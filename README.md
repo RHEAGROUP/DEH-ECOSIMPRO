@@ -1,6 +1,6 @@
 # DEHP-ECOSIMPRO
 
-The DEHP ECOSIMPRO is a WPF C# Application that make use of the [Digital Engineering Hub Pathfinder Common library](https://github.com/RHEAGROUP/DEHP-Common)
+The DEHP ECOSIMPRO is a WPF C# Application that make use of the [Digital Engineering Hub Pathfinder ECOSIMPRO library](https://github.com/RHEAGROUP/DEHP-ECOSIMPRO)
 Which is available as Nuget package.
 
 The DEHP ECOSIMPRO allows users to interactivly exchange data between models built with [EcosimPro](https://www.ecosimpro.com/) software and a ECSS-E-TM-10-25A data source.
@@ -16,9 +16,23 @@ Development |  [![Build Status](https://ci.appveyor.com/api/projects/status/0u3q
 
 [![Build history](https://buildstats.info/appveyor/chart/rheagroup/dehp-ecosimpro)](https://ci.appveyor.com/project/rheagroup/dehp-ecosimpro/history)
 
+## SonarQube Status:
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=alert_status)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=security_rating)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=coverage)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=duplicated_lines_density)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=bugs)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=ncloc)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=sqale_index)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=RHEAGROUP_DEHP-ECOSIMPRO&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=RHEAGROUP_DEHP-ECOSIMPRO)
 # License
 
-The libraries contained in the CDP4-SDK Community Edition are provided to the community under the GNU Lesser General Public License. Because we make the software available with the LGPL, it can be used in both open source and proprietary software without being required to release the source code of your own components.
+The libraries contained in the DEHP EcosimPro are provided to the community under the GNU Lesser General Public License. Because we make the software available with the LGPL, it can be used in both open source and proprietary software without being required to release the source code of your own components.
 
 # Contributions
 
