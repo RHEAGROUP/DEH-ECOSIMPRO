@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <RootNamespace>DEHPEcosimpro</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <AssemblyTitle>DEHPEcosimpro</AssemblyTitle>
+    <Company>RHEA System S.A.</Company>
+    <Product>DEHPEcosimpro</Product>
+    <Description>DEHPEcosimpro desktop application</Description>
+    <Copyright>Copyright © RHEA System S.A.</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DevExpress.WindowsDesktop.Wpf.Layout" Version="20.1.7" />
+    <PackageReference Include="DevExpress.Wpf.Core" Version="20.1.7" />
+    <PackageReference Include="DevExpress.Wpf.Grid" Version="20.1.7" />
+    <PackageReference Include="DevExpress.Wpf.Layout" Version="20.1.7" />
+    <PackageReference Include="DevExpress.Wpf.Navigation" Version="20.1.7" />
+    <PackageReference Include="reactiveui-core.Net40" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+</Project>
