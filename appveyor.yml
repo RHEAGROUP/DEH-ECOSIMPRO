@@ -2,16 +2,14 @@ image: Visual Studio 2019
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  PROJECT_MAIN:   'DEHP'
   TEST_RESULT:    'TestResult.xml'
   TEST_COVERAGE:  'CoverResults.xml'
   SONARCLOUD_PROJECT_KEY: RHEAGROUP_DEHP-ECOSIMPRO
   SONARCLOUD_ORGANIZATION: rheagroup
   SONARCLOUD_URL: 'https://sonarcloud.io'
   SONARCLOUD_TOKEN:
-    secure: SusLBtRCNeSFMhatgx83owIfxgme9yjV8PxhORbPZ0Mz/aixNIbXWZlSz4Zxc05u
+    secure: th/5nKHJ0jW1sM3a0bs0cohRLIeMAx4Y5Do/al3L11XbWHOgoCdNYrNBQmSo9tFs
 
-skip_branch_with_pr: true
 for:
 # configuration for "master" branch, build in Release mode
 -
@@ -55,26 +53,25 @@ before_build:
         Write-Host Skipping Sonar Scanning
       }
 build:
-  project: '%PROJECT_MAIN%.sln'
-  verbosity: minimal
+  project: DEHPEcosimPro.sln
 
 test_script:
-    - >
-      OpenCover.Console.exe
-      -log:Error
-      -register
-      -target:".\testrunner\NUnit.ConsoleRunner.3.11.1\tools\nunit3-console.exe"
-      -targetargs:"cdp4ime-tests.nunit --where=""cat!=WebServicesDependent && cat!=AppVeyorExclusion && cat!=OfficeDependent"" --config=%CONFIGURATION%"
-      -returntargetcode
-      -hideskipped:All
-      -output:"%TEST_COVERAGE%"
-      -filter:"+[CDP4*]* -[*.Tests*]* -[*.Views]*"
-      -excludebyattribute:*.ExcludeFromCodeCoverageAttribute
+  - >
+    OpenCover.Console.exe
+    -log:Error
+    -register
+    -target:".\testrunner\NUnit.ConsoleRunner.3.11.1\tools\nunit3-console.exe"
+    -targetargs:"DEHPEcosimPro-tests.nunit --where=""cat!=WebServicesDependent && cat!=AppVeyorExclusion && cat!=OfficeDependent"" --config=%CONFIGURATION%"
+    -returntargetcode
+    -hideskipped:All
+    -output:"%TEST_COVERAGE%"
+    -filter:"+[CDP4*]* -[*.Tests*]* -[*.Views]*"
+    -excludebyattribute:*.ExcludeFromCodeCoverageAttribute
 after_test:
-    - ps: >-
-        if ($env:APPVEYOR_PULL_REQUEST_NUMBER -Or $env:APPVEYOR_REPO_BRANCH -eq "development" -Or $env:APPVEYOR_REPO_BRANCH -eq "master") {
-          SonarScanner.MSBuild.exe end /d:"sonar.login=$env:SONARCLOUD_TOKEN"
-        }
+  - ps: >-
+      if ($env:APPVEYOR_PULL_REQUEST_NUMBER -Or $env:APPVEYOR_REPO_BRANCH -eq "development" -Or $env:APPVEYOR_REPO_BRANCH -eq "master") {
+        SonarScanner.MSBuild.exe end /d:"sonar.login=$env:SONARCLOUD_TOKEN"
+      }
 notifications:
   - provider: Email
     to:

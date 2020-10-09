@@ -1,9 +1,9 @@
 ﻿<NUnitProject>
   <Settings activeconfig="Debug" processModel="Default" domainUsage="Default" />
   <Config name="Debug">
-    <assembly path="DEHPEcomsimPro.Tests/bin/Debug/net472/DEHPEcomsimPro.Tests.dll" />
+    <assembly path="DEHPEcosimPro.Tests/bin/Debug/net472/DEHPEcosimPro.Tests.dll" />
   </Config>
   <Config name="Release">
-    <assembly path="DEHPEcomsimPro.Tests/bin/Release/net472/DEHPEcomsimPro.Tests.dll" />
+    <assembly path="DEHPEcosimPro.Tests/bin/Release/net472/DEHPEcosimPro.Tests.dll" />
   </Config>
 </NUnitProject>
