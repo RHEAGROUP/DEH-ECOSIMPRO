@@ -1,6 +1,6 @@
 # How to contribute
 
-We would like to start with saying thank you for wanting to contribute to CDP4-SDK codebase. We want to keep it as easy as possible to contribute changes that get things working in your environment. There are a few guidelines that we need contributors to follow so that we have a chance of keeping on top of things.
+We would like to start with saying thank you for wanting to contribute to DEHP-EcosimPro codebase. We want to keep it as easy as possible to contribute changes that get things working in your environment. There are a few guidelines that we need contributors to follow so that we have a chance of keeping on top of things.
 
 - [How to contribute](#how-to-contribute)
   - [Making Changes](#making-changes)
@@ -12,7 +12,7 @@ We would like to start with saying thank you for wanting to contribute to CDP4-S
 
 1. [Fork](http://help.github.com/forking/) on GitHub
 1. Clone your fork locally
-1. Configure the upstream repo (`git remote add upstream git://github.com/RHEAGROUP/DEHP-ECOSIMPRO`) 
+1. Configure the upstream repo (`git remote add upstream git://github.com/RHEAGROUP/DEHP-ECOSIMPRO`)
 1. Checkout development
 1. Create a local branch (`git checkout -b myBranch`) from development
 1. Work on your feature
@@ -24,7 +24,7 @@ You should **never** work on a clone of master or development, and you should **
 
 ### Handling Updates from Upstream/Development
 
-While you're working away in your branch it's quite possible that your upstream development (most likely the canonical CDP4-SDK version) may be updated. If this happens you should:
+While you're working away in your branch it's quite possible that your upstream development (most likely the canonical DEHP-EcosimPro version) may be updated. If this happens you should:
 
 1. [Stash](http://git-scm.com/book/en/Git-Tools-Stashing) any un-committed changes you need to
 1. `git checkout development`

@@ -1,6 +1,6 @@
 # DEHP-ECOSIMPRO
 
-The DEHP ECOSIMPRO is a WPF C# Application that make use of the [Digital Engineering Hub Pathfinder ECOSIMPRO library](https://github.com/RHEAGROUP/DEHP-ECOSIMPRO)
+The DEHP ECOSIMPRO is a WPF C# Application that make use of the [Digital Engineering Hub Pathfinder Common library](https://github.com/RHEAGROUP/DEHP-Common)
 Which is available as Nuget package.
 
 The DEHP ECOSIMPRO allows users to interactivly exchange data between models built with [EcosimPro](https://www.ecosimpro.com/) software and a ECSS-E-TM-10-25A data source.
