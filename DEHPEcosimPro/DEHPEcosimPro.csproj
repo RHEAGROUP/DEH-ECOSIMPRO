@@ -13,6 +13,7 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <LangVersion>latest</LangVersion>
+    <StartupObject>DEHPEcosimPro.App</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,10 @@
     <PackageReference Include="DevExpress.Wpf.Layout" Version="20.1.7" />
     <PackageReference Include="DevExpress.Wpf.Navigation" Version="20.1.7" />
     <PackageReference Include="reactiveui-core.Net40" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="App.xaml" />
   </ItemGroup>
 
   <ItemGroup>

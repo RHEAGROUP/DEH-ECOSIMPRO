@@ -22,7 +22,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro
+namespace DEHPEcosimPro.Views
 {
     using System.Windows;
 
