@@ -31,6 +31,9 @@ namespace DEHPEcosimPro.Views
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// Initializes a new <see cref="MainWindow"/>
+        /// </summary>
         public MainWindow()
         {
             this.InitializeComponent();

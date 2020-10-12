@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindowTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="AppTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -27,10 +27,10 @@ namespace DEHPEcosimPro.Tests
     using NUnit.Framework;
 
     [TestFixture]
-    public class MainWindowTestFixture
+    public class AppTestFixture
     {
         [Test]
-        public void Verify()
+        public void VerifyProperties()
         {
             Assert.Pass();
         }

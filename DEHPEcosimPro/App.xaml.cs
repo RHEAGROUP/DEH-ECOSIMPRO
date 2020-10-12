@@ -26,10 +26,18 @@ namespace DEHPEcosimPro
 {
     using System.Windows;
 
+    using DEHPEcosimPro.Views;
+
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
     {
+        /// <inheritdoc cref="Application.OnStartup"/>
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            this.MainWindow = new MainWindow();
+            base.OnStartup(e);
+        }
     }
 }
