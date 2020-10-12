@@ -37,9 +37,6 @@ for:
   - path: DEHPEcosimPro-%APPVEYOR_REPO_TAG_NAME%.zip
     name: DEHPEcosimPro %APPVEYOR_REPO_TAG_NAME%
 
-    #autre chose
-
-
 -
   matrix:
     only:
@@ -84,7 +81,7 @@ for:
       -log:Error
       -register
       -target:".\testrunner\NUnit.ConsoleRunner.3.11.1\tools\nunit3-console.exe"
-      -targetargs:"DEHPEcosimPro-tests.nunit --where=""cat!=WebServicesDependent && cat!=AppVeyorExclusion && cat!=OfficeDependent"" --config=%CONFIGURATION%"
+      -targetargs:"DEHPEcosimPro-tests.nunit --where=""cat!=AppVeyorExclusion"""
       -returntargetcode
       -hideskipped:All
       -output:"%TEST_COVERAGE%"
