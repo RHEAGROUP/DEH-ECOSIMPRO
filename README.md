@@ -11,8 +11,8 @@ AppVeyor is used to build and test the DEHP ECOSIMPRO
 
 Branch | Build Status
 ------- | :------------
-Master |  [![Build Status](https://ci.appveyor.com/api/projects/status/0u3qa0lt0l3phwn6/branch/master?svg=true)](https://ci.appveyor.com/api/projects/status/0u3qa0lt0l3phwn6)
-Development |  [![Build Status](https://ci.appveyor.com/api/projects/status/0u3qa0lt0l3phwn6/branch/development?svg=true)](https://ci.appveyor.com/api/projects/status/0u3qa0lt0l3phwn6)
+Master |  [![Build Status](https://ci.appveyor.com/api/projects/status/h83f47e4g3xdxxsw/branch/master?svg=true)](https://ci.appveyor.com/api/projects/status/h83f47e4g3xdxxsw)
+Development |  [![Build Status](https://ci.appveyor.com/api/projects/status/h83f47e4g3xdxxsw/branch/development?svg=true)](https://ci.appveyor.com/api/projects/status/h83f47e4g3xdxxsw)
 
 [![Build history](https://buildstats.info/appveyor/chart/rheagroup/dehp-ecosimpro)](https://ci.appveyor.com/project/rheagroup/dehp-ecosimpro/history)
 
