@@ -27,6 +27,7 @@ for:
   before_build:
     - ps: >-
           Write-Host Tag Encountered. Producing Artifact
+    - cmd: nuget sources add -name devexpress -source %DEVEXPRESS_API%
     - cmd: nuget restore -verbosity quiet
   build_script:
     - cmd: msbuild DEHPEcosimPro.sln -p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
