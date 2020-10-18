@@ -14,7 +14,7 @@ environment:
        # To be changed in the future since this token belongs to a personal account. See below.
        # https://github.com/RHEAGROUP/DEHP-Common/wiki/Build-And-Release#modifying-the-github-token
        GITHUB_TOKEN:
-         secure: uS7/WlBplrAs/j9ab9P3SUN7GZyf4QAHZX//YpDOzXG/DZ6o1MGHdIWLHHdDYM5P
+         secure: TwjHgtFeWBCMNJj7w68eQqKq95CqPhTr35ssPK8Gli2jKBM6TwjgXzq5jOHYRrzj
        TAG_SCENARIO: false
 
 skip_branch_with_pr: true
