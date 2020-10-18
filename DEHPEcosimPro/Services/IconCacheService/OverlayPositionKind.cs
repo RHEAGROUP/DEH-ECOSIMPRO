@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="RHEA System S.A.">
+// <copyright file="OverlayPositionKind.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,23 +22,31 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Views
+namespace DEHPEcosimPro.Services.IconCacheService
 {
-    using System.Collections.Generic;
-    using System.Windows;
-
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Assertion on the overlay position
     /// </summary>
-    public partial class MainWindow : Window
+    public enum OverlayPositionKind
     {
         /// <summary>
-        /// Initializes a new <see cref="MainWindow"/>
+        /// Asserts that the overlay shall be placed on the top left corner
         /// </summary>
-        public MainWindow()
-        {
-            this.InitializeComponent();
-            this.Mapping.ItemsSource = new List<string>() { "ok", "ock", "zok", "aok", "otk", "xok" };
-        }
+        TopLeft,
+
+        /// <summary>
+        /// Asserts that the overlay shall be placed on the top right corner
+        /// </summary>
+        TopRight,
+
+        /// <summary>
+        /// Asserts that the overlay shall be placed in the bottom left corner
+        /// </summary>
+        BottomLeft,
+
+        /// <summary>
+        /// Asserts that the overlay shall be palced on the bottom right corner
+        /// </summary>
+        BottomRight
     }
 }

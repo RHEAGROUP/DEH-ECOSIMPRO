@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="DEHPEcosimPro.Views.Rows.MappingRow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:DEHPEcosimPro.Converters"
+             xmlns:local="clr-namespace:DEHPEcosimPro.Views.Rows"
+             mc:Ignorable="d" HorizontalAlignment="Stretch"
+             d:DesignHeight="100" d:DesignWidth="1325">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <converters:MappingDirectionToRotationFactorConverter x:Key="MappingDirectionToRotationFactorConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <local:MappingThing DataContext="{Binding ObjectEcosimPro}"></local:MappingThing>
+
+        <Path Grid.Column="1" Stretch="Fill" Fill="DarkGray" 
+              Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z"
+              HorizontalAlignment="Stretch" MaxHeight="30"
+              RenderTransformOrigin=".5,.5">
+            <Path.RenderTransform>
+                <RotateTransform Angle="{Binding MappingDirection, Converter={StaticResource MappingDirectionToRotationFactorConverter}}" />
+            </Path.RenderTransform>
+        </Path>
+
+        <local:MappingThing DataContext="{Binding Object1025}" Grid.Column="2"></local:MappingThing>
+
+    </Grid>
+</UserControl>

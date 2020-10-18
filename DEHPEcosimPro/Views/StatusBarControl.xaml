@@ -1,0 +1,32 @@
+﻿<StatusBar x:Class="DEHPEcosimPro.Views.StatusBarControl"
+           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+           mc:Ignorable="d" 
+           d:DesignHeight="450" d:DesignWidth="800" DockPanel.Dock="Bottom" Background="AliceBlue">
+    <StatusBar.ItemsPanel>
+        <ItemsPanelTemplate>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+            </Grid>
+        </ItemsPanelTemplate>
+    </StatusBar.ItemsPanel>
+    <StatusBarItem Grid.Column="0">
+        <TextBlock Margin="10,0,0,0" Foreground="Black" FontSize="18" Text="Info" />
+    </StatusBarItem>
+    <Separator Grid.Column="1" />
+    <StatusBarItem Grid.Column="2">
+        <TextBlock Margin="10,0,0,0" Foreground="Black" FontSize="18" Text="16-10-20 11:01: Thanks Andrea and best of luck" />
+    </StatusBarItem>
+    <Separator Grid.Column="3" />
+    <StatusBarItem Grid.Column="4">
+        <Button Content="⚙" Foreground="Black" FontSize="18" BorderThickness="0" Background="Transparent"></Button>
+    </StatusBarItem>
+</StatusBar>

@@ -24,15 +24,22 @@
 
 namespace DEHPEcosimPro.Tests
 {
+    using Autofac;
+
+    using DEHPEcosimPro.Services.IconCacheService;
+
     using NUnit.Framework;
 
     [TestFixture]
     public class AppTestFixture
     {
         [Test]
-        public void VerifyProperties()
+        public void VerifyContainerIsBuilt()
         {
-            Assert.Pass();
+            var containerBuilder = new ContainerBuilder();
+            containerBuilder.RegisterInstance(new IconCacheService()).As<IIconCacheService>();
+            Assert.IsNotNull(new App(containerBuilder));
+            Assert.IsNotNull(AppContainer.Container.Resolve<IIconCacheService>());
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="RHEA System S.A.">
+// <copyright file="MappingRow.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,23 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Views
+namespace DEHPEcosimPro.Views.Rows
 {
-    using System.Collections.Generic;
-    using System.Windows;
+    using System.Windows.Controls;
 
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MappingThing.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MappingThing : UserControl
     {
         /// <summary>
-        /// Initializes a new <see cref="MainWindow"/>
+        /// Initializes a new <see cref="MappingThing"/>
         /// </summary>
-        public MainWindow()
+        public MappingThing()
         {
             this.InitializeComponent();
-            this.Mapping.ItemsSource = new List<string>() { "ok", "ock", "zok", "aok", "otk", "xok" };
         }
     }
 }

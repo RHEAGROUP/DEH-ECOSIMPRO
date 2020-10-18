@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="RHEA System S.A.">
+// <copyright file="StatusBarControl.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,21 +24,19 @@
 
 namespace DEHPEcosimPro.Views
 {
-    using System.Collections.Generic;
-    using System.Windows;
+    using System.Windows.Controls.Primitives;
 
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for StatusBarControl.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class StatusBarControl : StatusBar
     {
         /// <summary>
-        /// Initializes a new <see cref="MainWindow"/>
+        /// Initializes a new <see cref="StatusBarControl"/>
         /// </summary>
-        public MainWindow()
+        public StatusBarControl()
         {
             this.InitializeComponent();
-            this.Mapping.ItemsSource = new List<string>() { "ok", "ock", "zok", "aok", "otk", "xok" };
         }
     }
 }
