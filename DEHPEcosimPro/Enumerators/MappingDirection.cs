@@ -25,18 +25,18 @@
 namespace DEHPEcosimPro.Enumerators
 {
     /// <summary>
-    /// Enumeration of the two direction a mapping can be done
+    /// Enumeration of the two directions a mapping can be done
     /// </summary>
     public enum MappingDirection
     {
         /// <summary>
-        /// Left means from EcosimPro to 10-25 source
+        /// To1025DataSource refers to a transfert direction of data from a DST tool specific data source to a 10-25 data source
         /// </summary>
-        Left,
+        To1025DataSource,
 
         /// <summary>
-        /// Left means from 10-25 source to ecosimPro
+        /// From1025DataSource refers to a transfert direction of data from a 10-25 data source to a DST tool specific data source
         /// </summary>
-        Right
+        From1025DataSource
     }
 }
