@@ -49,8 +49,8 @@ namespace DEHPEcosimPro.Tests.Converters
         {
             Assert.AreEqual(0, this.converter.Convert(null, null, null, null));
 
-            Assert.AreEqual(180, this.converter.Convert(MappingDirection.TO1025DataSource, null, null, null));
-            Assert.AreEqual(0, this.converter.Convert(MappingDirection.Right, null, null, null));
+            Assert.AreEqual(180, this.converter.Convert(MappingDirection.To1025DataSource, null, null, null));
+            Assert.AreEqual(0, this.converter.Convert(MappingDirection.From1025DataSource, null, null, null));
             Assert.AreEqual(0, this.converter.Convert(2, null, null, null));
         }
 

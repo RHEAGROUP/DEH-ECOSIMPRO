@@ -19,7 +19,7 @@
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <local:MappingThing DataContext="{Binding ObjectEcosimPro}"></local:MappingThing>
+        <local:MappingThingControl DataContext="{Binding ObjectEcosimPro}"></local:MappingThingControl>
 
         <Path Grid.Column="1" Stretch="Fill" Fill="DarkGray" 
               Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z"
@@ -30,7 +30,7 @@
             </Path.RenderTransform>
         </Path>
 
-        <local:MappingThing DataContext="{Binding Object1025}" Grid.Column="2"></local:MappingThing>
+        <local:MappingThingControl DataContext="{Binding Object1025}" Grid.Column="2"></local:MappingThingControl>
 
     </Grid>
 </UserControl>

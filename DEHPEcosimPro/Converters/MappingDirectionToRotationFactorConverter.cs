@@ -44,7 +44,7 @@ namespace DEHPEcosimPro.Converters
         /// <returns>The rotation factor as <see cref="int"/></returns>
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            if (!(value is MappingDirection direction) || direction != MappingDirection.TO1025DataSource)
+            if (!(value is MappingDirection direction) || direction != MappingDirection.To1025DataSource)
             {
                 return 0;
             }
