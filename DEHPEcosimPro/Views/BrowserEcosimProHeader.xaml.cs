@@ -1,44 +1,57 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RowStatusKind.cs" company="RHEA System S.A.">
-//    Copyright (c) 2020-2020 RHEA System S.A.
-// 
+// <copyright file="BrowserEcosimProHeader.xaml.cs" company="RHEA System S.A.">
+//    Copyright (c) 2015-2020 RHEA System S.A.
+//
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
-// 
+//
 //    This file is part of DEHPEcosimPro
-// 
+//
 //    The DEHPEcosimPro is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
 //    License as published by the Free Software Foundation; either
 //    version 3 of the License, or (at your option) any later version.
-// 
+//
 //    The DEHPEcosimPro is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //    Lesser General Public License for more details.
-// 
+//
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with this program; if not, write to the Free Software Foundation,
 //    Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Enumerators
+namespace DEHPEcosimPro.Views
 {
-    using CDP4Common.CommonData;
+    using System.Windows;
+    using System.Windows.Controls;
 
     /// <summary>
-    /// An enumeration of the kind of row status.
+    /// Interaction logic for <see cref="BrowserEcosimProHeader"/> XAML
     /// </summary>
-    public enum RowStatusKind
+    public partial class BrowserEcosimProHeader : UserControl
     {
         /// <summary>
-        /// The row represent an active <see cref="Thing"/>
+        /// The dependency property whether the header sould display the option title and its value 
         /// </summary>
-        Active = 0,
+        public static readonly DependencyProperty IsOptionDependantProperty = DependencyProperty.Register("IsOptionDependant", typeof(bool), typeof(BrowserEcosimProHeader), new PropertyMetadata(false));
+        
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BrowserEcosimProHeader"/> class.
+        /// </summary>
+        public BrowserEcosimProHeader()
+        {
+            this.InitializeComponent();
+        }
 
         /// <summary>
-        /// The row represent an inactive <see cref="Thing"/>
+        /// Gets or sets the <see cref="IsOptionDependant"/> dependency property.
         /// </summary>
-        Inactive = 1
+        public bool IsOptionDependant
+        {
+            get => (bool)this.GetValue(IsOptionDependantProperty);
+            set => this.SetValue(IsOptionDependantProperty, value);
+        }
     }
 }

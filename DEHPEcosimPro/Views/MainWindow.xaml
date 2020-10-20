@@ -6,6 +6,7 @@
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking" 
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
         xmlns:views="clr-namespace:DEHPEcosimPro.Views" Title="DEHP EcosimPro Adapter" Width="800" Height="450" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
@@ -20,9 +21,8 @@
                 <RowDefinition Height="9*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <dxdo:DockLayoutManager AutoHideMode="Inline" FloatingMode="Desktop">
+            <dxdo:DockLayoutManager Grid.Row="0" AutoHideMode="Inline" FloatingMode="Desktop">
                 <dxdo:LayoutGroup AllowSplitters="True" Orientation="Vertical">
                     <dxdo:LayoutGroup x:Name="LayoutGroup" ItemHeight="7*" Orientation="Horizontal">
                         <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="EcosimPro">
@@ -32,7 +32,15 @@
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Button Width="150" Height="40" HorizontalAlignment="Center" Content="Connect"/>
-                                <views:DataSourcePanel Grid.Row="1" />
+                                <Grid Grid.Row="1" Background="AliceBlue">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <views:BrowserEcosimProHeader Grid.Row="1" />
+                                    <views:TreeListControl Grid.Row="2"></views:TreeListControl>
+                                </Grid>
                             </Grid>
                         </dxdo:LayoutPanel>
                         <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Impact">
@@ -41,8 +49,18 @@
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Button Height="40" HorizontalAlignment="Center" Content="Change Transfert Direction"/>
-                                <views:DataSourcePanel Grid.Row="1" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition></ColumnDefinition>
+                                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                        <ColumnDefinition></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Path Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
+                                    <Button Grid.Column="1" Height="40" HorizontalAlignment="Center" Content="Change Transfert Direction"/>
+                                    <Path Grid.Column="2" Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
+                                </Grid>
+                                <views:TreeListControl  Grid.Row="1"></views:TreeListControl>
                             </Grid>
                         </dxdo:LayoutPanel>
                         <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="10-25">
@@ -52,7 +70,15 @@
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Button Width="150" Height="40" HorizontalAlignment="Center" Content="Connect"/>
-                                <views:DataSourcePanel Grid.Row="1" />
+                                <Grid Grid.Row="1" Background="AliceBlue">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <common:Browser1025Header DataContext=""  Grid.Row="1" />
+                                    <views:TreeListControl Grid.Row="2"></views:TreeListControl>
+                                </Grid>
                             </Grid>
                         </dxdo:LayoutPanel>
                     </dxdo:LayoutGroup>
@@ -90,7 +116,7 @@
                 <Button Grid.Row="1" Grid.Column="1" Height="40" Margin="5,5,10,10" Content="Map"/>
             </Grid>
 
-            <views:StatusBarControl Grid.Row="2" />
+            <common:StatusBarControl Grid.Row="2" />
         </Grid>
     </DockPanel>
 </Window>

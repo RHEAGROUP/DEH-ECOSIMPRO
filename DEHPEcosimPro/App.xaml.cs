@@ -26,10 +26,12 @@ namespace DEHPEcosimPro
 {
     using Autofac;
 
+    using DEHPCommon;
+
     using DevExpress.Mvvm;
     using DevExpress.Xpf.Core;
 
-    using SplashScreen = DEHPEcosimPro.Views.SplashScreen;
+    using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
 
     /// <summary>
     /// Interaction logic for App.xaml
@@ -42,7 +44,7 @@ namespace DEHPEcosimPro
         /// <param name="containerBuilder">An optional <see cref="Container"/></param>
         public App(ContainerBuilder containerBuilder = null)
         {
-            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter" };
+            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             AppContainer.BuildContainer(containerBuilder);
         }

@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:converters="clr-namespace:DEHPEcosimPro.Converters"
+             xmlns:converters="clr-namespace:DEHPCommon.Converters;assembly=DEHPCommon"
              xmlns:local="clr-namespace:DEHPEcosimPro.Views.Rows"
+             xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views.Rows;assembly=DEHPCommon"
              mc:Ignorable="d" HorizontalAlignment="Stretch"
              d:DesignHeight="100" d:DesignWidth="1325">
     <UserControl.Resources>
@@ -19,7 +20,7 @@
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <local:MappingThingControl DataContext="{Binding ObjectEcosimPro}"></local:MappingThingControl>
+        <local:MappingEcosimProThing DataContext="{Binding ThingEcosimPro}"></local:MappingEcosimProThing>
 
         <Path Grid.Column="1" Stretch="Fill" Fill="DarkGray" 
               Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z"
@@ -30,7 +31,7 @@
             </Path.RenderTransform>
         </Path>
 
-        <local:MappingThingControl DataContext="{Binding Object1025}" Grid.Column="2"></local:MappingThingControl>
+        <common:Mapping1025ThingControl DataContext="{Binding Thing1025}" Grid.Column="2"></common:Mapping1025ThingControl>
 
     </Grid>
 </UserControl>

@@ -17,43 +17,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\Images\Thing\ActualFiniteState_48x48.png" />
-    <None Remove="Resources\Images\Thing\Book.png" />
-    <None Remove="Resources\Images\Thing\category_16x16.png" />
-    <None Remove="Resources\Images\Thing\category_32x32.png" />
-    <None Remove="Resources\Images\Thing\domainofexpertise_16x16.png" />
-    <None Remove="Resources\Images\Thing\domainofexpertise_32x32.png" />
-    <None Remove="Resources\Images\Thing\grayscaleIterationSetup_16x16.png" />
-    <None Remove="Resources\Images\Thing\grayscaleIterationSetup_32x32.png" />
-    <None Remove="Resources\Images\Thing\grayscaleParticipant_16x16.png" />
-    <None Remove="Resources\Images\Thing\grayscaleParticipant_32x32.png" />
-    <None Remove="Resources\Images\Thing\grayscalePerson_16x16.png" />
-    <None Remove="Resources\Images\Thing\grayscalePerson_32x32.png" />
-    <None Remove="Resources\Images\Thing\lock.png" />
-    <None Remove="Resources\Images\Thing\measurementunit_16x16.png" />
-    <None Remove="Resources\Images\Thing\measurementunit_32x32.png" />
-    <None Remove="Resources\Images\Thing\naturallanguage.png" />
-    <None Remove="Resources\Images\Thing\Organization_16x16.png" />
-    <None Remove="Resources\Images\Thing\Organization_32x32.png" />
-    <None Remove="Resources\Images\Thing\parameterComponent_32x32.png" />
-    <None Remove="Resources\Images\Thing\parametertype_16x16.png" />
-    <None Remove="Resources\Images\Thing\parametertype_32x32.png" />
-    <None Remove="Resources\Images\Thing\PossibleFiniteState_48x48.png" />
-    <None Remove="Resources\Images\Thing\requirement.png" />
-    <None Remove="Resources\Images\Thing\requirementContainer.png" />
-    <None Remove="Resources\Images\Thing\siteRdl_16x16.png" />
-    <None Remove="Resources\Images\Thing\siteRdl_32x32.png" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Autofac" Version="6.0.0" />
-    <PackageReference Include="DEHPCommon" Version="1.0.51" />
+    <PackageReference Include="DEHPCommon" Version="1.1.0.1" />
     <PackageReference Include="DevExpress.WindowsDesktop.Wpf.Layout" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Core" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Grid" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Layout" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Navigation" Version="20.1.8" />
     <PackageReference Include="reactiveui-core.Net40" Version="6.5.0" />
+    <PackageReference Include="Splat.Net40" Version="1.6.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,106 +37,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\Images\ExclamationRed_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\ExclamationRed_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Info_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\linkgreen_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\linkgreen_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Warning_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\ActualFiniteState_48x48.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\Book.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\category_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\category_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\domainofexpertise_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\domainofexpertise_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscaleIterationSetup_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscaleIterationSetup_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscaleParticipant_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscaleParticipant_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscalePerson_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\grayscalePerson_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\lock.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\measurementunit_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\measurementunit_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\naturallanguage.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\Organization_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\Organization_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\parameterComponent_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\parametertype_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\parametertype_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\PossibleFiniteState_48x48.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\requirement.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\requirementContainer.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\siteRdl_16x16.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Images\Thing\siteRdl_32x32.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    <Page Update="Views\BrowserEcosimProHeader.xaml">
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
 </Project>

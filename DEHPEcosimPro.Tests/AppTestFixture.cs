@@ -24,9 +24,12 @@
 
 namespace DEHPEcosimPro.Tests
 {
+    using System.Collections;
+    using System.Collections.Generic;
+
     using Autofac;
 
-    using DEHPEcosimPro.Services.IconCacheService;
+    using DEHPCommon;
 
     using NUnit.Framework;
 
@@ -37,9 +40,9 @@ namespace DEHPEcosimPro.Tests
         public void VerifyContainerIsBuilt()
         {
             var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterInstance(new IconCacheService()).As<IIconCacheService>();
+            containerBuilder.RegisterType<List<byte>>().As<IList>();
             Assert.IsNotNull(new App(containerBuilder));
-            Assert.IsNotNull(AppContainer.Container.Resolve<IIconCacheService>());
+            Assert.IsNotNull(AppContainer.Container.Resolve<IList>());
         }
     }
 }

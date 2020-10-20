@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="OverlayPositionKind.cs" company="RHEA System S.A.">
+// <copyright file="MappingEcosimProThing.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,31 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Services.IconCacheService
+namespace DEHPEcosimPro.Views.Rows
 {
+    using System.Windows.Controls;
+
     /// <summary>
-    /// Assertion on the overlay position
+    /// Interaction logic for MappingEcosimProThing.xaml
     /// </summary>
-    public enum OverlayPositionKind
+    public partial class MappingEcosimProThing : UserControl
     {
         /// <summary>
-        /// Asserts that the overlay shall be placed on the top left corner
+        /// Initializes a new <see cref="MappingEcosimProThing"/>
         /// </summary>
-        TopLeft,
-
-        /// <summary>
-        /// Asserts that the overlay shall be placed on the top right corner
-        /// </summary>
-        TopRight,
-
-        /// <summary>
-        /// Asserts that the overlay shall be placed in the bottom left corner
-        /// </summary>
-        BottomLeft,
-
-        /// <summary>
-        /// Asserts that the overlay shall be palced on the bottom right corner
-        /// </summary>
-        BottomRight
+        public MappingEcosimProThing()
+        {
+            this.InitializeComponent();
+        }
     }
 }
