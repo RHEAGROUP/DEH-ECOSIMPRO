@@ -29,5 +29,14 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     /// </summary>
     public interface IMainWindowViewModel
     {
+        /// <summary>
+        /// Gets the view model that represents the 10-25 data source
+        /// </summary>
+        IDataSourceViewModel Object1025 { get; }
+
+        /// <summary>
+        /// Gets the view model that represents the EcosimPro data source
+        /// </summary>
+        IDataSourceViewModel ObjectEcosimPro { get; }
     }
 }

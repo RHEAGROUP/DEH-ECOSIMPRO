@@ -48,16 +48,8 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         public MainWindowViewModel(IDataSourceViewModel object1025ViewModel, IDataSourceViewModel objectEcosimProViewModel)
         {
-            this.InitializeCommands();
             this.Object1025 = object1025ViewModel;
             this.ObjectEcosimPro = objectEcosimProViewModel;
-        }
-
-        /// <summary>
-        /// Initializes the <see cref="ReactiveCommand{T}"/>
-        /// </summary>
-        private void InitializeCommands()
-        {
         }
     }
 }

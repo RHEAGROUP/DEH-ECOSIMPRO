@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IDataSourceViewModel.cs" company="RHEA System S.A.">
+// <copyright file="MainWindowViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,23 +22,35 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Tests.ViewModel
 {
-    using ReactiveUI;
+    using Autofac;
 
-    /// <summary>
-    /// Definition of methods and properties of <see cref="DataSourceViewModel"/>
-    /// </summary>
-    public interface IDataSourceViewModel
+    using DEHPCommon;
+
+    using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Interfaces;
+
+    using NUnit.Framework;
+
+    [TestFixture]
+    public class MainWindowViewModelTestFixture
     {
-        /// <summary>
-        /// Gets or sets the name
-        /// </summary>
-        string ConnectButtonText { get; set; }
+        [SetUp]
+        public void Setup()
+        {
+            var containerBuilder = new ContainerBuilder(); 
+            containerBuilder.RegisterType<MainWindowViewModel>().As<IMainWindowViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DataSourceViewModel>().As<IDataSourceViewModel>();
+            AppContainer.BuildContainer(containerBuilder);
+        }
 
-        /// <summary>
-        /// <see cref="ReactiveCommand{T}"/> for connecting to a data source
-        /// </summary>
-        ReactiveCommand<object> ConnectCommand { get; set; }
+        [Test]
+        public void VerifyProperties()
+        {
+            var viewModel = AppContainer.Container.Resolve<IMainWindowViewModel>();
+            Assert.IsNotNull(viewModel.Object1025);
+            Assert.IsNotNull(viewModel.ObjectEcosimPro);
+        }
     }
 }

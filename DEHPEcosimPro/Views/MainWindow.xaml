@@ -30,7 +30,7 @@
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="Connect"/>
+                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="{Binding ObjectEcosimPro.ConnectButtonText}"/>
                                 <Grid Grid.Row="1" Background="AliceBlue">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
@@ -68,7 +68,7 @@
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="Connect" Command="{Binding Object1025.ConnectCommand}"/>
+                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="{Binding Object1025.ConnectButtonText}" Command="{Binding Object1025.ConnectCommand}"/>
                                 <Grid Grid.Row="1" Background="AliceBlue">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />

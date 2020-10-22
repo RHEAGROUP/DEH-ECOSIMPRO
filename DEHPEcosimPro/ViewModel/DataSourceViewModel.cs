@@ -27,8 +27,8 @@ namespace DEHPEcosimPro.ViewModel
     using System;
     using System.Reactive.Linq;
 
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.ViewModel.Interfaces;
@@ -36,41 +36,42 @@ namespace DEHPEcosimPro.ViewModel
     using ReactiveUI;
 
     /// <summary>
-    /// View model that represents a data source panel <see cref="Views.DataSourcePanel"/>
+    /// View model that represents a data source panel
     /// </summary>
     public class DataSourceViewModel : ReactiveObject, IDataSourceViewModel
     {
+        /// <summary>
+        /// The connect text for the connect button
+        /// </summary>
+        private const string ConnectText = "Connect";
+
+        /// <summary>
+        /// The disconnect text for the connect button
+        /// </summary>
+        private const string DisconnectText = "Disconnect";
+
         /// <summary>
         /// The <see cref="INavigationService"/>
         /// </summary>
         private readonly INavigationService navigationService;
 
         /// <summary>
-        /// Backing field for <see cref="Name"/>
+        /// The <see cref="IHubController"/>
         /// </summary>
-        private string name;
+        private readonly IHubController hubController;
 
         /// <summary>
-        /// Gets or sets the name of this represented <see cref="Views.DataSourcePanel"/>
+        /// Backing field for <see cref="ConnectButtonText"/>
         /// </summary>
-        public string Name
+        private string connectButtonText = ConnectText;
+
+        /// <summary>
+        /// Gets or sets the name
+        /// </summary>
+        public string ConnectButtonText
         {
-            get => this.name;
-            set => this.RaiseAndSetIfChanged(ref this.name, value);
-        }
-
-        /// <summary>
-        /// Backing field for <see cref="IsConnected"/>
-        /// </summary>
-        private bool isConnected;
-
-        /// <summary>
-        /// Gets or sets an assert whether a connection is established
-        /// </summary>
-        public bool IsConnected
-        {
-            get => this.isConnected;
-            set => this.RaiseAndSetIfChanged(ref this.isConnected, value);
+            get => this.connectButtonText;
+            set => this.RaiseAndSetIfChanged(ref this.connectButtonText, value);
         }
         
         /// <summary>
@@ -81,9 +82,10 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Initializes a new <see cref="DataSourceViewModel"/>
         /// </summary>
-        public DataSourceViewModel(INavigationService navigationService)
+        public DataSourceViewModel(INavigationService navigationService, IHubController hubController)
         {
             this.navigationService = navigationService;
+            this.hubController = hubController;
             this.InitializeCommands();
         }
 
@@ -92,7 +94,6 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void InitializeCommands()
         {
-            var canConnect = this.WhenAnyValue(x => x.IsConnected).Where(x => x is false);
             this.ConnectCommand = ReactiveCommand.Create();
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
         }
@@ -102,7 +103,16 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void ConnectCommandExecute()
         {
-            this.navigationService.ShowDialog<Login>();
+            if (this.hubController.IsSessionOpen)
+            {
+                this.hubController.Close();
+            }
+            else
+            {
+                this.navigationService.ShowDialog<Login>();
+            }
+
+            this.ConnectButtonText = this.hubController.IsSessionOpen ? DisconnectText : ConnectText;
         }
     }
 }
