@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="App.cs" company="RHEA System S.A.">
+// <copyright file="App.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2019 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,12 +24,29 @@
 
 namespace DEHPEcosimPro
 {
-    using System.Windows;
+    using Autofac;
+
+    using DEHPCommon;
+
+    using DevExpress.Mvvm;
+    using DevExpress.Xpf.Core;
+
+    using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
 
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App
     {
+        /// <summary>
+        /// Initializes a new <see cref="App"/>
+        /// </summary>
+        /// <param name="containerBuilder">An optional <see cref="Container"/></param>
+        public App(ContainerBuilder containerBuilder = null)
+        {
+            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
+            SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
+            AppContainer.BuildContainer(containerBuilder);
+        }
     }
 }

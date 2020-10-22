@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net472</TargetFramework>
-    <RootNamespace>DEHPEcosimpro</RootNamespace>
+    <RootNamespace>DEHPEcosimPro</RootNamespace>
     <UseWPF>true</UseWPF>
-    <AssemblyTitle>DEHPEcosimpro</AssemblyTitle>
+    <AssemblyTitle>DEHPEcosimPro</AssemblyTitle>
     <Company>RHEA System S.A.</Company>
-    <Product>DEHPEcosimpro</Product>
-    <Description>DEHPEcosimpro desktop application</Description>
+    <Product>DEHPEcosimPro</Product>
+    <Description>DEHPEcosimPro desktop application</Description>
     <Copyright>Copyright © RHEA System S.A.</Copyright>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
@@ -17,12 +17,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevExpress.WindowsDesktop.Wpf.Layout" Version="20.1.7" />
-    <PackageReference Include="DevExpress.Wpf.Core" Version="20.1.7" />
-    <PackageReference Include="DevExpress.Wpf.Grid" Version="20.1.7" />
-    <PackageReference Include="DevExpress.Wpf.Layout" Version="20.1.7" />
-    <PackageReference Include="DevExpress.Wpf.Navigation" Version="20.1.7" />
+    <PackageReference Include="Autofac" Version="6.0.0" />
+    <PackageReference Include="DEHPCommon" Version="1.0.68" />
+    <PackageReference Include="DevExpress.WindowsDesktop.Wpf.Layout" Version="20.1.8" />
+    <PackageReference Include="DevExpress.Wpf.Core" Version="20.1.8" />
+    <PackageReference Include="DevExpress.Wpf.Grid" Version="20.1.8" />
+    <PackageReference Include="DevExpress.Wpf.Layout" Version="20.1.8" />
+    <PackageReference Include="DevExpress.Wpf.Navigation" Version="20.1.8" />
     <PackageReference Include="reactiveui-core.Net40" Version="6.5.0" />
+    <PackageReference Include="Splat.Net40" Version="1.6.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +34,16 @@
 
   <ItemGroup>
     <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\BrowserEcosimProHeader.xaml">
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
 </Project>

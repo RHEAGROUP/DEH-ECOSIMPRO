@@ -11,6 +11,10 @@ environment:
        SONARCLOUD_URL: 'https://sonarcloud.io'
        SONARCLOUD_TOKEN:
          secure: th/5nKHJ0jW1sM3a0bs0cohRLIeMAx4Y5Do/al3L11XbWHOgoCdNYrNBQmSo9tFs
+       # To be changed in the future since this token belongs to a personal account. See below.
+       # https://github.com/RHEAGROUP/DEHP-Common/wiki/Build-And-Release#modifying-the-github-token
+       GITHUB_TOKEN:
+         secure: uS7/WlBplrAs/j9ab9P3SUN7GZyf4QAHZX//YpDOzXG/DZ6o1MGHdIWLHHdDYM5P
        TAG_SCENARIO: false
 
 skip_branch_with_pr: true
@@ -28,6 +32,7 @@ for:
     - ps: >-
           Write-Host Tag Encountered. Producing Artifact
     - cmd: nuget sources add -name devexpress -source %DEVEXPRESS_API%
+    - cmd: nuget sources add -name github -username RHEAGROUP -password %GITHUB_TOKEN% -source https://nuget.pkg.github.com/RHEAGROUP/index.json
     - cmd: nuget restore -verbosity quiet
   build_script:
     - cmd: msbuild DEHPEcosimPro.sln -p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
@@ -56,6 +61,7 @@ for:
     - cmd: nuget install NUnit.Console -Version 3.11.1 -OutputDirectory testrunner
     - cmd: nuget install NUnit.Runners -Version 3.11.1 -OutputDirectory testrunner
     - cmd: nuget sources add -name devexpress -source %DEVEXPRESS_API%
+    - cmd: nuget sources add -name github -username RHEAGROUP -password %GITHUB_TOKEN% -source https://nuget.pkg.github.com/RHEAGROUP/index.json
     - cmd: nuget restore -verbosity quiet
     - cmd: set "JAVA_HOME=C:\Program Files\Java\jdk11"
     - cmd: set "PATH=C:\Program Files\Java\jdk11\bin;%PATH%"
