@@ -1,47 +1,49 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="RHEA System S.A.">
-//    Copyright (c) 2015-2020 RHEA System S.A.
-//
+// <copyright file="IDataSourceViewModel.cs" company="RHEA System S.A.">
+//    Copyright (c) 2020-2020 RHEA System S.A.
+// 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
-//
+// 
 //    This file is part of DEHPEcosimPro
-//
+// 
 //    The DEHPEcosimPro is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
 //    License as published by the Free Software Foundation; either
 //    version 3 of the License, or (at your option) any later version.
-//
+// 
 //    The DEHPEcosimPro is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //    Lesser General Public License for more details.
-//
+// 
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with this program; if not, write to the Free Software Foundation,
 //    Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Views
+namespace DEHPEcosimPro.ViewModel.Interfaces
 {
-    using System.Collections.Generic;
-    using System.Windows;
-
-    using Autofac;
-
-    using DEHPEcosimPro.ViewModel;
+    using ReactiveUI;
 
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Definition of methods and properties of <see cref="DataSourceViewModel"/>
     /// </summary>
-    public partial class MainWindow : Window
+    public interface IDataSourceViewModel
     {
         /// <summary>
-        /// Initializes a new <see cref="MainWindow"/>
+        /// Gets or sets the name of this represented <see cref="Views.DataSourcePanel"/>
         /// </summary>
-        public MainWindow()
-        {
-            this.InitializeComponent();
-        }
+        string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets an assert whether a connection is established
+        /// </summary>
+        bool IsConnected { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for connecting to a data source
+        /// </summary>
+        ReactiveCommand<object> ConnectCommand { get; set; }
     }
 }
