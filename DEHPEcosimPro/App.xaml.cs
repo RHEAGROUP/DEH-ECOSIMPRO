@@ -24,7 +24,14 @@
 
 namespace DEHPEcosimPro
 {
-    using System.Windows;
+    using Autofac;
+
+    using DEHPCommon;
+
+    using DevExpress.Mvvm;
+    using DevExpress.Xpf.Core;
+
+    using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
 
     using Autofac;
 

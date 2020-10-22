@@ -42,6 +42,7 @@ namespace DEHPEcosimPro.Views
         public MainWindow()
         {
             this.InitializeComponent();
+            this.Mapping.ItemsSource = new List<string>() { "ok", "ock", "zok", "aok", "otk", "xok" };
         }
     }
 }
