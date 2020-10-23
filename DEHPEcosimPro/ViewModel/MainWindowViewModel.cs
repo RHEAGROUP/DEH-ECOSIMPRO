@@ -36,20 +36,22 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
         /// </summary>
-        public IDataSourceViewModel Object1025 { get; private set; }
+        public IDataSourceViewModel HubDataSourceViewModel { get; private set; }
 
         /// <summary>
         /// Gets the view model that represents the EcosimPro data source
         /// </summary>
-        public IDataSourceViewModel ObjectEcosimPro { get; private set; }
+        public IDataSourceViewModel EcosimProSourceViewModel { get; private set; }
 
         /// <summary>
         /// Initializes a new <see cref="MainWindowViewModel"/>
         /// </summary>
-        public MainWindowViewModel(IDataSourceViewModel object1025ViewModel, IDataSourceViewModel objectEcosimProViewModel)
+        /// <param name="hubDataSourceViewModelViewModel">A <see cref="IDataSourceViewModel"/></param>
+        /// <param name="ecosimProSourceViewModelViewModel">A <see cref="IDataSourceViewModel"/></param>
+        public MainWindowViewModel(IDataSourceViewModel hubDataSourceViewModelViewModel, IDataSourceViewModel ecosimProSourceViewModelViewModel)
         {
-            this.Object1025 = object1025ViewModel;
-            this.ObjectEcosimPro = objectEcosimProViewModel;
+            this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
+            this.EcosimProSourceViewModel = ecosimProSourceViewModelViewModel;
         }
     }
 }

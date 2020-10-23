@@ -49,8 +49,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void VerifyProperties()
         {
             var viewModel = AppContainer.Container.Resolve<IMainWindowViewModel>();
-            Assert.IsNotNull(viewModel.Object1025);
-            Assert.IsNotNull(viewModel.ObjectEcosimPro);
+            Assert.IsNotNull(viewModel.HubDataSourceViewModel);
+            Assert.IsNotNull(viewModel.EcosimProSourceViewModel);
         }
     }
 }
