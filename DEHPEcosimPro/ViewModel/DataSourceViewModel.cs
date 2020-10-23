@@ -25,7 +25,6 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
-    using System.Reactive.Linq;
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
@@ -36,7 +35,8 @@ namespace DEHPEcosimPro.ViewModel
     using ReactiveUI;
 
     /// <summary>
-    /// View model that represents a data source panel
+    /// View model that represents a data source panel which holds a tree like browser, a informational header and
+    /// some control regarding the connection to the data source
     /// </summary>
     public class DataSourceViewModel : ReactiveObject, IDataSourceViewModel
     {
@@ -82,6 +82,8 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Initializes a new <see cref="DataSourceViewModel"/>
         /// </summary>
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        /// <param name="hubController">The <see cref="IHubController"/></param>
         public DataSourceViewModel(INavigationService navigationService, IHubController hubController)
         {
             this.navigationService = navigationService;

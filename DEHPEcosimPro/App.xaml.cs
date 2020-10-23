@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="App.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2019 RHEA System S.A.
 //
@@ -58,6 +58,10 @@ namespace DEHPEcosimPro
             AppContainer.BuildContainer(containerBuilder);
         }
 
+        /// <summary>
+        /// Occurs when <see cref="Application"/> starts, starts a new <see cref="ILifetimeScope"/> and open the <see cref="Application.MainWindow"/>
+        /// </summary>
+        /// <param name="e">The <see cref="StartupEventArgs"/></param>
         protected override void OnStartup(StartupEventArgs e)
         {
             using (var scope = AppContainer.Container.BeginLifetimeScope())
@@ -69,7 +73,7 @@ namespace DEHPEcosimPro
         }
         
         /// <summary>
-        /// Registers all the view model so the depency can be injected
+        /// Registers all the view model so the depencies can be injected
         /// </summary>
         /// <param name="containerBuilder">The <see cref="ContainerBuilder"/></param>
         private static void RegisterViewModels(ContainerBuilder containerBuilder)
