@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="App.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2019 RHEA System S.A.
 //
@@ -24,13 +24,20 @@
 
 namespace DEHPEcosimPro
 {
+    using System.Windows;
+
     using Autofac;
 
     using DEHPCommon;
+    using DEHPCommon.Services.NavigationService;
 
-    using DevExpress.Mvvm;
+    using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views;
+
     using DevExpress.Xpf.Core;
 
+    using DXSplashScreenViewModel = DevExpress.Mvvm.DXSplashScreenViewModel;
     using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
 
     /// <summary>
@@ -46,7 +53,33 @@ namespace DEHPEcosimPro
         {
             var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
+            containerBuilder ??= new ContainerBuilder();
+            RegisterViewModels(containerBuilder);
             AppContainer.BuildContainer(containerBuilder);
+        }
+
+        /// <summary>
+        /// Occurs when <see cref="Application"/> starts, starts a new <see cref="ILifetimeScope"/> and open the <see cref="Application.MainWindow"/>
+        /// </summary>
+        /// <param name="e">The <see cref="StartupEventArgs"/></param>
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            using (var scope = AppContainer.Container.BeginLifetimeScope())
+            {
+                scope.Resolve<INavigationService>().Show<MainWindow>();
+            }
+
+            base.OnStartup(e);
+        }
+        
+        /// <summary>
+        /// Registers all the view model so the depencies can be injected
+        /// </summary>
+        /// <param name="containerBuilder">The <see cref="ContainerBuilder"/></param>
+        private static void RegisterViewModels(ContainerBuilder containerBuilder)
+        {
+            containerBuilder.RegisterType<MainWindowViewModel>().As<IMainWindowViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DataSourceViewModel>().As<IDataSourceViewModel>();
         }
     }
 }
