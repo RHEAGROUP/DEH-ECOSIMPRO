@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DataSourceViewModelTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstDataSourceViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,61 +24,57 @@
 
 namespace DEHPEcosimPro.Tests.ViewModel
 {
-    using System.Reactive.Concurrency;
-    using System.Threading;
-
-    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.UserInterfaces.Views;
 
+    using DEHPEcosimPro.DstAdapter;
     using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using Moq;
 
     using NUnit.Framework;
 
-    using ReactiveUI;
-
-    [TestFixture, Apartment(ApartmentState.STA)]
-    public class DataSourceViewModelTestFixture
+    [TestFixture]
+    public class DstDataSourceViewModelTestFixture
     {
-        private Mock<IHubController> hubController;
+        private DstDataSourceViewModel viewModel;
         private Mock<INavigationService> navigationService;
-        private IDataSourceViewModel viewModel;
+        private Mock<IDstBrowserHeaderViewModel> browserHeader;
+        private Mock<IDstAdapter> dstAdapter;
 
         [SetUp]
         public void Setup()
         {
-            RxApp.MainThreadScheduler = Scheduler.CurrentThread;
+            this.dstAdapter = new Mock<IDstAdapter>();
+            this.dstAdapter.Setup(x => x.IsSessionOpen).Returns(true);
+            this.dstAdapter.Setup(x => x.CloseSession());
+
             this.navigationService = new Mock<INavigationService>();
-            this.navigationService.Setup(x => x.ShowDialog<Login>());
-            this.hubController = new Mock<IHubController>();
-            this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
-            this.hubController.Setup(x => x.Close());
-            this.viewModel = new DataSourceViewModel(this.navigationService.Object, this.hubController.Object);
+            this.navigationService.Setup(x => x.ShowDialog<DstLogin>());
+
+            this.browserHeader = new Mock<IDstBrowserHeaderViewModel>();
+
+            this.viewModel = new DstDataSourceViewModel(this.navigationService.Object, this.dstAdapter.Object, this.browserHeader.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            Assert.IsNotNull(this.viewModel.ConnectCommand);
-            Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
+            Assert.IsNotNull(this.viewModel.DstBrowserHeader);
         }
 
         [Test]
         public void VerifyConnectCommand()
         {
             Assert.IsTrue(this.viewModel.ConnectCommand.CanExecute(null));
-            this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.viewModel.ConnectCommand.Execute(null);
-            Assert.AreEqual("Disconnect", this.viewModel.ConnectButtonText);
-            this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
-            this.viewModel.ConnectCommand.Execute(null);
             Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
-
-            this.hubController.Verify(x => x.Close(), Times.Once);
-            this.navigationService.Verify(x => x.ShowDialog<Login>(), Times.Once);
+            Assert.DoesNotThrow(() => this.viewModel.ConnectCommand.Execute(null));
+            this.dstAdapter.Verify(x => x.CloseSession(), Times.Once);
+            Assert.AreEqual("Disconnect", this.viewModel.ConnectButtonText);
+            this.dstAdapter.Setup(x => x.IsSessionOpen).Returns(false);
+            Assert.DoesNotThrow(() => this.viewModel.ConnectCommand.Execute(null));
+            this.navigationService.Verify(x => x.ShowDialog<DstLogin>(), Times.Once);
         }
     }
 }

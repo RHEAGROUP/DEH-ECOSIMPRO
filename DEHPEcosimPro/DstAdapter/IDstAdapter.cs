@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AppTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="IDstAdapter.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,28 +22,34 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests
+namespace DEHPEcosimPro.DstAdapter
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
+    using System.Threading.Tasks;
 
-    using Autofac;
+    using Opc.Ua;
 
-    using DEHPCommon;
-
-    using NUnit.Framework;
-    
-    [TestFixture]
-    public class AppTestFixture
+    /// <summary>
+    /// Interface definition for <see cref="DstAdapter"/>
+    /// </summary>
+    public interface IDstAdapter
     {
-        [Test]
-        public void VerifyContainerIsBuilt()
-        {
-            var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterType<List<byte>>().As<IList>();
-            Assert.IsNotNull(new App(containerBuilder));
-            Assert.IsNotNull(AppContainer.Container.Resolve<IList>());
-        }
+        /// <summary>
+        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// </summary>
+        bool IsSessionOpen { get; }
+
+        /// <summary>
+        /// Connects to the provided endpoint
+        /// </summary>
+        /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
+        /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
+        /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
+        /// <returns>A <see cref="Task"/></returns>
+        Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
+
+        /// <summary>
+        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// </summary>
+        void CloseSession();
     }
 }

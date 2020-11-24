@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AppTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="IHubDataSourceViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,28 +22,30 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests
+namespace DEHPEcosimPro.ViewModel.Interfaces
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
-    using Autofac;
+    using ReactiveUI;
 
-    using DEHPCommon;
-
-    using NUnit.Framework;
-    
-    [TestFixture]
-    public class AppTestFixture
+    /// <summary>
+    /// Definition of methods and properties of <see cref="HubDataSourceViewModel"/>
+    /// </summary>
+    public interface IHubDataSourceViewModel
     {
-        [Test]
-        public void VerifyContainerIsBuilt()
-        {
-            var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterType<List<byte>>().As<IList>();
-            Assert.IsNotNull(new App(containerBuilder));
-            Assert.IsNotNull(AppContainer.Container.Resolve<IList>());
-        }
+        /// <summary>
+        /// The <see cref="IObjectBrowserViewModel"/>
+        /// </summary>
+        IObjectBrowserViewModel ObjectBrowser { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name
+        /// </summary>
+        string ConnectButtonText { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for connecting to a data source
+        /// </summary>
+        ReactiveCommand<object> ConnectCommand { get; set; }
     }
 }

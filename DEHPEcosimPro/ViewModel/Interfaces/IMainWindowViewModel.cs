@@ -32,11 +32,11 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
         /// </summary>
-        IDataSourceViewModel HubDataSourceViewModel { get; }
+        IHubDataSourceViewModel HubDataSourceViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the EcosimPro data source
         /// </summary>
-        IDataSourceViewModel EcosimProSourceViewModel { get; }
+        IDstDataSourceViewModel DstSourceViewModel { get; }
     }
 }

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IDataSourceViewModel.cs" company="RHEA System S.A.">
+// <copyright file="IDstLoginViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,23 +22,52 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
+    using System.Reactive;
+
+    using DEHPCommon.UserInterfaces.Behaviors;
+
     using ReactiveUI;
 
     /// <summary>
-    /// Definition of methods and properties of <see cref="DataSourceViewModel"/>
+    /// Interface definiton for <see cref="DstLoginViewModel"/>
     /// </summary>
-    public interface IDataSourceViewModel
+    public interface IDstLoginViewModel
     {
         /// <summary>
-        /// Gets or sets the name
+        /// Gets or sets server username value
         /// </summary>
-        string ConnectButtonText { get; set; }
+        string UserName { get; set; }
 
         /// <summary>
-        /// <see cref="ReactiveCommand{T}"/> for connecting to a data source
+        /// Gets or sets server password value
         /// </summary>
-        ReactiveCommand<object> ConnectCommand { get; set; }
+        string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets server uri
+        /// </summary>
+        string Uri { get; set; }
+
+        /// <summary>
+        /// Gets or sets login succesfully flag
+        /// </summary>
+        bool LoginSuccessfull { get; }
+
+        /// <summary>
+        /// Gets or sets an assert whether the specified <see cref="Uri"/> endpoint requires authentication
+        /// </summary>
+        bool RequiresAuthentication { get; set; }
+
+        /// <summary>
+        /// Gets the server login command
+        /// </summary>
+        ReactiveCommand<Unit> LoginCommand { get; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
+        /// </summary>
+        ICloseWindowBehavior CloseWindowBehavior { get; set; }
     }
 }

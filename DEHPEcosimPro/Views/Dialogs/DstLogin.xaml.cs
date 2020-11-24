@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AppTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstLogin.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,28 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests
+namespace DEHPEcosimPro.Views.Dialogs
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
+    using System.Windows;
 
-    using Autofac;
-
-    using DEHPCommon;
-
-    using NUnit.Framework;
-    
-    [TestFixture]
-    public class AppTestFixture
+    /// <summary>
+    /// Interaction logic for DstLogin.xaml
+    /// </summary>
+    public partial class DstLogin : Window
     {
-        [Test]
-        public void VerifyContainerIsBuilt()
+        /// <summary>
+        /// Initializes a new <see cref="DstLogin"/>
+        /// </summary>
+        public DstLogin()
         {
-            var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterType<List<byte>>().As<IList>();
-            Assert.IsNotNull(new App(containerBuilder));
-            Assert.IsNotNull(AppContainer.Container.Resolve<IList>());
+            this.InitializeComponent();
         }
     }
 }

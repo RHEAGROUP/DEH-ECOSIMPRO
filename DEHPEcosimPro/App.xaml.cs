@@ -24,18 +24,28 @@
 
 namespace DEHPEcosimPro
 {
+    using System;
+    using System.Runtime.CompilerServices;
     using System.Windows;
+    using System.Windows.Threading;
 
     using Autofac;
 
     using DEHPCommon;
     using DEHPCommon.Services.NavigationService;
 
+    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.Services.OpcConnector;
+    using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Dialogs;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
 
     using DevExpress.Xpf.Core;
+
+    using NLog;
 
     using DXSplashScreenViewModel = DevExpress.Mvvm.DXSplashScreenViewModel;
     using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
@@ -54,6 +64,7 @@ namespace DEHPEcosimPro
             var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
+            RegisterTypes(containerBuilder);
             RegisterViewModels(containerBuilder);
             AppContainer.BuildContainer(containerBuilder);
         }
@@ -71,7 +82,20 @@ namespace DEHPEcosimPro
 
             base.OnStartup(e);
         }
-        
+
+        /// <summary>
+        /// Registers all the view model so the depencies can be injected
+        /// </summary>
+        /// <param name="containerBuilder">The <see cref="ContainerBuilder"/></param>
+        private static void RegisterTypes(ContainerBuilder containerBuilder)
+        {
+            containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
+            containerBuilder.RegisterType<OpcSessionHandler>().As<IOpcSessionHandler>().SingleInstance();
+            containerBuilder.RegisterType<OpcSessionReconnectHandler>().As<IOpcSessionReconnectHandler>().SingleInstance();
+            containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
+            containerBuilder.RegisterType<DstAdapter.DstAdapter>().As<IDstAdapter>().SingleInstance();
+        }
+
         /// <summary>
         /// Registers all the view model so the depencies can be injected
         /// </summary>
@@ -79,7 +103,10 @@ namespace DEHPEcosimPro
         private static void RegisterViewModels(ContainerBuilder containerBuilder)
         {
             containerBuilder.RegisterType<MainWindowViewModel>().As<IMainWindowViewModel>().SingleInstance();
-            containerBuilder.RegisterType<DataSourceViewModel>().As<IDataSourceViewModel>();
+            containerBuilder.RegisterType<HubDataSourceViewModel>().As<IHubDataSourceViewModel>();
+            containerBuilder.RegisterType<DstBrowserHeaderViewModel>().As<IDstBrowserHeaderViewModel>();
+            containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>();
+            containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
         }
     }
 }
