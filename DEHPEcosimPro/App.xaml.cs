@@ -84,7 +84,7 @@ namespace DEHPEcosimPro
         }
 
         /// <summary>
-        /// Registers all the view model so the depencies can be injected
+        /// Registers the types that can be resolved by the <see cref="IContainer"/>
         /// </summary>
         /// <param name="containerBuilder">The <see cref="ContainerBuilder"/></param>
         private static void RegisterTypes(ContainerBuilder containerBuilder)
