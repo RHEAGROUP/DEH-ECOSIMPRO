@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstAdapterTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstControllerTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -36,9 +36,9 @@ namespace DEHPEcosimPro.Tests.DstAdapter
     using Opc.Ua;
 
     [TestFixture]
-    public class DstAdapterTestFixture
+    public class DstControllerTestFixture
     {
-        private DstAdapter adapter;
+        private DstController controller;
         private Mock<IOpcClientService> opcClient;
 
         [SetUp]
@@ -47,26 +47,26 @@ namespace DEHPEcosimPro.Tests.DstAdapter
             this.opcClient = new Mock<IOpcClientService>();
             this.opcClient.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
             this.opcClient.Setup(x => x.CloseSession());
-            this.adapter = new DstAdapter(this.opcClient.Object);
+            this.controller = new DstController(this.opcClient.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            Assert.IsFalse(this.adapter.IsSessionOpen);
+            Assert.IsFalse(this.controller.IsSessionOpen);
         }
 
         [Test]
         public void VerifyConnect()
         {
-            Assert.DoesNotThrowAsync(async () => await this.adapter.Connect("endpoint"));
+            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint"));
             this.opcClient.Verify(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
         }
 
         [Test]
         public void VerifyClose()
         {
-            this.adapter.CloseSession();
+            this.controller.CloseSession();
             this.opcClient.Verify(x => x.CloseSession(), Times.Once);
         }
     }

@@ -41,12 +41,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private DstDataSourceViewModel viewModel;
         private Mock<INavigationService> navigationService;
         private Mock<IDstBrowserHeaderViewModel> browserHeader;
-        private Mock<IDstAdapter> dstAdapter;
+        private Mock<IDstController> dstAdapter;
 
         [SetUp]
         public void Setup()
         {
-            this.dstAdapter = new Mock<IDstAdapter>();
+            this.dstAdapter = new Mock<IDstController>();
             this.dstAdapter.Setup(x => x.IsSessionOpen).Returns(true);
             this.dstAdapter.Setup(x => x.CloseSession());
 

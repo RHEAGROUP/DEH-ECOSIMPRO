@@ -45,9 +45,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     public class DstLoginViewModel : ReactiveObject, IDstLoginViewModel, ICloseWindowViewModel
     {
         /// <summary>
-        /// The <see cref="IDstAdapter"/> instance
+        /// The <see cref="IDstController"/> instance
         /// </summary>
-        private readonly IDstAdapter dstAdapter;
+        private readonly IDstController dstController;
 
         /// <summary>
         /// The <see cref="IStatusBarControlViewModel"/> instance
@@ -137,11 +137,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Initializes a new instance of the <see cref="DstLoginViewModel"/> class.
         /// </summary>
-        /// <param name="dstAdapter">The <see cref="IDstAdapter"/></param>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarControlView">The <see cref="IStatusBarControlViewModel"/></param>
-        public DstLoginViewModel(IDstAdapter dstAdapter, IStatusBarControlViewModel statusBarControlView)
+        public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView)
         {
-            this.dstAdapter = dstAdapter;
+            this.dstController = dstController;
             this.statusBarControlView = statusBarControlView;
 
             var canLogin = this.WhenAnyValue(
@@ -166,8 +166,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             try
             {
                 var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
-                await this.dstAdapter.Connect(this.Uri, true, credentials);
-                this.LoginSuccessfull = this.dstAdapter.IsSessionOpen;
+                await this.dstController.Connect(this.Uri, true, credentials);
+                this.LoginSuccessfull = this.dstController.IsSessionOpen;
 
                 if (this.LoginSuccessfull)
                 {

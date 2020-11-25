@@ -44,7 +44,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     [TestFixture]
     public class DstLoginViewModelTestFixture
     {
-        private Mock<IDstAdapter> dstAdapter;
+        private Mock<IDstController> dstAdapter;
         private Mock<IStatusBarControlViewModel> statusBar;
         private DstLoginViewModel viewModel;
 
@@ -52,7 +52,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         public void Setup()
         {
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
-            this.dstAdapter = new Mock<IDstAdapter>();
+            this.dstAdapter = new Mock<IDstController>();
             this.dstAdapter.Setup(x => x.IsSessionOpen).Returns(true);
             this.dstAdapter.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
 

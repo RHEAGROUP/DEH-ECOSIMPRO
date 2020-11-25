@@ -37,9 +37,9 @@ namespace DEHPEcosimPro.ViewModel
     public sealed class DstDataSourceViewModel : DataSourceViewModel, IDstDataSourceViewModel
     {
         /// <summary>
-        /// The <see cref="IDstAdapter"/>
+        /// The <see cref="IDstController"/>
         /// </summary>
-        private readonly IDstAdapter dstAdapter;
+        private readonly IDstController dstController;
         
         /// <summary>
         /// Gets the <see cref="IDstBrowserHeaderViewModel"/>
@@ -50,11 +50,11 @@ namespace DEHPEcosimPro.ViewModel
         /// Initializes a new <see cref="DstDataSourceViewModel"/>
         /// </summary>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
-        /// <param name="dstAdapter">The <see cref="IDstAdapter"/></param>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="dstBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
-        public DstDataSourceViewModel(INavigationService navigationService, IDstAdapter dstAdapter, IDstBrowserHeaderViewModel dstBrowserHeader) : base(navigationService)
+        public DstDataSourceViewModel(INavigationService navigationService, IDstController dstController, IDstBrowserHeaderViewModel dstBrowserHeader) : base(navigationService)
         {
-            this.dstAdapter = dstAdapter;
+            this.dstController = dstController;
             this.DstBrowserHeader = dstBrowserHeader;
             this.InitializeCommands();
         }
@@ -64,16 +64,16 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         protected override void ConnectCommandExecute()
         {
-            if (this.dstAdapter.IsSessionOpen)
+            if (this.dstController.IsSessionOpen)
             {
-                this.dstAdapter.CloseSession();
+                this.dstController.CloseSession();
             }
             else
             {
                 this.NavigationService.ShowDialog<DstLogin>();
             }
 
-            this.UpdateConnectButtonText(this.dstAdapter.IsSessionOpen);
+            this.UpdateConnectButtonText(this.dstController.IsSessionOpen);
         }
     }
 }

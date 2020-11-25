@@ -88,7 +88,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<OpcSessionHandler>().As<IOpcSessionHandler>().SingleInstance();
             containerBuilder.RegisterType<OpcSessionReconnectHandler>().As<IOpcSessionReconnectHandler>().SingleInstance();
             containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
-            containerBuilder.RegisterType<DstAdapter.DstAdapter>().As<IDstAdapter>().SingleInstance();
+            containerBuilder.RegisterType<DstAdapter.DstController>().As<IDstController>().SingleInstance();
         }
 
         /// <summary>
