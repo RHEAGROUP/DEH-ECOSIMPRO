@@ -24,8 +24,6 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
-    using System;
-
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 

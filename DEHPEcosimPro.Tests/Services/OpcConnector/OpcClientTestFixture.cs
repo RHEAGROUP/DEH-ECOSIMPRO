@@ -95,8 +95,7 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             this.sessionHandler.Setup(x => x.SelectEndpoint(Endpoint, true, 15000)).Returns(new EndpointDescription(Endpoint));
             this.sessionHandler.Setup(x => x.CallMethod(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<object[]>())).Returns(new List<object>() { 1 });
 
-            this.sessionHandler.Setup(x => x.Browse(It.IsAny<RequestHeader>(), null, It.IsAny<NodeId>(), It.IsAny<uint>(),
-                It.IsAny<BrowseDirection>(), It.IsAny<NodeId>(), It.IsAny<bool>(), It.IsAny<uint>(), out It.Ref<byte[]>.IsAny, out this.referenceDescriptionCollection));
+            this.sessionHandler.Setup(x => x.Browse(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<bool>(), It.IsAny<uint>(), out It.Ref<byte[]>.IsAny, out this.referenceDescriptionCollection));
 
             this.sessionHandler.Setup(x => x.CreateSession(It.IsAny<ApplicationConfiguration>(), It.IsAny<ConfiguredEndpoint>(), It.IsAny<bool>(),
                 It.IsAny<string>(), It.IsAny<uint>(), It.IsAny<IUserIdentity>(), It.IsAny<IList<string>>())).Returns(Task.CompletedTask);
@@ -113,8 +112,7 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             Assert.AreEqual(OpcClientStatusCode.Connected, this.client.OpcClientStatusCode);
             Assert.IsTrue(this.client.References.Count > 0);
 
-            this.sessionHandler.Setup(x => x.Browse(It.IsAny<RequestHeader>(), null, It.IsAny<NodeId>(), It.IsAny<uint>(),
-                It.IsAny<BrowseDirection>(), It.IsAny<NodeId>(), It.IsAny<bool>(), It.IsAny<uint>(), out It.Ref<byte[]>.IsAny, out this.referenceDescriptionCollection))
+            this.sessionHandler.Setup(x => x.Browse(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<bool>(), It.IsAny<uint>(), out It.Ref<byte[]>.IsAny, out this.referenceDescriptionCollection))
                 .Throws<HttpRequestException>();
 
             Assert.ThrowsAsync<HttpRequestException>(async () => await this.client.Connect(Endpoint));

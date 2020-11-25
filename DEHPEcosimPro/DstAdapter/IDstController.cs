@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IDstAdapter.cs" company="RHEA System S.A.">
+// <copyright file="IDstController.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -29,9 +29,9 @@ namespace DEHPEcosimPro.DstAdapter
     using Opc.Ua;
 
     /// <summary>
-    /// Interface definition for <see cref="DstAdapter"/>
+    /// Interface definition for <see cref="DstController"/>
     /// </summary>
-    public interface IDstAdapter
+    public interface IDstController
     {
         /// <summary>
         /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open

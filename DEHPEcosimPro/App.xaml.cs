@@ -24,10 +24,7 @@
 
 namespace DEHPEcosimPro
 {
-    using System;
-    using System.Runtime.CompilerServices;
     using System.Windows;
-    using System.Windows.Threading;
 
     using Autofac;
 
@@ -44,8 +41,6 @@ namespace DEHPEcosimPro
     using DEHPEcosimPro.Views;
 
     using DevExpress.Xpf.Core;
-
-    using NLog;
 
     using DXSplashScreenViewModel = DevExpress.Mvvm.DXSplashScreenViewModel;
     using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;

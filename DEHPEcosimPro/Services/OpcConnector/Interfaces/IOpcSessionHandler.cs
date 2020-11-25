@@ -79,19 +79,15 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <summary>
         /// Invokes the Browse service.
         /// </summary>
-        /// <param name="requestHeader">The request header.</param>
-        /// <param name="view">The view to browse.</param>
         /// <param name="nodeToBrowse">The node to browse.</param>
-        /// <param name="maxResultsToReturn">The maximum number of returned values.</param>
-        /// <param name="browseDirection">The browse direction.</param>
         /// <param name="referenceTypeId">The reference type id.</param>
         /// <param name="includeSubtypes">If set to <c>true</c> the subtypes of the ReferenceType will be included in the browse.</param>
         /// <param name="nodeClassMask">The node class mask.</param>
         /// <param name="continuationPoint">The continuation point.</param>
         /// <param name="references">The list of node references.</param>
         /// <returns>A<see cref="ResponseHeader"/></returns>
-        void Browse(RequestHeader requestHeader, ViewDescription view, NodeId nodeToBrowse, uint maxResultsToReturn, BrowseDirection browseDirection, 
-            NodeId referenceTypeId, bool includeSubtypes, uint nodeClassMask, out byte[] continuationPoint, out ReferenceDescriptionCollection references);
+        void Browse(NodeId nodeToBrowse, NodeId referenceTypeId, bool includeSubtypes, 
+            uint nodeClassMask, out byte[] continuationPoint, out ReferenceDescriptionCollection references);
 
         /// <summary>
         /// Creates a new communication session with a server by invoking the CreateSession service

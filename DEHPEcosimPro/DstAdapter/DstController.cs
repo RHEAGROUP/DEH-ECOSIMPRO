@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstAdapter.cs" company="RHEA System S.A.">
+// <copyright file="DstController.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -31,12 +31,10 @@ namespace DEHPEcosimPro.DstAdapter
 
     using Opc.Ua;
 
-    using ReactiveUI;
-
     /// <summary>
-    /// The <see cref="DstAdapter"/> takes care of retrieving data from and to EcosimPro
+    /// The <see cref="DstController"/> takes care of retrieving data from and to EcosimPro
     /// </summary>
-    public class DstAdapter : ReactiveObject, IDstAdapter
+    public class DstController : IDstController
     {
         /// <summary>
         /// The <see cref="IOpcClientService"/> that handles the OPC connection with EcosimPro
@@ -49,10 +47,10 @@ namespace DEHPEcosimPro.DstAdapter
         public bool IsSessionOpen =>  this.opcClientService.OpcClientStatusCode == OpcClientStatusCode.Connected;
 
         /// <summary>
-        /// Initializes a new <see cref="DstAdapter"/>
+        /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
-        public DstAdapter(IOpcClientService opcClientService)
+        public DstController(IOpcClientService opcClientService)
         {
             this.opcClientService = opcClientService;
         }

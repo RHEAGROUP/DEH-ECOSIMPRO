@@ -104,7 +104,7 @@ for:
       -target:".\testrunner\NUnit.ConsoleRunner.3.11.1\tools\nunit3-console.exe"
       -targetargs:"DEHPEcosimPro-tests.nunit --where=""cat!=AppVeyorExclusion"""
       -returntargetcode
-      -hideskipped:All
+      -hideskipped:All;Attribute
       -output:"%TEST_COVERAGE%"
       -filter:"+[DEHPEcosimPro*]* -[*.Tests*]* -[*.Views]*""
       -excludebyattribute:*.ExcludeFromCodeCoverageAttribute

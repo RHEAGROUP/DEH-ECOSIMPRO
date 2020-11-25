@@ -203,8 +203,8 @@ namespace DEHPEcosimPro.Services.OpcConnector
 
         this.References = this.sessionHandler.FetchReferences(ObjectIds.ObjectsFolder);
 
-        this.sessionHandler.Browse(null, null, ObjectIds.ObjectsFolder, 0u, BrowseDirection.Forward, ReferenceTypeIds.HierarchicalReferences,
-            true, (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var references);
+        this.sessionHandler.Browse(ObjectIds.ObjectsFolder, ReferenceTypeIds.HierarchicalReferences, true,
+            (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var references);
 
         this.References = references;
         var additionalReferences = new ReferenceDescriptionCollection();
@@ -214,8 +214,9 @@ namespace DEHPEcosimPro.Services.OpcConnector
         {
             this.statusBarControl.Append($"{reference.DisplayName}, {reference.BrowseName}, {reference.NodeClass}");
 
-            this.sessionHandler.Browse(null, null, ExpandedNodeId.ToNodeId(reference.NodeId, this.sessionHandler.NamespaceUris), 0u, BrowseDirection.Forward,
-                ReferenceTypeIds.HierarchicalReferences, true, (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var referenceDescriptions);
+            this.sessionHandler.Browse(ExpandedNodeId.ToNodeId(reference.NodeId, this.sessionHandler.NamespaceUris),
+                ReferenceTypeIds.HierarchicalReferences, true, 
+                (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var referenceDescriptions);
 
             additionalReferences.AddRange(referenceDescriptions);
 

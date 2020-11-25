@@ -65,11 +65,6 @@ namespace DEHPEcosimPro.ViewModel
         public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
         
         /// <summary>
-        /// Gets or sets the command that refreshes the data source
-        /// </summary>
-        public ReactiveCommand<Unit> RefreshCommand { get; set; }
-
-        /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
         /// </summary>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
@@ -85,23 +80,6 @@ namespace DEHPEcosimPro.ViewModel
             this.ObjectBrowser = objectBrowser;
             this.HubBrowserHeader = hubBrowserHeader;
             this.InitializeCommands();
-        }
-
-        /// <summary>
-        /// Initializes the <see cref="ReactiveCommand{T}"/>
-        /// </summary>
-        protected override void InitializeCommands()
-        {
-            base.InitializeCommands();
-            this.RefreshCommand = ReactiveCommand.CreateAsyncTask(async _ => await this.RefreshCommandExecute(), RxApp.MainThreadScheduler);
-        }
-
-        /// <summary>
-        /// Executes the <see cref="RefreshCommand"/>
-        /// </summary>
-        /// <returns></returns>
-        private async Task RefreshCommandExecute()
-        {
         }
 
         /// <summary>
