@@ -22,7 +22,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.DstAdapter
+namespace DEHPEcosimPro.DstController
 {
     using System.Threading.Tasks;
 

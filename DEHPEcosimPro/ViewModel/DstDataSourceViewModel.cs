@@ -27,7 +27,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
-    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views.Dialogs;
 

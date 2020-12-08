@@ -29,7 +29,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using DEHPCommon;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
-    using DEHPEcosimPro.DstAdapter;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel;

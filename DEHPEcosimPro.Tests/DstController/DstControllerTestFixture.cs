@@ -22,11 +22,11 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests.DstAdapter
+namespace DEHPEcosimPro.Tests.DstController
 {
     using System.Threading.Tasks;
 
-    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
 
     using Moq;

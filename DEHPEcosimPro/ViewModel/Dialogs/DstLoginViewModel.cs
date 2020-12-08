@@ -32,7 +32,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
-    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
 
     using Opc.Ua;

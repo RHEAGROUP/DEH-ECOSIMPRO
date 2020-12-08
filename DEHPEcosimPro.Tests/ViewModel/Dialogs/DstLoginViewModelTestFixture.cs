@@ -30,7 +30,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
-    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Moq;

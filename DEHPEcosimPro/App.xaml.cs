@@ -31,7 +31,7 @@ namespace DEHPEcosimPro
     using DEHPCommon;
     using DEHPCommon.Services.NavigationService;
 
-    using DEHPEcosimPro.DstAdapter;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel;
@@ -88,7 +88,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<OpcSessionHandler>().As<IOpcSessionHandler>().SingleInstance();
             containerBuilder.RegisterType<OpcSessionReconnectHandler>().As<IOpcSessionReconnectHandler>().SingleInstance();
             containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
-            containerBuilder.RegisterType<DstAdapter.DstController>().As<IDstController>().SingleInstance();
+            containerBuilder.RegisterType<DstController.DstController>().As<IDstController>().SingleInstance();
         }
 
         /// <summary>

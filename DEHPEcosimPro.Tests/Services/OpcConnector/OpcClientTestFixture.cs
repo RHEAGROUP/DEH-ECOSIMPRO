@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
 
     using DEHPCommon.Enumerators;
@@ -143,12 +144,6 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
         {
             Assert.DoesNotThrow(() => this.client.CloseSession());
             this.sessionHandler.Verify(x => x.CloseSession(true), Times.Once);
-        }
-
-        [Test]
-        public void VerifyOnReconnectComplete()
-        {
-            //this.client.OnReconnectComplete();
         }
     }
 }
