@@ -7,8 +7,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
-
-        xmlns:views="clr-namespace:DEHPEcosimPro.Views" Title="DEHP EcosimPro Adapter" Width="1424" Height="747" mc:Ignorable="d">
+        xmlns:views="clr-namespace:DEHPEcosimPro.Views" 
+        Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
+        MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
             <DataTemplate x:Key="MappedThingRowDataTemplate">
