@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AppTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstBrowserHeaderViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,28 +22,15 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests
+namespace DEHPEcosimPro.ViewModel
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
+    using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views;
 
-    using Autofac;
-
-    using DEHPCommon;
-
-    using NUnit.Framework;
-    
-    [TestFixture]
-    public class AppTestFixture
+    /// <summary>
+    /// The <see cref="DstBrowserHeaderViewModel"/> is the view model the <see cref="DstBrowserHeader"/>
+    /// </summary>
+    public class DstBrowserHeaderViewModel : IDstBrowserHeaderViewModel
     {
-        [Test]
-        public void VerifyContainerIsBuilt()
-        {
-            var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterType<List<byte>>().As<IList>();
-            Assert.IsNotNull(new App(containerBuilder));
-            Assert.IsNotNull(AppContainer.Container.Resolve<IList>());
-        }
     }
 }

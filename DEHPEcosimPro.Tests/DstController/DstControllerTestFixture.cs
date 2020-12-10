@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MainWindowViewModelTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstControllerTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,44 +22,52 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests.ViewModel
+namespace DEHPEcosimPro.Tests.DstController
 {
-    using Autofac;
+    using System.Threading.Tasks;
 
-    using DEHPCommon;
-    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
-
-    using DEHPEcosimPro.Services.OpcConnector;
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
-    using DEHPEcosimPro.ViewModel;
-    using DEHPEcosimPro.ViewModel.Interfaces;
 
     using Moq;
 
     using NUnit.Framework;
 
+    using Opc.Ua;
+
     [TestFixture]
-    public class MainWindowViewModelTestFixture
+    public class DstControllerTestFixture
     {
-        private Mock<IStatusBarControlViewModel> statusBarViewModel;
-        private Mock<IHubDataSourceViewModel> hubDataSourceViewModel;
-        private Mock<IDstDataSourceViewModel> dstDataSourceViewModel;
+        private DstController controller;
+        private Mock<IOpcClientService> opcClient;
 
         [SetUp]
         public void Setup()
         {
-            this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
-            this.hubDataSourceViewModel = new Mock<IHubDataSourceViewModel>();
-            this.dstDataSourceViewModel = new Mock<IDstDataSourceViewModel>();
+            this.opcClient = new Mock<IOpcClientService>();
+            this.opcClient.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
+            this.opcClient.Setup(x => x.CloseSession());
+            this.controller = new DstController(this.opcClient.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            var viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object, this.statusBarViewModel.Object);
-            Assert.IsNotNull(viewModel.HubDataSourceViewModel);
-            Assert.IsNotNull(viewModel.DstSourceViewModel);
-            Assert.IsNotNull(viewModel.StatusBarControlViewModel);
+            Assert.IsFalse(this.controller.IsSessionOpen);
+        }
+
+        [Test]
+        public void VerifyConnect()
+        {
+            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint"));
+            this.opcClient.Verify(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
+        }
+
+        [Test]
+        public void VerifyClose()
+        {
+            this.controller.CloseSession();
+            this.opcClient.Verify(x => x.CloseSession(), Times.Once);
         }
     }
 }

@@ -18,4 +18,10 @@
     <ProjectReference Include="..\DEHPEcosimPro\DEHPEcosimPro.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Resources\OpcClient.Config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

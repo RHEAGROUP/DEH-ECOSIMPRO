@@ -24,12 +24,7 @@
 
 namespace DEHPEcosimPro.Views
 {
-    using System.Collections.Generic;
     using System.Windows;
-
-    using Autofac;
-
-    using DEHPEcosimPro.ViewModel;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -42,7 +37,6 @@ namespace DEHPEcosimPro.Views
         public MainWindow()
         {
             this.InitializeComponent();
-            this.Mapping.ItemsSource = new List<string>() { "ok", "ock", "zok", "aok", "otk", "xok" };
         }
     }
 }

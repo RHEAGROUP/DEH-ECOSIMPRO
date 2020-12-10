@@ -3,10 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:dataTemplate="clr-namespace:DEHPEcosimPro.Views.Rows"
-        xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking" 
+        xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
-        xmlns:views="clr-namespace:DEHPEcosimPro.Views" Title="DEHP EcosimPro Adapter" Width="800" Height="450" mc:Ignorable="d">
+        xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
+        xmlns:views="clr-namespace:DEHPEcosimPro.Views" 
+        Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
+        MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
             <DataTemplate x:Key="MappedThingRowDataTemplate">
@@ -30,14 +33,14 @@
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="{Binding EcosimProSourceViewModel.ConnectButtonText}"/>
+                                <Button Width="150" Height="40" HorizontalAlignment="Center" Content="{Binding DstSourceViewModel.ConnectButtonText}" Command="{Binding DstSourceViewModel.ConnectCommand}"/>
                                 <Grid Grid.Row="1" Background="AliceBlue">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <views:BrowserEcosimProHeader Grid.Row="1" />
+                                    <views:DstBrowserHeader DataContext="{Binding DstSourceViewModel.DstBrowserHeader}" Grid.Row="1" />
                                     <views:TreeListControl Grid.Row="2"></views:TreeListControl>
                                 </Grid>
                             </Grid>
@@ -62,7 +65,7 @@
                                 <views:TreeListControl  Grid.Row="1"></views:TreeListControl>
                             </Grid>
                         </dxdo:LayoutPanel>
-                        <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="10-25">
+                        <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>
@@ -75,8 +78,12 @@
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <common:Browser1025Header DataContext="" Grid.Row="1" />
-                                    <views:TreeListControl Grid.Row="2"></views:TreeListControl>
+                                    <common:HubBrowserHeader DataContext="{Binding HubDataSourceViewModel.HubBrowserHeader}" Grid.Row="1" />
+                                    <objectBrowser:ObjectBrowser Grid.Row="2">
+                                        <objectBrowser:ObjectBrowser.DataContext>
+                                            <Binding Path="HubDataSourceViewModel.ObjectBrowser"></Binding>
+                                        </objectBrowser:ObjectBrowser.DataContext>
+                                    </objectBrowser:ObjectBrowser>
                                 </Grid>
                             </Grid>
                         </dxdo:LayoutPanel>
@@ -115,7 +122,7 @@
                 <Button Grid.Row="1" Grid.Column="1" Height="40" Margin="5,5,10,10" Content="Map"/>
             </Grid>
 
-            <common:StatusBarControl Grid.Row="2" />
+            <common:StatusBarControl DataContext="{Binding StatusBarControlViewModel}" Grid.Row="2" />
         </Grid>
     </DockPanel>
 </Window>

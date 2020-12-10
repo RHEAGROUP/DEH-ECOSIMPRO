@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IMainWindowViewModel.cs" company="RHEA System S.A.">
+// <copyright file="IDstController.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,21 +22,34 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.DstController
 {
+    using System.Threading.Tasks;
+
+    using Opc.Ua;
+
     /// <summary>
-    /// Interface definitions of methods and properties of <see cref="Views.MainWindow"/>
+    /// Interface definition for <see cref="DstController"/>
     /// </summary>
-    public interface IMainWindowViewModel
+    public interface IDstController
     {
         /// <summary>
-        /// Gets the view model that represents the 10-25 data source
+        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// </summary>
-        IHubDataSourceViewModel HubDataSourceViewModel { get; }
+        bool IsSessionOpen { get; }
 
         /// <summary>
-        /// Gets the view model that represents the EcosimPro data source
+        /// Connects to the provided endpoint
         /// </summary>
-        IDstDataSourceViewModel DstSourceViewModel { get; }
+        /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
+        /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
+        /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
+        /// <returns>A <see cref="Task"/></returns>
+        Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
+
+        /// <summary>
+        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// </summary>
+        void CloseSession();
     }
 }

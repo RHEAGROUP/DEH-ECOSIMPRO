@@ -26,19 +26,14 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
 
-    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.UserInterfaces.Views;
-
-    using DEHPEcosimPro.ViewModel.Interfaces;
 
     using ReactiveUI;
 
     /// <summary>
-    /// View model that represents a data source panel which holds a tree like browser, a informational header and
-    /// some control regarding the connection to the data source
+    /// The <see cref="DataSourceViewModel"/> is the base view model for view model that represents a data source like <see cref="DstDataSourceViewModel"/>
     /// </summary>
-    public class DataSourceViewModel : ReactiveObject, IDataSourceViewModel
+    public abstract class DataSourceViewModel : ReactiveObject
     {
         /// <summary>
         /// The connect text for the connect button
@@ -51,19 +46,23 @@ namespace DEHPEcosimPro.ViewModel
         private const string DisconnectText = "Disconnect";
 
         /// <summary>
-        /// The <see cref="INavigationService"/>
-        /// </summary>
-        private readonly INavigationService navigationService;
-
-        /// <summary>
-        /// The <see cref="IHubController"/>
-        /// </summary>
-        private readonly IHubController hubController;
-
-        /// <summary>
         /// Backing field for <see cref="ConnectButtonText"/>
         /// </summary>
         private string connectButtonText = ConnectText;
+        
+        /// <summary>
+        /// Gets the <see cref="INavigationService"/>
+        /// </summary>
+        protected readonly INavigationService NavigationService;
+
+        /// <summary>
+        /// Initializes a new <see cref="DataSourceViewModel"/>
+        /// </summary>
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        protected DataSourceViewModel(INavigationService navigationService)
+        {
+            this.NavigationService = navigationService;
+        }
 
         /// <summary>
         /// Gets or sets the name
@@ -80,41 +79,26 @@ namespace DEHPEcosimPro.ViewModel
         public ReactiveCommand<object> ConnectCommand { get; set; }
 
         /// <summary>
-        /// Initializes a new <see cref="DataSourceViewModel"/>
-        /// </summary>
-        /// <param name="navigationService">The <see cref="INavigationService"/></param>
-        /// <param name="hubController">The <see cref="IHubController"/></param>
-        public DataSourceViewModel(INavigationService navigationService, IHubController hubController)
-        {
-            this.navigationService = navigationService;
-            this.hubController = hubController;
-            this.InitializeCommands();
-        }
-
-        /// <summary>
         /// Initializes the <see cref="ReactiveCommand{T}"/>
         /// </summary>
-        private void InitializeCommands()
+        protected virtual void InitializeCommands()
         {
             this.ConnectCommand = ReactiveCommand.Create();
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
         }
-
+        
         /// <summary>
         /// Executes the <see cref="ConnectCommand"/>
         /// </summary>
-        private void ConnectCommandExecute()
-        {
-            if (this.hubController.IsSessionOpen)
-            {
-                this.hubController.Close();
-            }
-            else
-            {
-                this.navigationService.ShowDialog<Login>();
-            }
+        protected abstract void ConnectCommandExecute();
 
-            this.ConnectButtonText = this.hubController.IsSessionOpen ? DisconnectText : ConnectText;
+        /// <summary>
+        /// Updates the <see cref="ConnectButtonText"/>
+        /// </summary>
+        /// <param name="isSessionOpen">Assert whether the the button text should be <see cref="ConnectText"/> or <see cref="DisconnectText"/></param>
+        protected void UpdateConnectButtonText(bool isSessionOpen)
+        {
+            this.ConnectButtonText = isSessionOpen ? DisconnectText : ConnectText;
         }
     }
 }

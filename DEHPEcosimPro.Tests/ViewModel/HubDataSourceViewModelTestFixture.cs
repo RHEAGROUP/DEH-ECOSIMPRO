@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DataSourceViewModelTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="HubDataSourceViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -29,6 +29,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.ViewModel;
@@ -41,11 +43,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using ReactiveUI;
 
     [TestFixture, Apartment(ApartmentState.STA)]
-    public class DataSourceViewModelTestFixture
+    public class HubDataSourceViewModelTestFixture
     {
         private Mock<IHubController> hubController;
         private Mock<INavigationService> navigationService;
-        private IDataSourceViewModel viewModel;
+        private Mock<IObjectBrowserViewModel> objectBrowser;
+        private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
+        private IHubDataSourceViewModel viewModel;
+        private Mock<IHubBrowserHeaderViewModel> hubBrowserHeader;
 
         [SetUp]
         public void Setup()
@@ -56,7 +61,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.hubController.Setup(x => x.Close());
-            this.viewModel = new DataSourceViewModel(this.navigationService.Object, this.hubController.Object);
+            this.objectBrowser = new Mock<IObjectBrowserViewModel>();
+            this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
+            this.hubBrowserHeader = new Mock<IHubBrowserHeaderViewModel>();
+            this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.treeSelectorService.Object, this.hubBrowserHeader.Object);
         }
 
         [Test]

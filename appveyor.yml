@@ -9,9 +9,7 @@ environment:
       SONARCLOUD_ORGANIZATION: rheagroup
       SONARCLOUD_URL: 'https://sonarcloud.io'
       SONARCLOUD_TOKEN:
-        secure: th/5nKHJ0jW1sM3a0bs0cohRLIeMAx4Y5Do/al3L11XbWHOgoCdNYrNBQmSo9tFs
-      # To be changed in the future since this token belongs to a personal account. See below.
-      # https://github.com/RHEAGROUP/DEHP-Common/wiki/Build-And-Release#modifying-the-github-token
+        secure: 67KNIhsvMPwHylkTvfGtu39hYkK94X8svR0pxSBeqbm92ffGeViAv7SVDHnC+kbv
       GITHUB_TOKEN:
         secure: uS7/WlBplrAs/j9ab9P3SUN7GZyf4QAHZX//YpDOzXG/DZ6o1MGHdIWLHHdDYM5P
       TAG_SCENARIO: true
@@ -24,9 +22,7 @@ environment:
       SONARCLOUD_ORGANIZATION: rheagroup
       SONARCLOUD_URL: 'https://sonarcloud.io'
       SONARCLOUD_TOKEN:
-        secure: th/5nKHJ0jW1sM3a0bs0cohRLIeMAx4Y5Do/al3L11XbWHOgoCdNYrNBQmSo9tFs
-      # To be changed in the future since this token belongs to a personal account. See below.
-      # https://github.com/RHEAGROUP/DEHP-Common/wiki/Build-And-Release#modifying-the-github-token
+        secure: 67KNIhsvMPwHylkTvfGtu39hYkK94X8svR0pxSBeqbm92ffGeViAv7SVDHnC+kbv
       GITHUB_TOKEN:
         secure: uS7/WlBplrAs/j9ab9P3SUN7GZyf4QAHZX//YpDOzXG/DZ6o1MGHdIWLHHdDYM5P
       TAG_SCENARIO: false
@@ -82,8 +78,8 @@ for:
     - cmd: java -version
     - ps: >-
         if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
-          Write-Host Sonar Scanning PR# $env:APPVEYOR_PULL_REQUEST_NUMBER
-          SonarScanner.MSBuild.exe begin /key:$env:SONARCLOUD_PROJECT_KEY /o:$env:SONARCLOUD_ORGANIZATION /d:sonar.host.url=$env:SONARCLOUD_URL /d:sonar.login=$env:SONARCLOUD_TOKEN /d:sonar.cs.opencover.reportsPaths=$env:TEST_COVERAGE /d:sonar.cs.nunit.reportsPaths=$env:TEST_RESULT /d:sonar.pullrequest.key=$env:APPVEYOR_PULL_REQUEST_NUMBER /d:sonar.pullrequest.provider=GitHub /d:sonar.pullrequest.github.repository=$env:APPVEYOR_REPO_NAME
+          Write-Host Sonar Scanning PR# $env:APPVEYOR_PULL_REQUEST_NUMBER Branch $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH
+          SonarScanner.MSBuild.exe begin /key:$env:SONARCLOUD_PROJECT_KEY /o:$env:SONARCLOUD_ORGANIZATION /d:sonar.host.url=$env:SONARCLOUD_URL /d:sonar.login=$env:SONARCLOUD_TOKEN /d:sonar.cs.opencover.reportsPaths=$env:TEST_COVERAGE /d:sonar.cs.nunit.reportsPaths=$env:TEST_RESULT /d:sonar.pullrequest.key=$env:APPVEYOR_PULL_REQUEST_NUMBER /d:sonar.pullrequest.branch=$env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH /d:sonar.pullrequest.provider=GitHub /d:sonar.pullrequest.github.repository=$env:APPVEYOR_REPO_NAME
         } elseif ($env:APPVEYOR_REPO_BRANCH -eq "development") {
           Write-Host Sonar Scanning branch $env:APPVEYOR_REPO_BRANCH
           SonarScanner.MSBuild.exe begin /key:$env:SONARCLOUD_PROJECT_KEY /o:$env:SONARCLOUD_ORGANIZATION /d:sonar.host.url=$env:SONARCLOUD_URL /d:sonar.login=$env:SONARCLOUD_TOKEN /d:sonar.cs.opencover.reportsPaths=$env:TEST_COVERAGE /d:sonar.cs.nunit.reportsPaths=$env:TEST_RESULT /d:sonar.branch.name=$env:APPVEYOR_REPO_BRANCH /d:sonar.pullrequest.github.repository=$env:APPVEYOR_REPO_NAME
@@ -104,9 +100,9 @@ for:
       -target:".\testrunner\NUnit.ConsoleRunner.3.11.1\tools\nunit3-console.exe"
       -targetargs:"DEHPEcosimPro-tests.nunit --where=""cat!=AppVeyorExclusion"""
       -returntargetcode
-      -hideskipped:All
+      -hideskipped:All;Attribute
       -output:"%TEST_COVERAGE%"
-      -filter:"+[DEHPEcosimPro*]* -[*.Tests*]* -[*.Views]*""
+      -filter:"+[DEHPEcosimPro*]* -[*.Tests*]* -[*.Views]*"
       -excludebyattribute:*.ExcludeFromCodeCoverageAttribute
   after_test:
     - ps: >-

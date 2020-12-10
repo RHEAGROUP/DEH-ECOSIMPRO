@@ -24,6 +24,8 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+
     using DEHPEcosimPro.ViewModel.Interfaces;
 
     using ReactiveUI;
@@ -36,22 +38,29 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
         /// </summary>
-        public IDataSourceViewModel HubDataSourceViewModel { get; private set; }
+        public IHubDataSourceViewModel HubDataSourceViewModel { get; private set; }
 
         /// <summary>
         /// Gets the view model that represents the EcosimPro data source
         /// </summary>
-        public IDataSourceViewModel EcosimProSourceViewModel { get; private set; }
+        public IDstDataSourceViewModel DstSourceViewModel { get; private set; }
+
+        /// <summary>
+        /// Gets the view model that represents the status bar
+        /// </summary>
+        public IStatusBarControlViewModel StatusBarControlViewModel { get; private set; }
 
         /// <summary>
         /// Initializes a new <see cref="MainWindowViewModel"/>
         /// </summary>
-        /// <param name="hubDataSourceViewModelViewModel">A <see cref="IDataSourceViewModel"/></param>
-        /// <param name="ecosimProSourceViewModelViewModel">A <see cref="IDataSourceViewModel"/></param>
-        public MainWindowViewModel(IDataSourceViewModel hubDataSourceViewModelViewModel, IDataSourceViewModel ecosimProSourceViewModelViewModel)
+        /// <param name="hubHubDataSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
+        /// <param name="dstSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
+        /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
+        public MainWindowViewModel(IHubDataSourceViewModel hubHubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, IStatusBarControlViewModel statusBarControlViewModel)
         {
-            this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
-            this.EcosimProSourceViewModel = ecosimProSourceViewModelViewModel;
+            this.HubDataSourceViewModel = hubHubDataSourceViewModelViewModel;
+            this.DstSourceViewModel = dstSourceViewModelViewModel;
+            this.StatusBarControlViewModel = statusBarControlViewModel;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="BrowserEcosimProHeader.xaml.cs" company="RHEA System S.A.">
+// <copyright file="DstBrowserHeader.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,34 +24,19 @@
 
 namespace DEHPEcosimPro.Views
 {
-    using System.Windows;
     using System.Windows.Controls;
 
     /// <summary>
-    /// Interaction logic for <see cref="BrowserEcosimProHeader"/> XAML
+    /// Interaction logic for <see cref="DstBrowserHeader"/> XAML
     /// </summary>
-    public partial class BrowserEcosimProHeader : UserControl
+    public partial class DstBrowserHeader : UserControl
     {
         /// <summary>
-        /// The dependency property whether the header sould display the option title and its value 
+        /// Initializes a new instance of the <see cref="DstBrowserHeader"/> class.
         /// </summary>
-        public static readonly DependencyProperty IsOptionDependantProperty = DependencyProperty.Register("IsOptionDependant", typeof(bool), typeof(BrowserEcosimProHeader), new PropertyMetadata(false));
-        
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BrowserEcosimProHeader"/> class.
-        /// </summary>
-        public BrowserEcosimProHeader()
+        public DstBrowserHeader()
         {
             this.InitializeComponent();
-        }
-
-        /// <summary>
-        /// Gets or sets the <see cref="IsOptionDependant"/> dependency property.
-        /// </summary>
-        public bool IsOptionDependant
-        {
-            get => (bool)this.GetValue(IsOptionDependantProperty);
-            set => this.SetValue(IsOptionDependantProperty, value);
         }
     }
 }
