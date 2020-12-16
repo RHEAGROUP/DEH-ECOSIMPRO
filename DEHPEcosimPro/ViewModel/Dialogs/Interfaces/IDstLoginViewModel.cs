@@ -2,7 +2,7 @@
 // <copyright file="IDstLoginViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -53,7 +53,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// <summary>
         /// Gets or sets login succesfully flag
         /// </summary>
-        bool LoginSuccessfull { get; }
+        bool LoginSuccessful { get; }
 
         /// <summary>
         /// Gets or sets an assert whether the specified <see cref="Uri"/> endpoint requires authentication

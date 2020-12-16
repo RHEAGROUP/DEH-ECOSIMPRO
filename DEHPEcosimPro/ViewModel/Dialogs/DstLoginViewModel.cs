@@ -2,7 +2,7 @@
 // <copyright file="DstLoginViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -31,7 +31,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
+    using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
 
@@ -53,6 +55,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="IStatusBarControlViewModel"/> instance
         /// </summary>
         private readonly IStatusBarControlViewModel statusBarControlView;
+
+        /// <summary>
+        /// The <see cref="IUserPreferenceService{AppSettings}"/> instance
+        /// </summary>
+        private readonly IUserPreferenceService<AppSettings> userPreferenceService;
 
         /// <summary>
         /// Backing field for the <see cref="UserName"/> property
@@ -97,17 +104,17 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Backing field for the <see cref="LoginSuccessfull"/> property
+        /// Backing field for the <see cref="LoginSuccessful"/> property
         /// </summary>
-        private bool loginSuccessfull;
+        private bool loginSuccessful;
 
         /// <summary>
         /// Gets or sets login succesfully flag
         /// </summary>
-        public bool LoginSuccessfull
+        public bool LoginSuccessful
         {
-            get => this.loginSuccessfull;
-            private set => this.RaiseAndSetIfChanged(ref this.loginSuccessfull, value);
+            get => this.loginSuccessful;
+            private set => this.RaiseAndSetIfChanged(ref this.loginSuccessful, value);
         }
 
         /// <summary>
@@ -123,12 +130,31 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.requiresAuthentication;
             set => this.RaiseAndSetIfChanged(ref this.requiresAuthentication, value);
         }
-        
+
+        /// <summary>
+        /// Backing field for <see cref="SavedUris"/>
+        /// </summary>
+        private ReactiveList<string> savedUris;
+
+        /// <summary>
+        /// Gets or sets the saved server addresses
+        /// </summary>
+        public ReactiveList<string> SavedUris
+        {
+            get => this.savedUris;
+            set => this.RaiseAndSetIfChanged(ref this.savedUris, value);
+        }
+
+        /// <summary>
+        /// Gets the command responsible for adding the current <see cref="Uri"/> to <see cref="SavedUris"/>
+        /// </summary>
+        public ReactiveCommand<object> SaveCurrentUriCommand { get; private set; }
+
         /// <summary>
         /// Gets the server login command
         /// </summary>
         public ReactiveCommand<Unit> LoginCommand { get; private set; }
-        
+
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
         /// </summary>
@@ -139,10 +165,24 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarControlView">The <see cref="IStatusBarControlViewModel"/></param>
-        public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView)
+        /// <param name="userPreferenceService">The <see cref="IUserPreferenceService{AppSettings}"/></param>
+        public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView, IUserPreferenceService<AppSettings> userPreferenceService)
         {
             this.dstController = dstController;
             this.statusBarControlView = statusBarControlView;
+            this.userPreferenceService = userPreferenceService;
+
+            this.SavedUris = new ReactiveList<string> { ChangeTrackingEnabled = true };
+
+            var canSaveUri = this.WhenAnyValue(
+                vm => vm.Uri,
+                vm => vm.SavedUris,
+                (uri, savedUris) => !string.IsNullOrWhiteSpace(uri) && !savedUris.Contains(uri));
+
+            this.SaveCurrentUriCommand = ReactiveCommand.Create(canSaveUri);
+            this.SaveCurrentUriCommand.Subscribe(_ => this.ExecuteSaveCurrentUri());
+
+            this.PopulateSavedUris();
 
             var canLogin = this.WhenAnyValue(
                 vm => vm.UserName,
@@ -150,9 +190,29 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 vm => vm.RequiresAuthentication,
                 vm => vm.Uri,
                 (username, password, requiresAuthentication, uri) =>
-                    (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(username) || !requiresAuthentication) && !string.IsNullOrEmpty(uri));
-            
+                    (!string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(username) || !requiresAuthentication)
+                    && !string.IsNullOrWhiteSpace(uri));
+
             this.LoginCommand = ReactiveCommand.CreateAsyncTask(canLogin, async _ => await this.ExecuteLogin());
+        }
+
+        /// <summary>
+        /// Loads the saved server addresses into the <see cref="SavedUris"/>
+        /// </summary>
+        private void PopulateSavedUris()
+        {
+            this.userPreferenceService.Read();
+            this.SavedUris = new ReactiveList<string>(this.userPreferenceService.UserPreferenceSettings.SavedOpcUris);
+        }
+
+        /// <summary>
+        /// Executes the <see cref="SaveCurrentUriCommand"/>
+        /// </summary>
+        private void ExecuteSaveCurrentUri()
+        {
+            this.userPreferenceService.UserPreferenceSettings.SavedOpcUris.Add(this.Uri);
+            this.userPreferenceService.Save();
+            this.PopulateSavedUris();
         }
 
         /// <summary>
@@ -167,9 +227,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
                 await this.dstController.Connect(this.Uri, true, credentials);
-                this.LoginSuccessfull = this.dstController.IsSessionOpen;
+                this.LoginSuccessful = this.dstController.IsSessionOpen;
 
-                if (this.LoginSuccessfull)
+                if (this.LoginSuccessful)
                 {
                     this.statusBarControlView.Append("Loggin successful");
                     await Task.Delay(1000);
