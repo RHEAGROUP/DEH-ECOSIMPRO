@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IDstLoginViewModel.cs" company="RHEA System S.A.">
+// <copyright file="AppSettings.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed
@@ -22,52 +22,28 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
+namespace DEHPEcosimPro.Settings
 {
-    using System.Reactive;
+    using System.Collections.Generic;
 
-    using DEHPCommon.UserInterfaces.Behaviors;
-
-    using ReactiveUI;
+    using DEHPCommon.UserPreferenceHandler;
 
     /// <summary>
-    /// Interface definiton for <see cref="DstLoginViewModel"/>
+    /// Extends the <see cref="UserPreference"/> class and acts as a container for the locally saved user settings
     /// </summary>
-    public interface IDstLoginViewModel
+    public class AppSettings : UserPreference
     {
         /// <summary>
-        /// Gets or sets server username value
+        /// The set of locally saved OPC server addresses
         /// </summary>
-        string UserName { get; set; }
+        public List<string> SavedOpcUris { get; set; }
 
         /// <summary>
-        /// Gets or sets server password value
+        /// Initializes a new instance of the <see cref="AppSettings"/> class
         /// </summary>
-        string Password { get; set; }
-
-        /// <summary>
-        /// Gets or sets server uri
-        /// </summary>
-        string Uri { get; set; }
-
-        /// <summary>
-        /// Gets or sets login succesfully flag
-        /// </summary>
-        bool LoginSuccessful { get; }
-
-        /// <summary>
-        /// Gets or sets an assert whether the specified <see cref="Uri"/> endpoint requires authentication
-        /// </summary>
-        bool RequiresAuthentication { get; set; }
-
-        /// <summary>
-        /// Gets the server login command
-        /// </summary>
-        ReactiveCommand<Unit> LoginCommand { get; }
-
-        /// <summary>
-        /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
-        /// </summary>
-        ICloseWindowBehavior CloseWindowBehavior { get; set; }
+        public AppSettings()
+        {
+            this.SavedOpcUris = new List<string>();
+        }
     }
 }

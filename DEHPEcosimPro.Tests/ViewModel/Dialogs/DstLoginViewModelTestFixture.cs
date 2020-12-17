@@ -2,7 +2,7 @@
 // <copyright file="DstLoginViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -24,13 +24,16 @@
 
 namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 {
+    using System.Collections.Generic;
     using System.Reactive.Concurrency;
     using System.Threading.Tasks;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Moq;
@@ -46,6 +49,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     {
         private Mock<IDstController> dstAdapter;
         private Mock<IStatusBarControlViewModel> statusBar;
+        private Mock<IUserPreferenceService<AppSettings>> userPreferenceService;
         private DstLoginViewModel viewModel;
 
         [SetUp]
@@ -59,19 +63,27 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.statusBar.Setup(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()));
 
-            this.viewModel = new DstLoginViewModel(this.dstAdapter.Object, this.statusBar.Object);
+            this.userPreferenceService = new Mock<IUserPreferenceService<AppSettings>>();
+            this.userPreferenceService.SetupProperty(s => s.UserPreferenceSettings, new AppSettings { SavedOpcUris = new List<string>() });
+
+            this.viewModel = new DstLoginViewModel(this.dstAdapter.Object, this.statusBar.Object, this.userPreferenceService.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
+            Assert.IsFalse(this.viewModel.LoginSuccessful);
             Assert.IsNull(this.viewModel.CloseWindowBehavior);
-            Assert.IsFalse(this.viewModel.LoginSuccessfull);
+            
             Assert.IsNotNull(this.viewModel.LoginCommand);
+            Assert.IsNotNull(this.viewModel.SaveCurrentUriCommand);
+
+            Assert.IsEmpty(this.viewModel.SavedUris);
+
+            Assert.IsNull(this.viewModel.Uri);
             Assert.IsNull(this.viewModel.Password);
             Assert.IsNull(this.viewModel.UserName);
             Assert.IsFalse(this.viewModel.RequiresAuthentication);
-            Assert.IsNull(this.viewModel.Uri);
         }
 
         [Test]
@@ -89,10 +101,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsFalse(this.viewModel.LoginCommand.CanExecute(null));
             this.viewModel.Uri = "u://r.l";
             Assert.DoesNotThrowAsync(async () => await this.viewModel.LoginCommand.ExecuteAsyncTask(null));
-            
+
             this.dstAdapter.Verify(
                 x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
-            
+
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(2));
 
             this.dstAdapter.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()))
@@ -102,6 +114,27 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(3));
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Once);
+        }
+
+        [Test]
+        public void VerifyThat_SaveCurrentUriCommand_IsWorkingProperly()
+        {
+            Assert.IsFalse(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
+
+            this.viewModel.Uri = "u://r.l";
+            Assert.IsTrue(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
+            
+            this.viewModel.SaveCurrentUriCommand.Execute(null);
+
+            Assert.AreEqual(1, this.viewModel.SavedUris.Count);
+            CollectionAssert.Contains(this.viewModel.SavedUris, "u://r.l");
+            Assert.IsFalse(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
+
+            this.viewModel.Uri = "anotherUrl";
+            Assert.IsTrue(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
+
+            this.viewModel.Uri = "u://r.l";
+            Assert.IsFalse(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
         }
     }
 }
