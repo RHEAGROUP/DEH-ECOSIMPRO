@@ -126,9 +126,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             
             this.viewModel.SaveCurrentUriCommand.Execute(null);
 
-            CollectionAssert.Contains(this.viewModel.SavedUris, "u://r.l");
             Assert.AreEqual(1, this.viewModel.SavedUris.Count);
+            CollectionAssert.Contains(this.viewModel.SavedUris, "u://r.l");
+            Assert.IsFalse(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
 
+            this.viewModel.Uri = "anotherUrl";
+            Assert.IsTrue(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
+
+            this.viewModel.Uri = "u://r.l";
             Assert.IsFalse(this.viewModel.SaveCurrentUriCommand.CanExecute(null));
         }
     }

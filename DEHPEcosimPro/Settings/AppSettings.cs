@@ -28,10 +28,19 @@ namespace DEHPEcosimPro.Settings
 
     using DEHPCommon.UserPreferenceHandler;
 
+    /// <summary>
+    /// Extends the <see cref="UserPreference"/> class and acts as a container for the locally saved user settings
+    /// </summary>
     public class AppSettings : UserPreference
     {
+        /// <summary>
+        /// The set of locally saved OPC server addresses
+        /// </summary>
         public List<string> SavedOpcUris { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AppSettings"/> class
+        /// </summary>
         public AppSettings()
         {
             this.SavedOpcUris = new List<string>();

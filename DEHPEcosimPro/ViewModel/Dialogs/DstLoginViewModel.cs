@@ -26,6 +26,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
     using System.Reactive;
+    using System.Reactive.Linq;
     using System.Threading.Tasks;
 
     using DEHPCommon.Enumerators;
@@ -132,18 +133,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Backing field for <see cref="SavedUris"/>
-        /// </summary>
-        private ReactiveList<string> savedUris;
-
-        /// <summary>
         /// Gets or sets the saved server addresses
         /// </summary>
-        public ReactiveList<string> SavedUris
-        {
-            get => this.savedUris;
-            set => this.RaiseAndSetIfChanged(ref this.savedUris, value);
-        }
+        public ReactiveList<string> SavedUris { get; private set; } = new ReactiveList<string> { ChangeTrackingEnabled = true };
 
         /// <summary>
         /// Gets the command responsible for adding the current <see cref="Uri"/> to <see cref="SavedUris"/>
@@ -172,17 +164,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.statusBarControlView = statusBarControlView;
             this.userPreferenceService = userPreferenceService;
 
-            this.SavedUris = new ReactiveList<string> { ChangeTrackingEnabled = true };
+            this.PopulateSavedUris();
 
-            var canSaveUri = this.WhenAnyValue(
-                vm => vm.Uri,
-                vm => vm.SavedUris,
-                (uri, savedUris) => !string.IsNullOrWhiteSpace(uri) && !savedUris.Contains(uri));
+            var canSaveUri = this.SavedUris.CountChanged.StartWith(0).CombineLatest(this.WhenAnyValue(vm => vm.Uri),
+                (args, uri) => !string.IsNullOrWhiteSpace(uri) && !this.SavedUris.Contains(uri));
 
             this.SaveCurrentUriCommand = ReactiveCommand.Create(canSaveUri);
             this.SaveCurrentUriCommand.Subscribe(_ => this.ExecuteSaveCurrentUri());
-
-            this.PopulateSavedUris();
 
             var canLogin = this.WhenAnyValue(
                 vm => vm.UserName,
@@ -202,7 +190,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private void PopulateSavedUris()
         {
             this.userPreferenceService.Read();
-            this.SavedUris = new ReactiveList<string>(this.userPreferenceService.UserPreferenceSettings.SavedOpcUris);
+            this.SavedUris.Clear();
+            this.SavedUris.AddRange(this.userPreferenceService.UserPreferenceSettings.SavedOpcUris);
         }
 
         /// <summary>
