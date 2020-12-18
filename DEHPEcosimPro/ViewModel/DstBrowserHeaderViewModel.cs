@@ -2,7 +2,7 @@
 // <copyright file="DstBrowserHeaderViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -24,13 +24,25 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
 
+    using ReactiveUI;
+
     /// <summary>
-    /// The <see cref="DstBrowserHeaderViewModel"/> is the view model the <see cref="DstBrowserHeader"/>
+    /// The view model for <see cref="DstBrowserHeader"/>
     /// </summary>
-    public class DstBrowserHeaderViewModel : IDstBrowserHeaderViewModel
+    public class DstBrowserHeaderViewModel : ReactiveObject, IDstBrowserHeaderViewModel
     {
+        /// <summary>
+        /// The <see cref="IDstController"/>
+        /// </summary>
+        private readonly IDstController dstController;
+
+        public DstBrowserHeaderViewModel(IDstController dstController)
+        {
+            this.dstController = dstController;
+        }
     }
 }
