@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
     using System.Threading.Tasks;
 
     using DEHPCommon.Enumerators;
@@ -34,6 +35,8 @@ namespace DEHPEcosimPro.Services.OpcConnector
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+
+    using DevExpress.Data.Helpers;
 
     using Opc.Ua;
     using Opc.Ua.Client;
@@ -92,7 +95,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// Gets the <see cref="OpcClientStatusCode"/> reflecting the connection status of this <see cref="OpcClientService"/>
         /// </summary>
         public OpcClientStatusCode OpcClientStatusCode
-        { 
+        {
             get => this.opcClientStatusCode;
             private set => this.RaiseAndSetIfChanged(ref this.opcClientStatusCode, value);
         }
@@ -227,47 +230,61 @@ namespace DEHPEcosimPro.Services.OpcConnector
             }
 
             this.References.AddRange(additionalReferences);
-            this.AddSubscription(this.sessionHandler.DefaultSubscription);
+            this.AddSubscription();
         }
 
         /// <summary>
-        /// Adds a subscription based on the attributeId to monitor
+        /// Creates the default subscription which monitors the server time
         /// </summary>
-        /// <param name="attributeId">The attribute Id of the node to monitor</param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
-        public void AddSubscription(uint attributeId, MonitoredItemNotificationEventHandler onNotification = null)
+        private void AddSubscription()
         {
-            var subscription = new Subscription() { PublishingInterval = this.RefreshInterval, DefaultItem = new MonitoredItem() { AttributeId = attributeId} };
-            this.AddSubscription(subscription, onNotification);
+            var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
+
+            var list = new List<MonitoredItem>
+            {
+                new MonitoredItem(subscription.DefaultItem)
+                {
+                    DisplayName = "ServerStatusCurrentTime", StartNodeId = $"i={Variables.Server_ServerStatus_CurrentTime}"
+                }
+            };
+
+            list.ForEach(i => i.Notification += this.OnNotification);
+            subscription.AddItems(list);
+            this.AddSubscription(subscription);
+        }
+
+        /// <summary>
+        /// Adds a subscription based on the nodeId to monitor
+        /// </summary>
+        /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
+        /// <param name="onNotification">A event handler to call back on Notification</param>
+        public void AddSubscription(NodeId nodeId, MonitoredItemNotificationEventHandler onNotification = null)
+        {
+            var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
+
+            var list = new List<MonitoredItem>
+            {
+                new MonitoredItem(subscription.DefaultItem)
+                {
+                    DisplayName = nodeId.Identifier.ToString(), StartNodeId = nodeId, SamplingInterval = this.RefreshInterval   
+                }
+            };
+
+            list.ForEach(item => item.Notification += onNotification ?? this.OnNotification);
+            subscription.AddItems(list);
+            this.AddSubscription(subscription);
         }
 
         /// <summary>
         /// Adds a subscription to the <see cref="Session"/>
         /// </summary>
         /// <param name="subscription">A <see cref="Subscription"/> to be added to the <see cref="Session"/></param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
-        private void AddSubscription(Subscription subscription, MonitoredItemNotificationEventHandler onNotification = null)
+        private void AddSubscription(Subscription subscription)
         {
             try
             {
-                this.statusBarControl.Append($"Create a subscription with publishing interval of {this.RefreshInterval} ms");
-
-                this.statusBarControl.Append("Add a list of items (server current time and status) to the subscription.");
-
-                var list = new List<MonitoredItem>
-                {
-                    new MonitoredItem(subscription.DefaultItem)
-                    {
-                        DisplayName = "ServerStatusCurrentTime", StartNodeId = $"i={Variables.Server_ServerStatus_CurrentTime}"
-                    }
-                };
-
-                list.ForEach(i => i.Notification += onNotification ?? this.OnNotification);
-                subscription.AddItems(list);
-
                 this.statusBarControl.Append("Add the subscription to the session.");
                 this.sessionHandler.AddSubscription(subscription);
-                this.OpcClientStatusCode = OpcClientStatusCode.Connected;
             }
             catch (Exception exception)
             {
@@ -289,6 +306,16 @@ namespace DEHPEcosimPro.Services.OpcConnector
             return this.sessionHandler.CallMethod(objectId, methodId, arguments);
         }
 
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        public DataValue ReadNode(NodeId nodeId)
+        {
+            return this.sessionHandler.ReadNode(nodeId);
+        }
+        
         /// <summary>
         /// The <see cref="KeepAliveEventHandler"/> that is used to keep the <see cref="Session"/> alive
         /// </summary>

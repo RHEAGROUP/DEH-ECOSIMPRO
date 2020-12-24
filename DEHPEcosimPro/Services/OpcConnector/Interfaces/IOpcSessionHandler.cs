@@ -114,15 +114,14 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// Removes a subscription from the session.
         /// </summary>
         /// <param name="subscription">The subscription to remove.</param>
-        /// <returns>An assert whether the removal whent ok</returns>
+        /// <returns>An assert whether the removal went ok</returns>
         bool RemoveSubscription(Subscription subscription);
 
         /// <summary>
-        /// Removes a list of subscriptions from the sessiont.
+        /// Removes all active subscriptions from the session.
         /// </summary>
-        /// <param name="subscriptions">The list of subscriptions to remove.</param>
         /// <returns>An assert whether the removal whent ok</returns>
-        bool RemoveSubscriptions(IEnumerable<Subscription> subscriptions);
+        bool ClearSubscriptions();
 
         /// <summary>
         /// Calls the specified method and returns the output arguments.
@@ -144,6 +143,13 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// </summary>
         /// <param name="deleteSubscription">An assert whether to delete subscriptions</param>
         void CloseSession(bool deleteSubscription = true);
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        DataValue ReadNode(NodeId nodeId);
 
         /// <summary>
         /// Finds the endpoint that best matches the current settings.

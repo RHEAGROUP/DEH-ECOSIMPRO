@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TreeListControl.xaml.cs" company="RHEA System S.A.">
+// <copyright file="DstVariablesControl.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2020 RHEA System S.A.
 //
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -27,14 +27,14 @@ namespace DEHPEcosimPro.Views
     using System.Windows.Controls;
 
     /// <summary>
-    /// Interaction logic for TreeListControl.xaml
+    /// Interaction logic for DstVariablesControl.xaml
     /// </summary>
-    public partial class TreeListControl : UserControl
+    public partial class DstVariablesControl : UserControl
     {
         /// <summary>
-        /// Initializes a new <see cref="TreeListControl"/>
+        /// Initializes a new <see cref="DstVariablesControl"/>
         /// </summary>
-        public TreeListControl()
+        public DstVariablesControl()
         {
             this.InitializeComponent();
         }
