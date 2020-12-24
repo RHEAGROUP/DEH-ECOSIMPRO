@@ -2,7 +2,7 @@
 // <copyright file="App.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2015-2019 RHEA System S.A.
 //
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Ahmed Abulwafa Ahmed
 //
 //    This file is part of DEHPEcosimPro
 //
@@ -30,10 +30,12 @@ namespace DEHPEcosimPro
 
     using DEHPCommon;
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
@@ -102,6 +104,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<OpcSessionReconnectHandler>().As<IOpcSessionReconnectHandler>().SingleInstance();
             containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
             containerBuilder.RegisterType<DstController.DstController>().As<IDstController>().SingleInstance();
+            containerBuilder.RegisterType<UserPreferenceService<AppSettings>>().As<IUserPreferenceService<AppSettings>>().SingleInstance();
         }
 
         /// <summary>
