@@ -61,6 +61,20 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="IUserPreferenceService{AppSettings}"/> instance
         /// </summary>
         private readonly IUserPreferenceService<AppSettings> userPreferenceService;
+        
+        /// <summary>
+        /// Backing field for <see cref="IsBusy"/>
+        /// </summary>
+        private bool isBusy;
+
+        /// <summary>
+        /// Gets or sets the assert indicating whether the view is busy
+        /// </summary>
+        public bool IsBusy
+        {
+            get => this.isBusy;
+            set => this.RaiseAndSetIfChanged(ref this.isBusy, value);
+        }
 
         /// <summary>
         /// Backing field for the <see cref="UserName"/> property
@@ -210,6 +224,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <returns>The <see cref="Task"/></returns>
         private async Task ExecuteLogin()
         {
+            this.IsBusy = true;
             this.statusBarControlView.Append("Loggin in...");
 
             try
@@ -232,6 +247,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             catch (Exception exception)
             {
                 this.statusBarControlView.Append($"Loggin failed: {exception.Message}", StatusBarMessageSeverity.Error);
+            }
+            finally
+            {
+                this.IsBusy = false;
             }
         }
     }

@@ -24,7 +24,10 @@
 
 namespace DEHPEcosimPro.Tests.DstController
 {
+    using System;
     using System.Threading.Tasks;
+
+    using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
@@ -34,26 +37,35 @@ namespace DEHPEcosimPro.Tests.DstController
     using NUnit.Framework;
 
     using Opc.Ua;
+    using Opc.Ua.Client;
 
     [TestFixture]
     public class DstControllerTestFixture
     {
         private DstController controller;
         private Mock<IOpcClientService> opcClient;
+        private Mock<IHubController> hubController;
+        private Mock<IOpcSessionHandler> opcSessionHandler;
 
         [SetUp]
         public void Setup()
         {
+            this.hubController = new Mock<IHubController>();
+            this.opcSessionHandler = new Mock<IOpcSessionHandler>();
+    
             this.opcClient = new Mock<IOpcClientService>();
             this.opcClient.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
             this.opcClient.Setup(x => x.CloseSession());
-            this.controller = new DstController(this.opcClient.Object);
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
             Assert.IsFalse(this.controller.IsSessionOpen);
+            Assert.IsEmpty(this.controller.Variables);
+            Assert.IsNull(this.controller.References);
+            Assert.IsEmpty(this.controller.Methods);
         }
 
         [Test]
@@ -68,6 +80,21 @@ namespace DEHPEcosimPro.Tests.DstController
         {
             this.controller.CloseSession();
             this.opcClient.Verify(x => x.CloseSession(), Times.Once);
+        }
+
+        [Test]
+        public void VerifyAddSubscription()
+        {
+            Assert.DoesNotThrow(() =>
+            {
+                this.controller.AddSubscription(new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()) });
+            this.controller.AddSubscription(new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid())});
+            });
+
+            this.opcClient.Verify(x => x.AddSubscription(It.IsAny<NodeId>()), Times.Exactly(2));
+
+            this.controller.ClearSubscriptions();
+            this.opcSessionHandler.Verify(x => x.ClearSubscriptions(), Times.Once);
         }
     }
 }

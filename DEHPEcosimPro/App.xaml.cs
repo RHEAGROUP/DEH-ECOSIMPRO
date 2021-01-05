@@ -58,12 +58,25 @@ namespace DEHPEcosimPro
         /// <param name="containerBuilder">An optional <see cref="Container"/></param>
         public App(ContainerBuilder containerBuilder = null)
         {
+            this.Exit += this.OnExit;
             var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
             RegisterTypes(containerBuilder);
             RegisterViewModels(containerBuilder);
             AppContainer.BuildContainer(containerBuilder);
+        }
+
+        /// <summary>
+        /// Occurs when the app closes, it makes sure any opc connection are properly closed
+        /// </summary>
+        /// <param name="sender">The <see cref="object"/> sender</param>
+        /// <param name="e">The <see cref="ExitEventArgs"/></param>
+        private void OnExit(object sender, ExitEventArgs e)
+        {
+            var opcClientHandler = AppContainer.Container.Resolve<IOpcSessionHandler>();
+            opcClientHandler?.ClearSubscriptions();
+            opcClientHandler?.CloseSession();
         }
 
         /// <summary>
@@ -105,6 +118,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstBrowserHeaderViewModel>().As<IDstBrowserHeaderViewModel>();
             containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>();
             containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
+            containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>();
         }
     }
 }

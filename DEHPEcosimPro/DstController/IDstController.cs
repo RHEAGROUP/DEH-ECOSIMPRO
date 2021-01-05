@@ -24,9 +24,11 @@
 
 namespace DEHPEcosimPro.DstController
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using Opc.Ua;
+    using Opc.Ua.Client;
 
     /// <summary>
     /// Interface definition for <see cref="DstController"/>
@@ -36,7 +38,22 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// </summary>
-        bool IsSessionOpen { get; }
+        bool IsSessionOpen { get; set; }
+
+        /// <summary>
+        /// Gets the references variables available from the connected OPC server
+        /// </summary>
+        IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; }
+
+        /// <summary>
+        /// Gets the Methods available from the connected OPC server
+        /// </summary>
+        IList<ReferenceDescription> Methods { get; }
+
+        /// <summary>
+        /// Gets the all references available from the connected OPC server
+        /// </summary>
+        IList<ReferenceDescription> References { get; }
 
         /// <summary>
         /// Connects to the provided endpoint
@@ -46,6 +63,17 @@ namespace DEHPEcosimPro.DstController
         /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
         /// <returns>A <see cref="Task"/></returns>
         Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="reference"/>
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/></param>
+        void AddSubscription(ReferenceDescription reference);
+
+        /// <summary>
+        /// Removes all active subscriptions from the session.
+        /// </summary>
+        void ClearSubscriptions();
 
         /// <summary>
         /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>

@@ -64,15 +64,15 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             {
                 new ReferenceDescription()
                 {
-                    ReferenceTypeId = new NodeId(0)
+                    NodeId = new ExpandedNodeId(new NodeId(0))
                 },
                 new ReferenceDescription()
                 {
-                    ReferenceTypeId = new NodeId(1)
+                    NodeId = new ExpandedNodeId(new NodeId(1))
                 },
                 new ReferenceDescription()
                 {
-                    ReferenceTypeId = new NodeId(2)
+                    NodeId = new ExpandedNodeId(new NodeId(2))
                 }
             };
 
@@ -90,7 +90,7 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             this.sessionHandler.Setup(x => x.DefaultSubscription).Returns(new Subscription());
             this.sessionHandler.Setup(x => x.AddSubscription(It.IsAny<Subscription>())).Returns(true);
             this.sessionHandler.Setup(x => x.RemoveSubscription(It.IsAny<Subscription>())).Returns(true);
-            this.sessionHandler.Setup(x => x.RemoveSubscriptions(It.IsAny<IEnumerable<Subscription>>())).Returns(true);
+            this.sessionHandler.Setup(x => x.ClearSubscriptions()).Returns(true);
             this.sessionHandler.Setup(x => x.FetchReferences(It.IsAny<NodeId>())).Returns(this.referenceDescriptionCollection);
             this.sessionHandler.Setup(x => x.SetSession(this.reconnectHandler.Object));
             this.sessionHandler.Setup(x => x.SelectEndpoint(Endpoint, true, 15000)).Returns(new EndpointDescription(Endpoint));
@@ -122,13 +122,13 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
         [Test]
         public void VerifySubscription()
         {
-            var identifier = (uint) this.referenceDescriptionCollection.First().ReferenceTypeId.Identifier;
+            var identifier = (NodeId)this.referenceDescriptionCollection.First().NodeId;
             Assert.DoesNotThrow(() => this.client.AddSubscription(identifier));
             this.sessionHandler.Setup(x => x.AddSubscription(It.IsAny<Subscription>())).Throws<InvalidOperationException>();
-            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(22));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(18));
             Assert.DoesNotThrow(() => this.client.AddSubscription(identifier));
-            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(26));
-            var errorMessage = $"Error creating subscription for attribute id = {identifier}";
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(20));
+            var errorMessage = $"Error creating subscription for attribute id = 13";
             this.statusBarViewModel.Verify(x => x.Append(errorMessage, StatusBarMessageSeverity.Error), Times.Exactly(1));
         }
 
@@ -137,6 +137,13 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
         {
             Assert.DoesNotThrow(() => this.client.CallMethod(new NodeId(2), new NodeId(5), 1));
             this.sessionHandler.Verify(x => x.CallMethod(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<object[]>()), Times.Once);
+        }
+
+        [Test]
+        public void VerifyReadNode()
+        {
+            Assert.DoesNotThrow(() => this.client.ReadNode(new NodeId(2)));
+            this.sessionHandler.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Once);
         }
 
         [Test]

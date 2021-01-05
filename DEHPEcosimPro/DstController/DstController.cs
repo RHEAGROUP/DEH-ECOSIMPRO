@@ -24,35 +24,102 @@
 
 namespace DEHPEcosimPro.DstController
 {
+    using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
+    
+    using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
 
     using Opc.Ua;
 
+    using ReactiveUI;
+
     /// <summary>
     /// The <see cref="DstController"/> takes care of retrieving data from and to EcosimPro
     /// </summary>
-    public class DstController : IDstController
+    public class DstController : ReactiveObject, IDstController
     {
         /// <summary>
         /// The <see cref="IOpcClientService"/> that handles the OPC connection with EcosimPro
         /// </summary>
         private readonly IOpcClientService opcClientService;
-        
+
+        /// <summary>
+        /// The <see cref="IHubController"/>
+        /// </summary>
+        private readonly IHubController hubController;
+
+        /// <summary>
+        /// The <see cref="IOpcSessionHandler"/>
+        /// </summary>
+        private readonly IOpcSessionHandler sessionHandler;
+
+        /// <summary>
+        /// Backing field for <see cref="IsSessionOpen"/>
+        /// </summary>
+        private bool isSessionOpen;
+
         /// <summary>
         /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// </summary>
-        public bool IsSessionOpen =>  this.opcClientService.OpcClientStatusCode == OpcClientStatusCode.Connected;
+        public bool IsSessionOpen
+        {
+            get => this.isSessionOpen;
+            set => this.RaiseAndSetIfChanged(ref this.isSessionOpen, value);
+        }
+
+        /// <summary>
+        /// Gets the references variables available from the connected OPC server
+        /// </summary>
+        public IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; private set; } = new List<(ReferenceDescription, DataValue)>();
+        
+        /// <summary>
+        /// Gets the Methods available from the connected OPC server
+        /// </summary>
+        public IList<ReferenceDescription> Methods { get; private set; } = new List<ReferenceDescription>();
+
+        /// <summary>
+        /// Gets the all references available from the connected OPC server
+        /// </summary>
+        public IList<ReferenceDescription> References => this.opcClientService.References;
 
         /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
-        public DstController(IOpcClientService opcClientService)
+        /// <param name="hubController">The <see cref="IHubController"/></param>
+        /// <param name="sessionHandler">The <<see cref="IOpcSessionHandler"/></param>
+        public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler)
         {
             this.opcClientService = opcClientService;
+            this.hubController = hubController;
+            this.sessionHandler = sessionHandler;
+
+            this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
+            {
+                var isOpcSessionOpen = clientStatusCode == OpcClientStatusCode.Connected;
+
+                if (isOpcSessionOpen)
+                {
+                    foreach (var reference in this.opcClientService.References)
+                    {
+                        if (reference.NodeClass == NodeClass.Variable && reference.NodeId.NamespaceIndex == 4)
+                        {
+                            this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId)reference.NodeId)));
+                        }
+                        
+                        else if (reference.NodeClass == NodeClass.Method)
+                        {
+                            this.Methods.Add(reference);
+                        }
+                    }
+                }
+
+                this.IsSessionOpen = isOpcSessionOpen;
+            });
         }
 
         /// <summary>
@@ -66,12 +133,31 @@ namespace DEHPEcosimPro.DstController
         {
             await this.opcClientService.Connect(endpoint, autoAcceptConnection, credential);
         }
-        
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="reference"/>
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/></param>
+        public void AddSubscription(ReferenceDescription reference)
+        {
+            this.opcClientService.AddSubscription((NodeId)reference.NodeId);
+        }
+
+        /// <summary>
+        /// Removes all active subscriptions from the session.
+        /// </summary>
+        public void ClearSubscriptions()
+        {
+            this.sessionHandler.ClearSubscriptions();
+        }
+
         /// <summary>
         /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
         /// </summary>
         public void CloseSession()
         {
+            this.Methods.Clear();
+            this.Variables.Clear();
             this.opcClientService.CloseSession();
         }
     }

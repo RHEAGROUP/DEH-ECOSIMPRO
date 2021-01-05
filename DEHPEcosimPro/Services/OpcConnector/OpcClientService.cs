@@ -27,13 +27,19 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
     using System.Threading.Tasks;
+
+    using CDP4Dal;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+
+    using DevExpress.Data.Helpers;
 
     using Opc.Ua;
     using Opc.Ua.Client;
@@ -42,6 +48,8 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using ReactiveUI;
 
     using LogManager = NLog.LogManager;
+    using Session = Opc.Ua.Client.Session;
+    using Utils = Opc.Ua.Utils;
 
     /// <summary>
     /// The <see cref="OpcClientService"/> handles the OPC connection with an OPC server configured through EcosimPro
@@ -92,7 +100,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// Gets the <see cref="OpcClientStatusCode"/> reflecting the connection status of this <see cref="OpcClientService"/>
         /// </summary>
         public OpcClientStatusCode OpcClientStatusCode
-        { 
+        {
             get => this.opcClientStatusCode;
             private set => this.RaiseAndSetIfChanged(ref this.opcClientStatusCode, value);
         }
@@ -116,7 +124,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         }
 
         /// <summary>
-        /// Connects the client to the endpoint opening a <see cref="Session"/>
+        /// Connects the client to the endpoint opening a <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
         /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
@@ -142,11 +150,12 @@ namespace DEHPEcosimPro.Services.OpcConnector
         }
 
         /// <summary>
-        /// Closes the <see cref="Session"/>
+        /// Closes the <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
         public void CloseSession()
         {
             this.sessionHandler.CloseSession();
+            this.References.Clear();
             this.OpcClientStatusCode = OpcClientStatusCode.Disconnected;
             this.statusBarControl.Append($"Session from {this.endpointUrl} has been closed", StatusBarMessageSeverity.Warning);
         }
@@ -209,7 +218,6 @@ namespace DEHPEcosimPro.Services.OpcConnector
             this.References = references;
             var additionalReferences = new ReferenceDescriptionCollection();
 
-            // REM OUTPUT
             foreach (var reference in this.References)
             {
                 this.statusBarControl.Append($"{reference.DisplayName}, {reference.BrowseName}, {reference.NodeClass}");
@@ -227,47 +235,68 @@ namespace DEHPEcosimPro.Services.OpcConnector
             }
 
             this.References.AddRange(additionalReferences);
-            this.AddSubscription(this.sessionHandler.DefaultSubscription);
+            this.AddSubscription();
         }
 
         /// <summary>
-        /// Adds a subscription based on the attributeId to monitor
+        /// Creates the default subscription which monitors the server time
         /// </summary>
-        /// <param name="attributeId">The attribute Id of the node to monitor</param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
-        public void AddSubscription(uint attributeId, MonitoredItemNotificationEventHandler onNotification = null)
+        private void AddSubscription()
         {
-            var subscription = new Subscription() { PublishingInterval = this.RefreshInterval, DefaultItem = new MonitoredItem() { AttributeId = attributeId} };
-            this.AddSubscription(subscription, onNotification);
+            var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
+
+            var list = new List<MonitoredItem>
+            {
+                new MonitoredItem(subscription.DefaultItem)
+                {
+                    DisplayName = "ServerStatusCurrentTime", StartNodeId = $"i={Variables.Server_ServerStatus_CurrentTime}"
+                }
+            };
+
+            list.ForEach(i => i.Notification += (item, e) =>
+            {
+                foreach (var value in item.DequeueValues())
+                {
+                    this.statusBarControl.Append($"{item.DisplayName}: {value.Value}, {value.SourceTimestamp}, {value.StatusCode}, {e.NotificationValue.TypeId}");
+                }
+            });
+
+            subscription.AddItems(list);
+            this.AddSubscription(subscription);
         }
 
         /// <summary>
-        /// Adds a subscription to the <see cref="Session"/>
+        /// Adds a subscription based on the nodeId to monitor
         /// </summary>
-        /// <param name="subscription">A <see cref="Subscription"/> to be added to the <see cref="Session"/></param>
+        /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
         /// <param name="onNotification">A event handler to call back on Notification</param>
-        private void AddSubscription(Subscription subscription, MonitoredItemNotificationEventHandler onNotification = null)
+        public void AddSubscription(NodeId nodeId)
+        {
+            var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
+
+            var list = new List<MonitoredItem>
+            {
+                new MonitoredItem(subscription.DefaultItem)
+                {
+                    DisplayName = nodeId.Identifier.ToString(), StartNodeId = nodeId, SamplingInterval = this.RefreshInterval   
+                }
+            };
+
+            list.ForEach(item => item.Notification += this.OnNotification);
+            subscription.AddItems(list);
+            this.AddSubscription(subscription);
+        }
+
+        /// <summary>
+        /// Adds a subscription to the <see cref="Opc.Ua.Client.Session"/>
+        /// </summary>
+        /// <param name="subscription">A <see cref="Subscription"/> to be added to the <see cref="Opc.Ua.Client.Session"/></param>
+        private void AddSubscription(Subscription subscription)
         {
             try
             {
-                this.statusBarControl.Append($"Create a subscription with publishing interval of {this.RefreshInterval} ms");
-
-                this.statusBarControl.Append("Add a list of items (server current time and status) to the subscription.");
-
-                var list = new List<MonitoredItem>
-                {
-                    new MonitoredItem(subscription.DefaultItem)
-                    {
-                        DisplayName = "ServerStatusCurrentTime", StartNodeId = $"i={Variables.Server_ServerStatus_CurrentTime}"
-                    }
-                };
-
-                list.ForEach(i => i.Notification += onNotification ?? this.OnNotification);
-                subscription.AddItems(list);
-
                 this.statusBarControl.Append("Add the subscription to the session.");
                 this.sessionHandler.AddSubscription(subscription);
-                this.OpcClientStatusCode = OpcClientStatusCode.Connected;
             }
             catch (Exception exception)
             {
@@ -290,9 +319,19 @@ namespace DEHPEcosimPro.Services.OpcConnector
         }
 
         /// <summary>
-        /// The <see cref="KeepAliveEventHandler"/> that is used to keep the <see cref="Session"/> alive
+        /// Reads a node and gets its states information
         /// </summary>
-        /// <param name="sender">The <see cref="Session"/> object</param>
+        /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        public DataValue ReadNode(NodeId nodeId)
+        {
+            return this.sessionHandler.ReadNode(nodeId);
+        }
+        
+        /// <summary>
+        /// The <see cref="KeepAliveEventHandler"/> that is used to keep the <see cref="Opc.Ua.Client.Session"/> alive
+        /// </summary>
+        /// <param name="sender">The <see cref="Opc.Ua.Client.Session"/> object</param>
         /// <param name="e">The <see cref="KeepAliveEventArgs"/></param>
         [ExcludeFromCodeCoverage]
         private void OnClientKeepAlive(Session sender, KeepAliveEventArgs e)
@@ -343,10 +382,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         [ExcludeFromCodeCoverage]
         private void OnNotification(MonitoredItem item, MonitoredItemNotificationEventArgs e)
         {
-            foreach (var value in item.DequeueValues())
-            {
-                this.statusBarControl.Append($"{item.DisplayName}: {value.Value}, {value.SourceTimestamp}, {value.StatusCode}, {e.NotificationValue.TypeId}");
-            }
+            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(item));
         }
 
         /// <summary>

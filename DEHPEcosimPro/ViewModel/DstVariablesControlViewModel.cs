@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstDataSourceViewModel.cs" company="RHEA System S.A.">
+// <copyright file="DstVariablesControlViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,17 +24,19 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
-    using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using System;
+    using System.Linq;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
-    using DEHPEcosimPro.Views.Dialogs;
+    using DEHPEcosimPro.ViewModel.Rows;
+
+    using ReactiveUI;
 
     /// <summary>
-    /// The <see cref="DstDataSourceViewModel"/> is the view model for the panel that will display controls and data relative to EcosimPro
+    /// The <see cref="DstVariablesControlViewModel"/> is the view model for displaying OPC references
     /// </summary>
-    public sealed class DstDataSourceViewModel : DataSourceViewModel, IDstDataSourceViewModel
+    public class DstVariablesControlViewModel : ReactiveObject, IDstVariablesControlViewModel
     {
         /// <summary>
         /// The <see cref="IDstController"/>
@@ -42,48 +44,65 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstController dstController;
 
         /// <summary>
-        /// Gets the <see cref="IDstBrowserHeaderViewModel"/>
+        /// Backing field for <see cref="IsBusy"/>
         /// </summary>
-        public IDstBrowserHeaderViewModel DstBrowserHeader { get; }
+        private bool isBusy;
 
         /// <summary>
-        /// Gets the <see cref="IDstVariablesControlViewModel"/>
+        /// Gets or sets the assert indicating whether the view is busy
         /// </summary>
-        public IDstVariablesControlViewModel DstVariablesViewModel { get; }
-
-        /// <summary>
-        /// Initializes a new <see cref="DstDataSourceViewModel"/>
-        /// </summary>
-        /// <param name="navigationService">The <see cref="INavigationService"/></param>
-        /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="dstBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
-        /// <param name="dstVariablesViewModel">The <see cref="IDstVariablesControlViewModel"/></param>
-        public DstDataSourceViewModel(INavigationService navigationService, IDstController dstController, IDstBrowserHeaderViewModel dstBrowserHeader, IDstVariablesControlViewModel dstVariablesViewModel) : base(navigationService)
+        public bool IsBusy
         {
-            this.dstController = dstController;
-            this.DstVariablesViewModel = dstVariablesViewModel;
-            this.DstBrowserHeader = dstBrowserHeader;
-            this.InitializeCommands();
+            get => this.isBusy;
+            set => this.RaiseAndSetIfChanged(ref this.isBusy, value);
         }
 
         /// <summary>
-        /// Executes the <see cref="DataSourceViewModel.ConnectCommand"/>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        protected override void ConnectCommandExecute()
-        {
-            this.DstVariablesViewModel.IsBusy = true;
+        public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
 
+        /// <summary>
+        /// Initializes a new <see cref="DstVariablesControlViewModel"/>
+        /// </summary>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
+        public DstVariablesControlViewModel(IDstController dstController)
+        {
+            this.dstController = dstController;
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
+        }
+
+        /// <summary>
+        /// Updates this view model properties
+        /// </summary>
+        public void UpdateProperties()
+        {
             if (this.dstController.IsSessionOpen)
             {
-                this.dstController.CloseSession();
+                this.IsBusy = true;
+
+                this.Variables.AddRange(this.dstController.Variables.Select(r => new VariableRowViewModel(r)));
+
+                this.AddSubscriptions();
             }
             else
             {
-                this.NavigationService.ShowDialog<DstLogin>();
+                this.Variables.Clear();
+                this.dstController.ClearSubscriptions();
             }
 
-            this.UpdateConnectButtonText(this.dstController.IsSessionOpen);
-            this.DstVariablesViewModel.IsBusy = false;
+            this.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Adds all the subscription
+        /// </summary>
+        private void AddSubscriptions()
+        {
+            foreach (var variable in this.Variables)
+            {
+                this.dstController.AddSubscription(variable.Reference);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="OpcSessionHandler.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -41,10 +41,15 @@ namespace DEHPEcosimPro.Services.OpcConnector
     public class OpcSessionHandler : IOpcSessionHandler
     {
         /// <summary>
+        /// Holds the alive subscriptions 
+        /// </summary>
+        private readonly IList<Subscription> subscriptions = new List<Subscription>();
+
+        /// <summary>
         /// Gets the <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
         public Session Session { get; private set; }
-
+        
         /// <summary>
         /// Gets or Sets the default subscription for the session.
         /// </summary>
@@ -142,20 +147,32 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// Removes a subscription from the session.
         /// </summary>
         /// <param name="subscription">The subscription to remove.</param>
-        /// <returns>An assert whether the removal whent ok</returns>
+        /// <returns>An assert whether the removal went ok</returns>
         public bool RemoveSubscription(Subscription subscription)
         {
-            return this.Session.RemoveSubscription(subscription);
+            if (this.Session.RemoveSubscription(subscription))
+            {
+                this.subscriptions.Remove(subscription);
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// Removes a list of subscriptions from the sessiont.
+        /// Removes all active subscriptions from the session.
         /// </summary>
-        /// <param name="subscriptions">The list of subscriptions to remove.</param>
-        /// <returns>An assert whether the removal whent ok</returns>
-        public bool RemoveSubscriptions(IEnumerable<Subscription> subscriptions)
+        /// <returns>An assert whether the removal went ok</returns>
+        public bool ClearSubscriptions()
         {
-            return this.Session.RemoveSubscriptions(subscriptions);
+            var result = this.Session?.RemoveSubscriptions(this.subscriptions) == true;
+            
+            if (result)
+            {
+                this.subscriptions.Clear();
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -185,7 +202,17 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <param name="deleteSubscription">An assert whether to delete subscriptions</param>
         public void CloseSession(bool deleteSubscription = true)
         {
-            this.Session.Close();
+            this.Session?.Close();
+        }
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        public DataValue ReadNode(NodeId nodeId)
+        {
+            return this.Session.ReadValue(nodeId);
         }
 
         /// <summary>

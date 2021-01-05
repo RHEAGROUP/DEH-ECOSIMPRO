@@ -38,7 +38,7 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
     public interface IOpcClientService
     {
         /// <summary>
-        /// The refresh interval for subscriptions
+        /// The refresh interval for subscriptions in millisecond
         /// </summary>
         int RefreshInterval { get; set; }
 
@@ -65,14 +65,13 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// Closes the <see cref="Session"/>
         /// </summary>
         void CloseSession();
-
+        
         /// <summary>
-        /// Adds a subscription based on the attributeId to monitor
+        /// Adds a subscription based on the nodeId to monitor
         /// </summary>
-        /// <param name="attributeId">The attribute Id of the node to monitor</param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
-        void AddSubscription(uint attributeId, MonitoredItemNotificationEventHandler onNotification = null);
-
+        /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
+        void AddSubscription(NodeId nodeId);
+        
         /// <summary>
         /// Calls the specified method and returns the output arguments.
         /// </summary>
@@ -81,5 +80,19 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <param name="arguments">The arguments to input</param>
         /// <returns>The <see cref="IList{T}"/> of output argument values.</returns>
         IList<object> CallMethod(NodeId objectId, NodeId methodId, params object[] arguments);
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        DataValue ReadNode(NodeId nodeId);
+
+        /// <summary>
+        /// The <see cref="OpcClientService.CertificateValidator"/> validates
+        /// </summary>
+        /// <param name="validator">A <see cref="OpcClientService.CertificateValidator"/></param>
+        /// <param name="e">The <see cref="CertificateValidationEventArgs"/></param>
+        void CertificateValidator(CertificateValidator validator, CertificateValidationEventArgs e);
     }
 }
