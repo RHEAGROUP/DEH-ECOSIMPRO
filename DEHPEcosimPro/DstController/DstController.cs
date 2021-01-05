@@ -93,6 +93,7 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
+        /// <param name="sessionHandler">The <<see cref="IOpcSessionHandler"/></param>
         public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler)
         {
             this.opcClientService = opcClientService;
@@ -107,7 +108,7 @@ namespace DEHPEcosimPro.DstController
                 {
                     foreach (var reference in this.opcClientService.References)
                     {
-                        if (reference.NodeClass == NodeClass.Variable)
+                        if (reference.NodeClass == NodeClass.Variable && reference.NodeId.NamespaceIndex == 4)
                         {
                             this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId)reference.NodeId)));
                         }
@@ -158,6 +159,8 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         public void CloseSession()
         {
+            this.Methods.Clear();
+            this.Variables.Clear();
             this.opcClientService.CloseSession();
         }
     }

@@ -60,8 +60,7 @@
                     <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" />
                     <dxg:TreeListColumn AllowEditing="False" FieldName="LastNotificationTime" Header="Last Time Updated" />
                     <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
-                    <dxg:TreeListColumn AllowEditing="False" FieldName="NodeType" Header="Node Type" />
-                    <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue" Fixed="Right" />
+                    <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
             </dxg:TreeListControl>
         </Grid>

@@ -27,7 +27,7 @@
             <dxdo:DockLayoutManager Grid.Row="0" AutoHideMode="Inline" FloatingMode="Desktop">
                 <dxdo:LayoutGroup AllowSplitters="True" Orientation="Vertical">
                     <dxdo:LayoutGroup x:Name="LayoutGroup" ItemHeight="7*" Orientation="Horizontal">
-                        <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="EcosimPro">
+                        <dxdo:LayoutPanel x:Name="EcosimProPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="EcosimPro">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>
@@ -65,7 +65,7 @@
                                 <views:DstVariablesControl  Grid.Row="1"></views:DstVariablesControl>
                             </Grid>
                         </dxdo:LayoutPanel>
-                        <dxdo:LayoutPanel MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
+                        <dxdo:LayoutPanel x:Name="HubPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>

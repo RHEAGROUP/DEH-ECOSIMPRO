@@ -140,6 +140,13 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
         }
 
         [Test]
+        public void VerifyReadNode()
+        {
+            Assert.DoesNotThrow(() => this.client.ReadNode(new NodeId(2)));
+            this.sessionHandler.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Once);
+        }
+
+        [Test]
         public void VerifyClose()
         {
             Assert.DoesNotThrow(() => this.client.CloseSession());

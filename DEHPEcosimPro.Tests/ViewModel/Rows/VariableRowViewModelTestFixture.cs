@@ -28,6 +28,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     using System.Collections.Generic;
     using System.Linq;
 
+    using CDP4Dal;
+
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using NUnit.Framework;
@@ -49,13 +52,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             {
                 NodeId = new ExpandedNodeId(id),
                 DisplayName = new LocalizedText("", name)
-            }, new DataValue() {Value = value}));
+            }, new DataValue() { Value = value, ServerTimestamp = DateTime.MinValue}));
 
-            Assert.AreEqual(NodeClass.Unspecified.ToString(), viewModel.NodeType);
             Assert.AreEqual(name, viewModel.Name);
-            Assert.AreEqual(id.ToString(), viewModel.Id);
+            Assert.AreEqual(null, viewModel.LastNotificationTime);
             Assert.AreEqual(value, viewModel.ActualValue);
-            Assert.IsNull(viewModel.LastNotificationTime);
             Assert.IsNotEmpty(viewModel.Values);
             Assert.AreEqual(value, viewModel.InitialValue);
             Assert.IsNull(viewModel.AverageValue);
@@ -72,11 +73,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             {
                 NodeId = new ExpandedNodeId(Guid.NewGuid()),
                 DisplayName = new LocalizedText("", "DummyVariable0")
-            }, new DataValue() { Value = .2 }));
+            }, new DataValue() { Value = 63.1, ServerTimestamp = DateTime.MinValue }));
 
-            var monitoredItem = new MonitoredItem();
+            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent()
+            {
+                TimeStamp = DateTime.MinValue.AddDays(1), Id = viewModel.Reference.NodeId.Identifier, Value = 20.9
+            });
             
-            Assert.Throws<NullReferenceException>(() => viewModel.OnNotification(monitoredItem, null));
+            Assert.AreEqual(2, viewModel.Values.Count);
+            Assert.AreEqual(42, viewModel.AverageValue);
+
+            Assert.Throws<NullReferenceException>(() => _ = new OpcVariableChangedEvent(new MonitoredItem()));
         }
 
         [Test]
@@ -88,11 +95,22 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 DisplayName = new LocalizedText("", "DummyVariable0")
             }, new DataValue() { Value = .2 }));
 
-            var newValues = new List<double>() { 131234, .01001023012f, 2u, 12312.4323423, 0.42e2, .09009, 2ul };
+            var newValues = new List<(object Value, DateTime When)>()
+            {
+                (131234, DateTime.MinValue.AddDays(1)), 
+                (-143298.5224323, DateTime.MinValue.AddDays(1)),
+                (2u, DateTime.MinValue.AddDays(1)),
+                (44.87613, DateTime.MinValue.AddDays(1)),
+                (0.42e2, DateTime.MinValue.AddDays(1)),
+                (.12387, DateTime.MinValue.AddDays(1)),
+                (2ul, DateTime.MinValue.AddDays(1))
+            };
 
-            viewModel.Values.AddRange(newValues.Cast<object>());
+            viewModel.Values.AddRange(newValues);
 
-            Assert.AreEqual((newValues.Sum() + .2) / (newValues.Count + 1), viewModel.ComputeAverageValue());
+            Assert.AreEqual(-1496.6653040374986d, viewModel.ComputeAverageValue());
+            viewModel.Values.Add(("15%", DateTime.MinValue.AddDays(2)));
+            Assert.AreEqual("-", viewModel.ComputeAverageValue());
         }
     }
 }

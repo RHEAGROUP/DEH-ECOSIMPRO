@@ -202,7 +202,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <param name="deleteSubscription">An assert whether to delete subscriptions</param>
         public void CloseSession(bool deleteSubscription = true)
         {
-            this.Session.Close();
+            this.Session?.Close();
         }
 
         /// <summary>

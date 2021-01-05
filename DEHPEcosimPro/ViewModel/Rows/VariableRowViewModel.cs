@@ -24,9 +24,14 @@
 
 namespace DEHPEcosimPro.ViewModel.Rows
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reactive.Linq;
 
+    using CDP4Dal;
+
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Views;
 
     using Opc.Ua;
@@ -50,20 +55,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         private readonly DataValue data;
 
         /// <summary>
-        /// Backing field for <see cref="Id"/>
-        /// </summary>
-        private string id;
-
-        /// <summary>
-        /// Gets the unique identifier of the represented reference
-        /// </summary>
-        public string Id
-        {
-            get => this.id;
-            set => this.RaiseAndSetIfChanged(ref this.id, value);
-        }
-        
-        /// <summary>
         /// Backing field for <see cref="Name"/>
         /// </summary>
         private string name;
@@ -80,7 +71,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Gets the values that the represented variable has held
         /// </summary>
-        public List<object> Values { get; } = new List<object>();
+        public List<(object Value, DateTime TimeStamp)> Values { get; } = new List<(object Value, DateTime TimeStamp)>();
 
         /// <summary>
         /// Backing field for <see cref="InitialValue"/>
@@ -139,20 +130,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="NodeType"/>
-        /// </summary>
-        private string nodeType;
-
-        /// <summary>
-        /// Gets the value of the represented reference
-        /// </summary>
-        public string NodeType
-        {
-            get => this.nodeType;
-            set => this.RaiseAndSetIfChanged(ref this.nodeType, value);
-        }
-
-        /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
@@ -162,6 +139,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.Reference = referenceDescriptionValue;
             this.data = dataValue;
             this.SetProperties();
+
+            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
+                .Where(x => x.Id == this.Reference.NodeId.Identifier && x.TimeStamp > this.Values.Last().TimeStamp)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.OnNotification);
         }
 
         /// <summary>
@@ -175,60 +157,44 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
-                this.Values.Add(this.data.Value);
+                this.Values.Add((this.data.Value, this.data.ServerTimestamp));
             }
-
-            this.Id = this.Reference.NodeId.Identifier.ToString();
-            this.NodeType = this.Reference.NodeClass.ToString();
         }
-
+        
         /// <summary>
-        /// Occurs when the opc server gets an update when the represented variable reference has been subscribed to
+        /// Occurs when the opc server sends an update when the represented variable reference has been subscribed to
         /// </summary>
-        /// <param name="monitoredItem">The <see cref="MonitoredItem"/></param>
-        /// <param name="e">The <see cref="MonitoredItemNotificationEventArgs"/></param>
-        public void OnNotification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs e)
+        private void OnNotification(OpcVariableChangedEvent update)
         {
-            var value = (monitoredItem.LastValue as MonitoredItemNotification)?.Value;
-            var notificationTime = monitoredItem.Subscription.LastNotificationTime.ToString("T");
-
-            if (notificationTime != this.LastNotificationTime)
-            {
-                this.Values.Add(value);
-                this.ActualValue = value;
-                this.AverageValue = this.ComputeAverageValue();
-            }
-
-            this.actualValue = value;
-            this.LastNotificationTime = this.lastNotificationTime;
+            this.Values.Add((update.Value, update.TimeStamp));
+            this.ActualValue = update.Value;
+            this.AverageValue = this.ComputeAverageValue();
+        
+            this.actualValue = update.Value;
+            this.LastNotificationTime = update.TimeStamp.ToLongTimeString();
         }
 
         /// <summary>
-        /// Computes the average value for this represented variable
-        /// </summary>
-        /// <returns>An <see cref="object"/> holding the average</returns>
+            /// Computes the average value for this represented variable
+            /// </summary>
+            /// <returns>An <see cref="object"/> holding the average</returns>
         public object ComputeAverageValue()
         {
-            if (this.Values.All(x => x switch
+            var valuesInDouble = new List<double>();
+
+            foreach (var value in this.Values.Select(x => x.Value))
             {
-                sbyte _ => true,
-                byte _ => true,
-                short _ => true,
-                ushort _ => true,
-                int _ => true,
-                uint _ => true,
-                long _ => true,
-                ulong _ => true,
-                float _ => true,
-                double _ => true,
-                decimal _ => true,
-                _ => false
-            }))
-            {
-                return this.Values.Cast<double>().Sum() / this.Values.Count;
+                if (double.TryParse(value.ToString(), out var valueInDouble))
+                {
+                    valuesInDouble.Add(valueInDouble);
+                }
+                else
+                {
+                    return "-";
+                }
             }
 
-            return "-";
+            return valuesInDouble.Sum() / this.Values.Count;
         }
     }
 }
