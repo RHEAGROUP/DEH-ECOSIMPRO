@@ -48,8 +48,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         {
             this.dstController = new Mock<IDstController>();
 
-            this.dstController.Setup(x => x.AddSubscription(
-                It.IsAny<ReferenceDescription>(), It.IsAny<MonitoredItemNotificationEventHandler>()));
+            this.dstController.Setup(x => x.AddSubscription(It.IsAny<ReferenceDescription>()));
             
             this.dstController.Setup(x => x.Variables).Returns(
                 new List<(ReferenceDescription Reference, DataValue Value)>()
@@ -85,8 +84,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.viewModel.UpdateProperties();
             Assert.AreEqual(3, this.viewModel.Variables.Count);
 
-            this.dstController.Verify(x => x.AddSubscription(
-                It.IsAny<ReferenceDescription>(), It.IsAny<MonitoredItemNotificationEventHandler>()), Times.Exactly(3));
+            this.dstController.Verify(x => x.AddSubscription(It.IsAny<ReferenceDescription>()), Times.Exactly(3));
             
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.UpdateProperties();

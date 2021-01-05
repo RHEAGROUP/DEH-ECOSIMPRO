@@ -270,7 +270,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// </summary>
         /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
         /// <param name="onNotification">A event handler to call back on Notification</param>
-        public void AddSubscription(NodeId nodeId, MonitoredItemNotificationEventHandler onNotification = null)
+        public void AddSubscription(NodeId nodeId)
         {
             var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
 
@@ -282,7 +282,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
                 }
             };
 
-            list.ForEach(item => item.Notification += onNotification ?? this.OnNotification);
+            list.ForEach(item => item.Notification += this.OnNotification);
             subscription.AddItems(list);
             this.AddSubscription(subscription);
         }

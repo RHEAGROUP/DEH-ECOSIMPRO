@@ -88,10 +88,10 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.DoesNotThrow(() =>
             {
                 this.controller.AddSubscription(new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()) });
-            this.controller.AddSubscription(new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid())}, (item, args) => { });
+            this.controller.AddSubscription(new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid())});
             });
 
-            this.opcClient.Verify(x => x.AddSubscription(It.IsAny<NodeId>(), It.IsAny<MonitoredItemNotificationEventHandler>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.AddSubscription(It.IsAny<NodeId>()), Times.Exactly(2));
 
             this.controller.ClearSubscriptions();
             this.opcSessionHandler.Verify(x => x.ClearSubscriptions(), Times.Once);

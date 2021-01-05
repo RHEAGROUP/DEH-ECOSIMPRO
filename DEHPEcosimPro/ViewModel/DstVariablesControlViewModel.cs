@@ -101,7 +101,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             foreach (var variable in this.Variables)
             {
-                this.dstController.AddSubscription(variable.Reference, null);
+                this.dstController.AddSubscription(variable.Reference);
             }
         }
     }

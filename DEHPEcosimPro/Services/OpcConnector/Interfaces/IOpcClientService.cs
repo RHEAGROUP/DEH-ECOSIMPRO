@@ -65,20 +65,12 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// Closes the <see cref="Session"/>
         /// </summary>
         void CloseSession();
-
-        ///// <summary>
-        ///// Adds a subscription based on the attributeId to monitor
-        ///// </summary>
-        ///// <param name="attributeId">The attribute Id of the node to monitor</param>
-        ///// <param name="onNotification">A event handler to call back on Notification</param>
-        //void AddSubscription(uint attributeId, MonitoredItemNotificationEventHandler onNotification = null);
-
+        
         /// <summary>
         /// Adds a subscription based on the nodeId to monitor
         /// </summary>
         /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
-        void AddSubscription(NodeId nodeId, MonitoredItemNotificationEventHandler onNotification = null);
+        void AddSubscription(NodeId nodeId);
         
         /// <summary>
         /// Calls the specified method and returns the output arguments.

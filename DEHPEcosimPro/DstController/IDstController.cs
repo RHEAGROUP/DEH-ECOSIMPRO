@@ -68,8 +68,7 @@ namespace DEHPEcosimPro.DstController
         /// Adds one subscription for the <paramref name="reference"/>
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/></param>
-        /// <param name="eventHandler">The <see cref="MonitoredItemNotificationEventHandler"/></param>
-        void AddSubscription(ReferenceDescription reference, MonitoredItemNotificationEventHandler eventHandler = null);
+        void AddSubscription(ReferenceDescription reference);
 
         /// <summary>
         /// Removes all active subscriptions from the session.

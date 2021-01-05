@@ -31,11 +31,9 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
-
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
 
     using ReactiveUI;
 
@@ -140,10 +138,9 @@ namespace DEHPEcosimPro.DstController
         /// Adds one subscription for the <paramref name="reference"/>
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/></param>
-        /// <param name="eventHandler">The <see cref="MonitoredItemNotificationEventHandler"/></param>
-        public void AddSubscription(ReferenceDescription reference, MonitoredItemNotificationEventHandler eventHandler = null)
+        public void AddSubscription(ReferenceDescription reference)
         {
-            this.opcClientService.AddSubscription((NodeId)reference.NodeId, eventHandler);
+            this.opcClientService.AddSubscription((NodeId)reference.NodeId);
         }
 
         /// <summary>
