@@ -24,10 +24,31 @@
 
 namespace DEHPEcosimPro.ViewModel.Interfaces
 {
+    using System;
+
     /// <summary>
     /// Interface definition for <see cref="DstBrowserHeaderViewModel"/>
     /// </summary>
     public interface IDstBrowserHeaderViewModel
     {
+        /// <summary>
+        /// Gets or sets the URI of the connected data source
+        /// </summary>
+        string ServerAddress { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time, in milliseconds, between which data is recorded
+        /// </summary>
+        int SamplingInterval { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total number of variables in the open session
+        /// </summary>
+        int VariablesCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date/time from which the server is up
+        /// </summary>
+        DateTime ServerUpFrom { get; set; }
     }
 }

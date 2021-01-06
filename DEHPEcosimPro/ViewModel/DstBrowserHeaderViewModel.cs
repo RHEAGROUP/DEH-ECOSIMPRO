@@ -24,6 +24,8 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
+    using System;
+
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
@@ -40,9 +42,77 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private readonly IDstController dstController;
 
+        /// <summary>
+        /// Backing field for <see cref="ServerAddress"/>
+        /// </summary>
+        private string serverAddress;
+
+        /// <summary>
+        /// Gets or sets the URI of the connected data source
+        /// </summary>
+        public string ServerAddress
+        {
+            get => this.serverAddress;
+            set => this.serverAddress = value;
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SamplingInterval"/>
+        /// </summary>
+        private int samplingInterval;
+
+        /// <summary>
+        /// Gets or sets the time, in milliseconds, between which data is recorded
+        /// </summary>
+        public int SamplingInterval
+        {
+            get => this.samplingInterval;
+            set => this.samplingInterval = value;
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="VariablesCount"/>
+        /// </summary>
+        private int variablesCount;
+
+        /// <summary>
+        /// Gets or sets the total number of variables in the open session
+        /// </summary>
+        public int VariablesCount
+        {
+            get => this.variablesCount;
+            set => this.variablesCount = value;
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="ServerUpFrom"/> 
+        /// </summary>
+        private DateTime serverUpFrom;
+
+        /// <summary>
+        /// Gets or sets the date and time from which the server has been up and running
+        /// </summary>
+        public DateTime ServerUpFrom
+        {
+            get => this.serverUpFrom;
+            set => this.serverUpFrom = value;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DstBrowserHeaderViewModel"/>
+        /// </summary>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
         public DstBrowserHeaderViewModel(IDstController dstController)
         {
             this.dstController = dstController;
+        }
+
+        /// <summary>
+        /// Updates the view model's properties
+        /// </summary>
+        private void UpdateProperties()
+        {
+
         }
     }
 }
