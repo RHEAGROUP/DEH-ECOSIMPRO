@@ -49,6 +49,11 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// <summary>
         /// Gets or sets the date/time from which the server is up
         /// </summary>
-        DateTime ServerUpFrom { get; set; }
+        DateTime? ServerStartTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current date/time of the server
+        /// </summary>
+        DateTime? CurrentServerTime { get; set; }
     }
 }

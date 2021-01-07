@@ -26,8 +26,9 @@ namespace DEHPEcosimPro.DstController
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
-    
+
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
@@ -72,10 +73,20 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// The endpoint url of the currently open session
+        /// </summary>
+        public string ServerAddress => this.opcClientService.EndpointUrl;
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
+        /// </summary>
+        public int RefreshInterval => this.opcClientService.RefreshInterval;
+
+        /// <summary>
         /// Gets the references variables available from the connected OPC server
         /// </summary>
         public IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; private set; } = new List<(ReferenceDescription, DataValue)>();
-        
+
         /// <summary>
         /// Gets the Methods available from the connected OPC server
         /// </summary>
@@ -110,7 +121,7 @@ namespace DEHPEcosimPro.DstController
                         {
                             this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId)reference.NodeId)));
                         }
-                        
+
                         else if (reference.NodeClass == NodeClass.Method)
                         {
                             this.Methods.Add(reference);
@@ -135,12 +146,52 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Reads and returns the server start time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.StartTime node was not found</returns>
+        public DateTime? GetServerStartTime()
+        {
+            var serverStartTimeNode = this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_StartTime);
+            if (this.IsSessionOpen && serverStartTimeNode != null)
+            {
+                return (DateTime)serverStartTimeNode.Value;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Reads and returns the current server time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
+        public DateTime? GetCurrentServerTime()
+        {
+            var currentServerTimeNode = this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_CurrentTime);
+            if (this.IsSessionOpen && currentServerTimeNode != null)
+            {
+                return (DateTime)currentServerTimeNode.Value;
+
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/></param>
+        public void AddSubscription(NodeId nodeId)
+        {
+            this.opcClientService.AddSubscription(nodeId);
+        }
+
+        /// <summary>
         /// Adds one subscription for the <paramref name="reference"/>
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/></param>
         public void AddSubscription(ReferenceDescription reference)
         {
-            this.opcClientService.AddSubscription((NodeId)reference.NodeId);
+            this.AddSubscription((NodeId)reference.NodeId);
         }
 
         /// <summary>

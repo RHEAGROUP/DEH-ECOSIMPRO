@@ -25,11 +25,15 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Reactive.Linq;
+
+    using CDP4Dal;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
-
+    using Opc.Ua;
     using ReactiveUI;
 
     /// <summary>
@@ -48,12 +52,17 @@ namespace DEHPEcosimPro.ViewModel
         private string serverAddress;
 
         /// <summary>
+        /// The <see cref="NodeId"/> of the ServerStatus.CurrentTime node in an OPC session
+        /// </summary>
+        private readonly NodeId currentServerTimeNodeId = new NodeId(Variables.Server_ServerStatus_CurrentTime);
+
+        /// <summary>
         /// Gets or sets the URI of the connected data source
         /// </summary>
         public string ServerAddress
         {
             get => this.serverAddress;
-            set => this.serverAddress = value;
+            set => this.RaiseAndSetIfChanged(ref this.serverAddress, value);
         }
 
         /// <summary>
@@ -67,7 +76,7 @@ namespace DEHPEcosimPro.ViewModel
         public int SamplingInterval
         {
             get => this.samplingInterval;
-            set => this.samplingInterval = value;
+            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
         }
 
         /// <summary>
@@ -81,21 +90,35 @@ namespace DEHPEcosimPro.ViewModel
         public int VariablesCount
         {
             get => this.variablesCount;
-            set => this.variablesCount = value;
+            set => this.RaiseAndSetIfChanged(ref this.variablesCount, value);
         }
 
         /// <summary>
-        /// Backing field for <see cref="ServerUpFrom"/> 
+        /// Backing field for <see cref="ServerStartTime"/> 
         /// </summary>
-        private DateTime serverUpFrom;
+        private DateTime? serverStartTime;
 
         /// <summary>
-        /// Gets or sets the date and time from which the server has been up and running
+        /// Gets or sets the date and time, in UTC, from which the server has been up and running
         /// </summary>
-        public DateTime ServerUpFrom
+        public DateTime? ServerStartTime
         {
-            get => this.serverUpFrom;
-            set => this.serverUpFrom = value;
+            get => this.serverStartTime;
+            set => this.RaiseAndSetIfChanged(ref this.serverStartTime, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="CurrentServerTime"/> 
+        /// </summary>
+        private DateTime? currentServerTime;
+
+        /// <summary>
+        /// Gets or sets the current date/time, in UTC, of the server
+        /// </summary>
+        public DateTime? CurrentServerTime
+        {
+            get => this.currentServerTime;
+            set => this.RaiseAndSetIfChanged(ref this.currentServerTime, value);
         }
 
         /// <summary>
@@ -105,14 +128,37 @@ namespace DEHPEcosimPro.ViewModel
         public DstBrowserHeaderViewModel(IDstController dstController)
         {
             this.dstController = dstController;
+
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen).ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateProperties);
+
+            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => x.Id == this.currentServerTimeNodeId.Identifier)
+                .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
         }
 
         /// <summary>
         /// Updates the view model's properties
         /// </summary>
-        private void UpdateProperties()
+        private void UpdateProperties(bool isSessionOpen)
         {
+            if (!isSessionOpen)
+            {
+                this.ServerAddress = string.Empty;
+                this.SamplingInterval = 0;
+                this.VariablesCount = 0;
+                this.ServerStartTime = null;
+                this.CurrentServerTime = null;
+            }
+            else
+            {
+                this.ServerAddress = this.dstController.ServerAddress;
+                this.SamplingInterval = this.dstController.RefreshInterval;
+                this.VariablesCount = this.dstController.Variables.Count;
+                this.ServerStartTime = this.dstController.GetServerStartTime();
+                this.CurrentServerTime = this.dstController.GetCurrentServerTime();
 
+                this.dstController.AddSubscription(this.currentServerTimeNodeId);
+            }
         }
     }
 }

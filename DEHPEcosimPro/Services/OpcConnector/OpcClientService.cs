@@ -77,17 +77,17 @@ namespace DEHPEcosimPro.Services.OpcConnector
         private readonly IOpcSessionReconnectHandler reconnectHandler;
 
         /// <summary>
-        /// The endpoint url
-        /// </summary>
-        private string endpointUrl;
-
-        /// <summary>
         /// An assert whether the certificate should be auto accepted
         /// </summary>
         private bool autoAccept;
-            
+
         /// <summary>
-        /// The refresh interval for subscriptions in millisecond
+        /// The endpoint url
+        /// </summary>
+        public string EndpointUrl { get; private set; }
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
         /// </summary>
         public int RefreshInterval { get; set; } = 1000;
 
@@ -132,7 +132,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>A <see cref="Task"/></returns>
         public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null)
         {
-            this.endpointUrl = endpoint;
+            this.EndpointUrl = endpoint;
             this.autoAccept = autoAcceptConnection;
 
             try
@@ -157,11 +157,11 @@ namespace DEHPEcosimPro.Services.OpcConnector
             this.sessionHandler.CloseSession();
             this.References.Clear();
             this.OpcClientStatusCode = OpcClientStatusCode.Disconnected;
-            this.statusBarControl.Append($"Session from {this.endpointUrl} has been closed", StatusBarMessageSeverity.Warning);
+            this.statusBarControl.Append($"Session from {this.EndpointUrl} has been closed", StatusBarMessageSeverity.Warning);
         }
 
         /// <summary>
-        /// Opens a connection to the <see cref="endpointUrl"/>
+        /// Opens a connection to the <see cref="EndpointUrl"/>
         /// </summary>
         /// <param name="credential">The <see cref="IUserIdentity"/> to use to authenticate the connection</param>
         /// <returns>A <see cref="Task"/></returns>
@@ -172,7 +172,9 @@ namespace DEHPEcosimPro.Services.OpcConnector
 
             var application = new ApplicationInstance
             {
-                ApplicationName = "DEPHEcosimPro OPC-UA Client", ApplicationType = ApplicationType.Client, ConfigSectionName = "Resources/OpcClient"
+                ApplicationName = "DEPHEcosimPro OPC-UA Client",
+                ApplicationType = ApplicationType.Client,
+                ConfigSectionName = "Resources/OpcClient"
             };
 
             var configuration = await application.LoadApplicationConfiguration(false);
@@ -192,9 +194,9 @@ namespace DEHPEcosimPro.Services.OpcConnector
 
             configuration.CertificateValidator.CertificateValidation += this.CertificateValidator;
 
-            this.statusBarControl.Append($"Discovering endpoints of {this.endpointUrl}");
+            this.statusBarControl.Append($"Discovering endpoints of {this.EndpointUrl}");
             this.OpcClientStatusCode = OpcClientStatusCode.ErrorDiscoverEndpoints;
-            var selectedEndpoint = this.sessionHandler.SelectEndpoint(this.endpointUrl);
+            var selectedEndpoint = this.sessionHandler.SelectEndpoint(this.EndpointUrl);
 
             Logger.Info($"Selected endpoint uses: {selectedEndpoint.SecurityPolicyUri.Substring(selectedEndpoint.SecurityPolicyUri.LastIndexOf('#') + 1)}");
 
@@ -213,7 +215,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
             this.References = this.sessionHandler.FetchReferences(ObjectIds.ObjectsFolder);
 
             this.sessionHandler.Browse(ObjectIds.ObjectsFolder, ReferenceTypeIds.HierarchicalReferences, true,
-                (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var references);
+                (uint)NodeClass.Variable | (uint)NodeClass.Object | (uint)NodeClass.Method, out _, out var references);
 
             this.References = references;
             var additionalReferences = new ReferenceDescriptionCollection();
@@ -223,8 +225,8 @@ namespace DEHPEcosimPro.Services.OpcConnector
                 this.statusBarControl.Append($"{reference.DisplayName}, {reference.BrowseName}, {reference.NodeClass}");
 
                 this.sessionHandler.Browse(ExpandedNodeId.ToNodeId(reference.NodeId, this.sessionHandler.NamespaceUris),
-                    ReferenceTypeIds.HierarchicalReferences, true, 
-                    (uint) NodeClass.Variable | (uint) NodeClass.Object | (uint) NodeClass.Method, out _, out var referenceDescriptions);
+                    ReferenceTypeIds.HierarchicalReferences, true,
+                    (uint)NodeClass.Variable | (uint)NodeClass.Object | (uint)NodeClass.Method, out _, out var referenceDescriptions);
 
                 additionalReferences.AddRange(referenceDescriptions);
 
@@ -278,7 +280,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
             {
                 new MonitoredItem(subscription.DefaultItem)
                 {
-                    DisplayName = nodeId.Identifier.ToString(), StartNodeId = nodeId, SamplingInterval = this.RefreshInterval   
+                    DisplayName = nodeId.Identifier.ToString(), StartNodeId = nodeId, SamplingInterval = this.RefreshInterval
                 }
             };
 
@@ -327,7 +329,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         {
             return this.sessionHandler.ReadNode(nodeId);
         }
-        
+
         /// <summary>
         /// The <see cref="KeepAliveEventHandler"/> that is used to keep the <see cref="Opc.Ua.Client.Session"/> alive
         /// </summary>
@@ -397,7 +399,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
             {
                 return;
             }
-            
+
             e.Accept = this.autoAccept;
 
             this.statusBarControl.Append(this.autoAccept ? $"Accepted Certificate: {e.Certificate.Subject}" : $"Rejected Certificate: {e.Certificate.Subject}");

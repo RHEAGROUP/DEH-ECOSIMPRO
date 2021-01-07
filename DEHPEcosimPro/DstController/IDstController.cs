@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.DstController
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
@@ -39,6 +40,16 @@ namespace DEHPEcosimPro.DstController
         /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// </summary>
         bool IsSessionOpen { get; set; }
+
+        /// <summary>
+        /// The endpoint url of the currently open session
+        /// </summary>
+        string ServerAddress { get; }
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
+        /// </summary>
+        int RefreshInterval { get; }
 
         /// <summary>
         /// Gets the references variables available from the connected OPC server
@@ -63,6 +74,25 @@ namespace DEHPEcosimPro.DstController
         /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
         /// <returns>A <see cref="Task"/></returns>
         Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
+
+        /// <summary>
+        /// Reads and returns the server start time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.StartTime node was not found</returns>
+        DateTime? GetServerStartTime();
+
+        /// <summary>
+        /// Reads and returns the current server time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
+
+        DateTime? GetCurrentServerTime();
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/></param>
+        public void AddSubscription(NodeId nodeId);
 
         /// <summary>
         /// Adds one subscription for the <paramref name="reference"/>
