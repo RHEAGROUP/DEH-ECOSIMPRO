@@ -78,6 +78,8 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsEmpty(this.controller.Variables);
             Assert.IsNull(this.controller.References);
             Assert.IsEmpty(this.controller.Methods);
+            Assert.Null(this.controller.ServerAddress);
+            Assert.Zero(this.controller.RefreshInterval);
         }
 
         [Test]

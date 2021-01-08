@@ -96,7 +96,7 @@ namespace DEHPEcosimPro.ViewModel
 
             this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
 
-            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => x.Id == this.currentServerTimeNodeId.Identifier)
+            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => Equals(x.Id, this.currentServerTimeNodeId.Identifier))
                 .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
 
             var canCallServerMethods = this.WhenAnyValue(vm => vm.dstController.IsSessionOpen);

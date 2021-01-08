@@ -28,9 +28,13 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System.Collections.Generic;
     using System.Reactive.Concurrency;
 
+    using CDP4Dal;
+
+    using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel;
 
     using Moq;
@@ -117,7 +121,17 @@ namespace DEHPEcosimPro.Tests.ViewModel
         }
 
         [Test]
-        public void VerifyCanCallRunMethodCommand()
+        public void VerifyCurrentServerTimeSubscription()
+        {
+            var currentServerTimeNodeId = new NodeId(Variables.Server_ServerStatus_CurrentTime);
+
+            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent { Id = currentServerTimeNodeId.Identifier, Value = DateTime.Today });
+
+            Assert.AreEqual(DateTime.Today, this.viewModel.CurrentServerTime);
+        }
+
+        [Test]
+        public void VerifyCallRunMethodCommand()
         {
             Assert.IsFalse(this.viewModel.CallRunMethodCommand.CanExecute(null));
 
@@ -125,10 +139,25 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object);
 
             Assert.IsTrue(this.viewModel.CallRunMethodCommand.CanExecute(null));
+
+            this.viewModel.CallRunMethodCommand.Execute(null);
+            this.dstController.Verify(x => x.CallServerMethod("method_run"), Times.Once);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("No method was found")), StatusBarMessageSeverity.Error), Times.Once);
+
+            this.dstController.Setup(x => x.CallServerMethod("method_run")).Returns(new List<object>());
+            this.viewModel.CallRunMethodCommand.Execute(null);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("Method executed successfully")), StatusBarMessageSeverity.Info), Times.Once);
+
+            this.dstController.Setup(x => x.CallServerMethod("method_run")).Throws(new Exception("dummy-exception"));
+            this.viewModel.CallRunMethodCommand.Execute(null);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("dummy-exception")), StatusBarMessageSeverity.Error), Times.Once);
         }
 
         [Test]
-        public void VerifyCanCallResetMethodCommand()
+        public void VerifyCallResetMethodCommand()
         {
             Assert.IsFalse(this.viewModel.CallResetMethodCommand.CanExecute(null));
 
@@ -136,6 +165,21 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object);
 
             Assert.IsTrue(this.viewModel.CallResetMethodCommand.CanExecute(null));
+
+            this.viewModel.CallResetMethodCommand.Execute(null);
+            this.dstController.Verify(x => x.CallServerMethod("method_reset"), Times.Once);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("No method was found")), StatusBarMessageSeverity.Error), Times.Once);
+
+            this.dstController.Setup(x => x.CallServerMethod("method_reset")).Returns(new List<object>());
+            this.viewModel.CallResetMethodCommand.Execute(null);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("Method executed successfully")), StatusBarMessageSeverity.Info), Times.Once);
+
+            this.dstController.Setup(x => x.CallServerMethod("method_reset")).Throws(new Exception("dummy-exception"));
+            this.viewModel.CallResetMethodCommand.Execute(null);
+
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("dummy-exception")), StatusBarMessageSeverity.Error), Times.Once);
         }
     }
 }
