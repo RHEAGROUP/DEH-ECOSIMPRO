@@ -45,6 +45,11 @@ namespace DEHPEcosimPro.ViewModel
     public class DstBrowserHeaderViewModel : ReactiveObject, IDstBrowserHeaderViewModel
     {
         /// <summary>
+        /// The <see cref="NodeId"/> of the ServerStatus.CurrentTime node in an OPC session
+        /// </summary>
+        private readonly NodeId currentServerTimeNodeId = new NodeId(Variables.Server_ServerStatus_CurrentTime);
+
+        /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
@@ -60,32 +65,9 @@ namespace DEHPEcosimPro.ViewModel
         private string serverAddress;
 
         /// <summary>
-        /// The <see cref="NodeId"/> of the ServerStatus.CurrentTime node in an OPC session
-        /// </summary>
-        private readonly NodeId currentServerTimeNodeId = new NodeId(Variables.Server_ServerStatus_CurrentTime);
-
-        /// <summary>
-        /// Gets or sets the URI of the connected data source
-        /// </summary>
-        public string ServerAddress
-        {
-            get => this.serverAddress;
-            set => this.RaiseAndSetIfChanged(ref this.serverAddress, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="SamplingInterval"/>
         /// </summary>
         private int samplingInterval;
-
-        /// <summary>
-        /// Gets or sets the time, in milliseconds, between which data is recorded
-        /// </summary>
-        public int SamplingInterval
-        {
-            get => this.samplingInterval;
-            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
-        }
 
         /// <summary>
         /// Backing field for <see cref="VariablesCount"/>
@@ -93,51 +75,14 @@ namespace DEHPEcosimPro.ViewModel
         private int variablesCount;
 
         /// <summary>
-        /// Gets or sets the total number of variables in the open session
-        /// </summary>
-        public int VariablesCount
-        {
-            get => this.variablesCount;
-            set => this.RaiseAndSetIfChanged(ref this.variablesCount, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="ServerStartTime"/> 
         /// </summary>
         private DateTime? serverStartTime;
 
         /// <summary>
-        /// Gets or sets the date and time, in UTC, from which the server has been up and running
-        /// </summary>
-        public DateTime? ServerStartTime
-        {
-            get => this.serverStartTime;
-            set => this.RaiseAndSetIfChanged(ref this.serverStartTime, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="CurrentServerTime"/> 
         /// </summary>
         private DateTime? currentServerTime;
-
-        /// <summary>
-        /// Gets or sets the current date/time, in UTC, of the server
-        /// </summary>
-        public DateTime? CurrentServerTime
-        {
-            get => this.currentServerTime;
-            set => this.RaiseAndSetIfChanged(ref this.currentServerTime, value);
-        }
-
-        /// <summary>
-        /// <see cref="ReactiveCommand{T}"/> for calling the 'Run' server method
-        /// </summary>
-        public ReactiveCommand<object> CallRunMethodCommand { get; set; }
-
-        /// <summary>
-        /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
-        /// </summary>
-        public ReactiveCommand<object> CallResetMethodCommand { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DstBrowserHeaderViewModel"/>
@@ -162,6 +107,61 @@ namespace DEHPEcosimPro.ViewModel
             this.CallResetMethodCommand = ReactiveCommand.Create(canCallServerMethods);
             this.CallResetMethodCommand.Subscribe(_ => this.CallServerMethod("method_reset"));
         }
+
+        /// <summary>
+        /// Gets or sets the URI of the connected data source
+        /// </summary>
+        public string ServerAddress
+        {
+            get => this.serverAddress;
+            set => this.RaiseAndSetIfChanged(ref this.serverAddress, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the time, in milliseconds, between which data is recorded
+        /// </summary>
+        public int SamplingInterval
+        {
+            get => this.samplingInterval;
+            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the total number of variables in the open session
+        /// </summary>
+        public int VariablesCount
+        {
+            get => this.variablesCount;
+            set => this.RaiseAndSetIfChanged(ref this.variablesCount, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the date and time, in UTC, from which the server has been up and running
+        /// </summary>
+        public DateTime? ServerStartTime
+        {
+            get => this.serverStartTime;
+            set => this.RaiseAndSetIfChanged(ref this.serverStartTime, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the current date/time, in UTC, of the server
+        /// </summary>
+        public DateTime? CurrentServerTime
+        {
+            get => this.currentServerTime;
+            set => this.RaiseAndSetIfChanged(ref this.currentServerTime, value);
+        }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Run' server method
+        /// </summary>
+        public ReactiveCommand<object> CallRunMethodCommand { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
+        /// </summary>
+        public ReactiveCommand<object> CallResetMethodCommand { get; set; }
 
         /// <summary>
         /// Updates the view model's properties
@@ -204,6 +204,7 @@ namespace DEHPEcosimPro.ViewModel
             try
             {
                 var callMethodResult = this.dstController.CallServerMethod(methodBrowseName);
+
                 if (callMethodResult != null)
                 {
                     this.statusBarControlViewModel.Append($"Method executed successfully. {string.Join(", ", callMethodResult)}");
