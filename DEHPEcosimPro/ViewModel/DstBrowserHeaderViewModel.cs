@@ -149,8 +149,7 @@ namespace DEHPEcosimPro.ViewModel
             this.dstController = dstController;
             this.statusBarControlViewModel = statusBarControlViewModel;
 
-            this.WhenAnyValue(x => x.dstController.IsSessionOpen).ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateProperties);
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
 
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => x.Id == this.currentServerTimeNodeId.Identifier)
                 .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
@@ -167,9 +166,9 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Updates the view model's properties
         /// </summary>
-        private void UpdateProperties(bool isSessionOpen)
+        public void UpdateProperties()
         {
-            if (isSessionOpen)
+            if (this.dstController.IsSessionOpen)
             {
                 this.ServerAddress = this.dstController.ServerAddress;
                 this.SamplingInterval = this.dstController.RefreshInterval;
@@ -186,6 +185,8 @@ namespace DEHPEcosimPro.ViewModel
                 this.VariablesCount = 0;
                 this.ServerStartTime = null;
                 this.CurrentServerTime = null;
+
+                this.dstController.ClearSubscriptions();
             }
         }
 
@@ -195,9 +196,14 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="methodBrowseName">The BrowseName of the server method</param>
         private void CallServerMethod(string methodBrowseName)
         {
+            if (string.IsNullOrEmpty(methodBrowseName))
+            {
+                return;
+            }
+
             try
             {
-                var callMethodResult = this.dstController.CallServerMethod(methodBrowseName, string.Empty);
+                var callMethodResult = this.dstController.CallServerMethod(methodBrowseName);
                 if (callMethodResult != null)
                 {
                     this.statusBarControlViewModel.Append($"Method executed successfully. {string.Join(", ", callMethodResult)}");

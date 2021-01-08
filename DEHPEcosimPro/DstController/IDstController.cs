@@ -106,9 +106,8 @@ namespace DEHPEcosimPro.DstController
         /// Calls the specified method and returns the output arguments.
         /// </summary>
         /// <param name="methodBrowseName">The BrowseName of the server method</param>
-        /// <param name="arguments">The arguments to input</param>
         /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
-        IList<object> CallServerMethod(string methodBrowseName, params object[] arguments);
+        IList<object> CallServerMethod(string methodBrowseName);
 
         /// <summary>
         /// Removes all active subscriptions from the session.

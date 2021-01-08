@@ -152,10 +152,9 @@ namespace DEHPEcosimPro.DstController
         /// <returns>null if the session is closed or the ServerStatus.StartTime node was not found</returns>
         public DateTime? GetServerStartTime()
         {
-            var serverStartTimeNode = this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_StartTime);
-            if (this.IsSessionOpen && serverStartTimeNode != null)
+            if (this.IsSessionOpen)
             {
-                return (DateTime)serverStartTimeNode.Value;
+                return (DateTime?)this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_StartTime)?.Value;
             }
 
             return null;
@@ -167,11 +166,9 @@ namespace DEHPEcosimPro.DstController
         /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
         public DateTime? GetCurrentServerTime()
         {
-            var currentServerTimeNode = this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_CurrentTime);
-            if (this.IsSessionOpen && currentServerTimeNode != null)
+            if (this.IsSessionOpen)
             {
-                return (DateTime)currentServerTimeNode.Value;
-
+                return (DateTime?)this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_CurrentTime)?.Value;
             }
 
             return null;
@@ -199,9 +196,8 @@ namespace DEHPEcosimPro.DstController
         /// Calls the specified method and returns the output arguments.
         /// </summary>
         /// <param name="methodBrowseName">The BrowseName of the server method</param>
-        /// <param name="arguments">The arguments to input</param>
         /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
-        public IList<object> CallServerMethod(string methodBrowseName, params object[] arguments)
+        public IList<object> CallServerMethod(string methodBrowseName)
         {
             var serverMethodsNode = this.References.SingleOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
             var methodNode = this.Methods.SingleOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
