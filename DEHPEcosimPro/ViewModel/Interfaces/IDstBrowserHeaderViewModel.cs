@@ -26,6 +26,8 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
 {
     using System;
 
+    using ReactiveUI;
+
     /// <summary>
     /// Interface definition for <see cref="DstBrowserHeaderViewModel"/>
     /// </summary>
@@ -55,5 +57,15 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// Gets or sets the current date/time of the server
         /// </summary>
         DateTime? CurrentServerTime { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Run' server method
+        /// </summary>
+        ReactiveCommand<object> CallRunMethodCommand { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
+        /// </summary>
+        ReactiveCommand<object> CallResetMethodCommand { get; set; }
     }
 }

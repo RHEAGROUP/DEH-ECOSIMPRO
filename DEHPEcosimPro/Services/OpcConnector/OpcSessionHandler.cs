@@ -46,23 +46,23 @@ namespace DEHPEcosimPro.Services.OpcConnector
         private readonly IList<Subscription> subscriptions = new List<Subscription>();
 
         /// <summary>
-        /// Gets the <see cref="Opc.Ua.Client.Session"/>
+        /// Gets the OPC <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
-        public Session Session { get; private set; }
+        public Session OpcSession { get; private set; }
         
         /// <summary>
         /// Gets or Sets the default subscription for the session.
         /// </summary>
         public Subscription DefaultSubscription
         {
-            get => this.Session.DefaultSubscription;
-            set => this.Session.DefaultSubscription = value;
+            get => this.OpcSession.DefaultSubscription;
+            set => this.OpcSession.DefaultSubscription = value;
         }
 
         /// <summary>
         /// Gets the table of namespace uris known to the server.
         /// </summary>
-        public NamespaceTable NamespaceUris => this.Session.NamespaceUris;
+        public NamespaceTable NamespaceUris => this.OpcSession.NamespaceUris;
 
         /// <summary>
         /// Returns true if the session is not receiving keep alives.
@@ -71,7 +71,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// Set to true if the server does not respond for 2 times the KeepAliveInterval.
         /// Set to false is communication recovers.
         /// </remarks>
-        public bool KeepAliveStopped => this.Session.KeepAliveStopped;
+        public bool KeepAliveStopped => this.OpcSession.KeepAliveStopped;
 
         /// <summary>
         /// Raised when a keep alive arrives from the server or an error is detected.
@@ -83,8 +83,8 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// </remarks>
         public event KeepAliveEventHandler KeepAlive
         {
-            add => this.Session.KeepAlive += value;
-            remove => this.Session.KeepAlive -= value;
+            add => this.OpcSession.KeepAlive += value;
+            remove => this.OpcSession.KeepAlive -= value;
         }
     
         /// <summary>
@@ -94,7 +94,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>A <see cref="ReferenceDescriptionCollection"/></returns>
         public ReferenceDescriptionCollection FetchReferences(NodeId nodeId)
         {
-            return this.Session.FetchReferences(nodeId);
+            return this.OpcSession.FetchReferences(nodeId);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         public void Browse(NodeId nodeToBrowse, NodeId referenceTypeId, bool includeSubtypes, 
             uint nodeClassMask, out byte[] continuationPoint, out ReferenceDescriptionCollection references)
         {
-            this.Session.Browse(null, null, nodeToBrowse, 0u, BrowseDirection.Forward, referenceTypeId,
+            this.OpcSession.Browse(null, null, nodeToBrowse, 0u, BrowseDirection.Forward, referenceTypeId,
                 includeSubtypes, nodeClassMask, out continuationPoint, out references);
         }
 
@@ -128,7 +128,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         public async Task CreateSession(ApplicationConfiguration configuration, ConfiguredEndpoint endpoint, bool updateBeforeConnect, string sessionName,
             uint sessionTimeout, IUserIdentity identity, IList<string> preferredLocales)
         {
-            this.Session = await Session.Create(configuration, endpoint, updateBeforeConnect, sessionName, sessionTimeout, identity, preferredLocales);
+            this.OpcSession = await Session.Create(configuration, endpoint, updateBeforeConnect, sessionName, sessionTimeout, identity, preferredLocales);
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>An assert whether the removal whent ok</returns>
         public bool AddSubscription(Subscription subscription)
         {
-            var result = this.Session.AddSubscription(subscription);
+            var result = this.OpcSession.AddSubscription(subscription);
             subscription.Create();
             return result;
         }
@@ -150,7 +150,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>An assert whether the removal went ok</returns>
         public bool RemoveSubscription(Subscription subscription)
         {
-            if (this.Session.RemoveSubscription(subscription))
+            if (this.OpcSession.RemoveSubscription(subscription))
             {
                 this.subscriptions.Remove(subscription);
                 return true;
@@ -165,7 +165,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>An assert whether the removal went ok</returns>
         public bool ClearSubscriptions()
         {
-            var result = this.Session?.RemoveSubscriptions(this.subscriptions) == true;
+            var result = this.OpcSession?.RemoveSubscriptions(this.subscriptions) == true;
             
             if (result)
             {
@@ -184,7 +184,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>The <see cref="IList{T}"/> of output argument values.</returns>
         public IList<object> CallMethod(NodeId objectId, NodeId methodId, params object[] arguments)
         {
-            return this.Session.Call(objectId, methodId, arguments);
+            return this.OpcSession.Call(objectId, methodId, arguments);
         }
 
         /// <summary>
@@ -193,16 +193,16 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <param name="reconnectHandler">A <see cref="IOpcSessionReconnectHandler"/></param>
         public void SetSession(IOpcSessionReconnectHandler reconnectHandler)
         {
-            this.Session = reconnectHandler?.Session;
+            this.OpcSession = reconnectHandler?.Session;
         }
 
         /// <summary>
-        /// Closes the <see cref="Session"/> and deletes subscription
+        /// Closes the <see cref="OpcSession"/> and deletes subscription
         /// </summary>
         /// <param name="deleteSubscription">An assert whether to delete subscriptions</param>
         public void CloseSession(bool deleteSubscription = true)
         {
-            this.Session?.Close();
+            this.OpcSession?.Close();
         }
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <returns>The <see cref="DataValue"/></returns>
         public DataValue ReadNode(NodeId nodeId)
         {
-            return this.Session.ReadValue(nodeId);
+            return this.OpcSession.ReadValue(nodeId);
         }
 
         /// <summary>

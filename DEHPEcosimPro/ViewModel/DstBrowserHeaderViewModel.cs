@@ -29,6 +29,9 @@ namespace DEHPEcosimPro.ViewModel
 
     using CDP4Dal;
 
+    using DEHPCommon.Enumerators;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
@@ -45,6 +48,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+
+        /// <summary>
+        /// The <see cref="IStatusBarControlViewModel"/> instance
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBarControlViewModel;
 
         /// <summary>
         /// Backing field for <see cref="ServerAddress"/>
@@ -122,18 +130,38 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Run' server method
+        /// </summary>
+        public ReactiveCommand<object> CallRunMethodCommand { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
+        /// </summary>
+        public ReactiveCommand<object> CallResetMethodCommand { get; set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DstBrowserHeaderViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public DstBrowserHeaderViewModel(IDstController dstController)
+        /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
+        public DstBrowserHeaderViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlViewModel)
         {
             this.dstController = dstController;
+            this.statusBarControlViewModel = statusBarControlViewModel;
 
             this.WhenAnyValue(x => x.dstController.IsSessionOpen).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.UpdateProperties);
 
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => x.Id == this.currentServerTimeNodeId.Identifier)
                 .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
+
+            var canCallServerMethods = this.WhenAnyValue(vm => vm.dstController.IsSessionOpen);
+
+            this.CallRunMethodCommand = ReactiveCommand.Create(canCallServerMethods);
+            this.CallRunMethodCommand.Subscribe(_ => this.CallServerMethod("method_run"));
+
+            this.CallResetMethodCommand = ReactiveCommand.Create(canCallServerMethods);
+            this.CallResetMethodCommand.Subscribe(_ => this.CallServerMethod("method_reset"));
         }
 
         /// <summary>
@@ -141,15 +169,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void UpdateProperties(bool isSessionOpen)
         {
-            if (!isSessionOpen)
-            {
-                this.ServerAddress = string.Empty;
-                this.SamplingInterval = 0;
-                this.VariablesCount = 0;
-                this.ServerStartTime = null;
-                this.CurrentServerTime = null;
-            }
-            else
+            if (isSessionOpen)
             {
                 this.ServerAddress = this.dstController.ServerAddress;
                 this.SamplingInterval = this.dstController.RefreshInterval;
@@ -158,6 +178,38 @@ namespace DEHPEcosimPro.ViewModel
                 this.CurrentServerTime = this.dstController.GetCurrentServerTime();
 
                 this.dstController.AddSubscription(this.currentServerTimeNodeId);
+            }
+            else
+            {
+                this.ServerAddress = string.Empty;
+                this.SamplingInterval = 0;
+                this.VariablesCount = 0;
+                this.ServerStartTime = null;
+                this.CurrentServerTime = null;
+            }
+        }
+
+        /// <summary>
+        /// Calls a server method and reports its execution state to the represented status bar
+        /// </summary>
+        /// <param name="methodBrowseName">The BrowseName of the server method</param>
+        private void CallServerMethod(string methodBrowseName)
+        {
+            try
+            {
+                var callMethodResult = this.dstController.CallServerMethod(methodBrowseName, string.Empty);
+                if (callMethodResult != null)
+                {
+                    this.statusBarControlViewModel.Append($"Method executed successfully. {string.Join(", ", callMethodResult)}");
+                }
+                else
+                {
+                    this.statusBarControlViewModel.Append($"No method was found with the BrowseName '{methodBrowseName}'", StatusBarMessageSeverity.Error);
+                }
+            }
+            catch (Exception exception)
+            {
+                this.statusBarControlViewModel.Append($"Executing method {methodBrowseName} failed: {exception.Message}", StatusBarMessageSeverity.Error);
             }
         }
     }

@@ -36,9 +36,9 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
     public interface IOpcSessionHandler
     {
         /// <summary>
-        /// Gets the <see cref="Opc.Ua.Client.Session"/>
+        /// Gets the OPC <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
-        Session Session { get; }
+        Session OpcSession { get; }
 
         /// <summary>
         /// Gets or Sets the default subscription for the session.
@@ -139,7 +139,7 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         void SetSession(IOpcSessionReconnectHandler reconnectHandler);
 
         /// <summary>
-        /// Closes the <see cref="OpcSessionHandler.Session"/> and deletes subscription
+        /// Closes the <see cref="OpcSessionHandler.OpcSession"/> and deletes subscription
         /// </summary>
         /// <param name="deleteSubscription">An assert whether to delete subscriptions</param>
         void CloseSession(bool deleteSubscription = true);

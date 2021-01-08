@@ -237,41 +237,12 @@ namespace DEHPEcosimPro.Services.OpcConnector
             }
 
             this.References.AddRange(additionalReferences);
-            this.AddSubscription();
-        }
-
-        /// <summary>
-        /// Creates the default subscription which monitors the server time
-        /// </summary>
-        private void AddSubscription()
-        {
-            var subscription = new Subscription(this.sessionHandler.DefaultSubscription);
-
-            var list = new List<MonitoredItem>
-            {
-                new MonitoredItem(subscription.DefaultItem)
-                {
-                    DisplayName = "ServerStatusCurrentTime", StartNodeId = $"i={Variables.Server_ServerStatus_CurrentTime}"
-                }
-            };
-
-            list.ForEach(i => i.Notification += (item, e) =>
-            {
-                foreach (var value in item.DequeueValues())
-                {
-                    this.statusBarControl.Append($"{item.DisplayName}: {value.Value}, {value.SourceTimestamp}, {value.StatusCode}, {e.NotificationValue.TypeId}");
-                }
-            });
-
-            subscription.AddItems(list);
-            this.AddSubscription(subscription);
         }
 
         /// <summary>
         /// Adds a subscription based on the nodeId to monitor
         /// </summary>
         /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
-        /// <param name="onNotification">A event handler to call back on Notification</param>
         public void AddSubscription(NodeId nodeId)
         {
             var subscription = new Subscription(this.sessionHandler.DefaultSubscription);

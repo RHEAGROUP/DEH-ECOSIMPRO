@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.DstController
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using DEHPEcosimPro.Services.OpcConnector;
+
     using Opc.Ua;
     using Opc.Ua.Client;
 
@@ -37,7 +39,7 @@ namespace DEHPEcosimPro.DstController
     public interface IDstController
     {
         /// <summary>
-        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         bool IsSessionOpen { get; set; }
 
@@ -101,12 +103,20 @@ namespace DEHPEcosimPro.DstController
         void AddSubscription(ReferenceDescription reference);
 
         /// <summary>
+        /// Calls the specified method and returns the output arguments.
+        /// </summary>
+        /// <param name="methodBrowseName">The BrowseName of the server method</param>
+        /// <param name="arguments">The arguments to input</param>
+        /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
+        IList<object> CallServerMethod(string methodBrowseName, params object[] arguments);
+
+        /// <summary>
         /// Removes all active subscriptions from the session.
         /// </summary>
         void ClearSubscriptions();
 
         /// <summary>
-        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// Closes the <see cref="OpcSessionHandler.OpcSession"/>
         /// </summary>
         void CloseSession();
     }

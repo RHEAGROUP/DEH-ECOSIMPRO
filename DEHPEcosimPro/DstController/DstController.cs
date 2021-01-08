@@ -32,6 +32,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
 
     using Opc.Ua;
@@ -64,7 +65,7 @@ namespace DEHPEcosimPro.DstController
         private bool isSessionOpen;
 
         /// <summary>
-        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         public bool IsSessionOpen
         {
@@ -195,6 +196,28 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Calls the specified method and returns the output arguments.
+        /// </summary>
+        /// <param name="methodBrowseName">The BrowseName of the server method</param>
+        /// <param name="arguments">The arguments to input</param>
+        /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
+        public IList<object> CallServerMethod(string methodBrowseName, params object[] arguments)
+        {
+            var serverMethodsNode = this.References.SingleOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
+            var methodNode = this.Methods.SingleOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
+
+            if (serverMethodsNode != null && methodNode != null)
+            {
+                return this.opcClientService.CallMethod(
+                    new NodeId(serverMethodsNode.Identifier, serverMethodsNode.NamespaceIndex),
+                    new NodeId(methodNode.Identifier, methodNode.NamespaceIndex),
+                    string.Empty);
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Removes all active subscriptions from the session.
         /// </summary>
         public void ClearSubscriptions()
@@ -203,7 +226,7 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
-        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// Closes the <see cref="OpcSessionHandler.OpcSession"/>
         /// </summary>
         public void CloseSession()
         {
