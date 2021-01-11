@@ -125,9 +125,9 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             var identifier = (NodeId)this.referenceDescriptionCollection.First().NodeId;
             Assert.DoesNotThrow(() => this.client.AddSubscription(identifier));
             this.sessionHandler.Setup(x => x.AddSubscription(It.IsAny<Subscription>())).Throws<InvalidOperationException>();
-            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(18));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(17));
             Assert.DoesNotThrow(() => this.client.AddSubscription(identifier));
-            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(20));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(19));
             var errorMessage = $"Error creating subscription for attribute id = 13";
             this.statusBarViewModel.Verify(x => x.Append(errorMessage, StatusBarMessageSeverity.Error), Times.Exactly(1));
         }

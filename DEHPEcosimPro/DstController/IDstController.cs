@@ -24,8 +24,11 @@
 
 namespace DEHPEcosimPro.DstController
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+
+    using DEHPEcosimPro.Services.OpcConnector;
 
     using Opc.Ua;
     using Opc.Ua.Client;
@@ -36,9 +39,19 @@ namespace DEHPEcosimPro.DstController
     public interface IDstController
     {
         /// <summary>
-        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         bool IsSessionOpen { get; set; }
+
+        /// <summary>
+        /// The endpoint url of the currently open session
+        /// </summary>
+        string ServerAddress { get; }
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
+        /// </summary>
+        int RefreshInterval { get; }
 
         /// <summary>
         /// Gets the references variables available from the connected OPC server
@@ -65,10 +78,36 @@ namespace DEHPEcosimPro.DstController
         Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
 
         /// <summary>
+        /// Reads and returns the server start time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.StartTime node was not found</returns>
+        DateTime? GetServerStartTime();
+
+        /// <summary>
+        /// Reads and returns the current server time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
+
+        DateTime? GetCurrentServerTime();
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/></param>
+        public void AddSubscription(NodeId nodeId);
+
+        /// <summary>
         /// Adds one subscription for the <paramref name="reference"/>
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/></param>
         void AddSubscription(ReferenceDescription reference);
+
+        /// <summary>
+        /// Calls the specified method and returns the output arguments.
+        /// </summary>
+        /// <param name="methodBrowseName">The BrowseName of the server method</param>
+        /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
+        IList<object> CallServerMethod(string methodBrowseName);
 
         /// <summary>
         /// Removes all active subscriptions from the session.
@@ -76,7 +115,7 @@ namespace DEHPEcosimPro.DstController
         void ClearSubscriptions();
 
         /// <summary>
-        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// Closes the <see cref="OpcSessionHandler.OpcSession"/>
         /// </summary>
         void CloseSession();
     }

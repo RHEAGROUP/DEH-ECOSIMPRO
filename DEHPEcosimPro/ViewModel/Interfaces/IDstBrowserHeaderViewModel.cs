@@ -24,10 +24,48 @@
 
 namespace DEHPEcosimPro.ViewModel.Interfaces
 {
+    using System;
+
+    using ReactiveUI;
+
     /// <summary>
     /// Interface definition for <see cref="DstBrowserHeaderViewModel"/>
     /// </summary>
     public interface IDstBrowserHeaderViewModel
     {
+        /// <summary>
+        /// Gets or sets the URI of the connected data source
+        /// </summary>
+        string ServerAddress { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time, in milliseconds, between which data is recorded
+        /// </summary>
+        int SamplingInterval { get; set; }
+
+        /// <summary>
+        /// Gets or sets the total number of variables in the open session
+        /// </summary>
+        int VariablesCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date/time from which the server is up
+        /// </summary>
+        DateTime? ServerStartTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current date/time of the server
+        /// </summary>
+        DateTime? CurrentServerTime { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Run' server method
+        /// </summary>
+        ReactiveCommand<object> CallRunMethodCommand { get; set; }
+
+        /// <summary>
+        /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
+        /// </summary>
+        ReactiveCommand<object> CallResetMethodCommand { get; set; }
     }
 }

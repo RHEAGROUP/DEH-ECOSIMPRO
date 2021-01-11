@@ -26,11 +26,13 @@ namespace DEHPEcosimPro.DstController
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
-    
+
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
 
     using Opc.Ua;
@@ -63,7 +65,7 @@ namespace DEHPEcosimPro.DstController
         private bool isSessionOpen;
 
         /// <summary>
-        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         public bool IsSessionOpen
         {
@@ -72,10 +74,20 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// The endpoint url of the currently open session
+        /// </summary>
+        public string ServerAddress => this.opcClientService.EndpointUrl;
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
+        /// </summary>
+        public int RefreshInterval => this.opcClientService.RefreshInterval;
+
+        /// <summary>
         /// Gets the references variables available from the connected OPC server
         /// </summary>
         public IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; private set; } = new List<(ReferenceDescription, DataValue)>();
-        
+
         /// <summary>
         /// Gets the Methods available from the connected OPC server
         /// </summary>
@@ -110,7 +122,7 @@ namespace DEHPEcosimPro.DstController
                         {
                             this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId)reference.NodeId)));
                         }
-                        
+
                         else if (reference.NodeClass == NodeClass.Method)
                         {
                             this.Methods.Add(reference);
@@ -135,12 +147,70 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Reads and returns the server start time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.StartTime node was not found</returns>
+        public DateTime? GetServerStartTime()
+        {
+            if (this.IsSessionOpen)
+            {
+                return (DateTime?)this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_StartTime)?.Value;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Reads and returns the current server time, in UTC, of the currently open session
+        /// </summary>
+        /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
+        public DateTime? GetCurrentServerTime()
+        {
+            if (this.IsSessionOpen)
+            {
+                return (DateTime?)this.opcClientService.ReadNode(Opc.Ua.Variables.Server_ServerStatus_CurrentTime)?.Value;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Adds one subscription for the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/></param>
+        public void AddSubscription(NodeId nodeId)
+        {
+            this.opcClientService.AddSubscription(nodeId);
+        }
+
+        /// <summary>
         /// Adds one subscription for the <paramref name="reference"/>
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/></param>
         public void AddSubscription(ReferenceDescription reference)
         {
-            this.opcClientService.AddSubscription((NodeId)reference.NodeId);
+            this.AddSubscription((NodeId)reference.NodeId);
+        }
+
+        /// <summary>
+        /// Calls the specified method and returns the output arguments.
+        /// </summary>
+        /// <param name="methodBrowseName">The BrowseName of the server method</param>
+        /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
+        public IList<object> CallServerMethod(string methodBrowseName)
+        {
+            var serverMethodsNode = this.References.SingleOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
+            var methodNode = this.Methods.SingleOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
+
+            if (serverMethodsNode != null && methodNode != null)
+            {
+                return this.opcClientService.CallMethod(
+                    new NodeId(serverMethodsNode.Identifier, serverMethodsNode.NamespaceIndex),
+                    new NodeId(methodNode.Identifier, methodNode.NamespaceIndex),
+                    string.Empty);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -152,7 +222,7 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
-        /// Closes the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/>
+        /// Closes the <see cref="OpcSessionHandler.OpcSession"/>
         /// </summary>
         public void CloseSession()
         {

@@ -38,7 +38,12 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
     public interface IOpcClientService
     {
         /// <summary>
-        /// The refresh interval for subscriptions in millisecond
+        /// The endpoint url
+        /// </summary>
+        string EndpointUrl { get; }
+
+        /// <summary>
+        /// The refresh interval for subscriptions in milliseconds
         /// </summary>
         int RefreshInterval { get; set; }
 

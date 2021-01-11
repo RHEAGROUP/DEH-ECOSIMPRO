@@ -5,29 +5,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:views="clr-namespace:DEHPEcosimPro.Views" 
-             d:DesignHeight="60" d:DesignWidth="400" mc:Ignorable="d">
+             d:DesignHeight="100" d:DesignWidth="400" mc:Ignorable="d">
     <UserControl.ToolTip>
         <ToolTip>
             <StackPanel Orientation="Vertical">
                 <StackPanel Margin="3" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="Model:" />
-                    <TextBlock Margin="3,0,0,0" />
+                    <TextBlock FontWeight="Bold" Text="Server Address:" />
+                    <TextBlock Margin="3,0,0,0" Text="{Binding ServerAddress}" />
                 </StackPanel>
                 <StackPanel Margin="3" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="Iteration:" />
-                    <TextBlock Margin="3,0,0,0" />
+                    <TextBlock FontWeight="Bold" Text="Sampling Interval (ms):" />
+                    <TextBlock Margin="3,0,0,0" Text="{Binding SamplingInterval}"/>
                 </StackPanel>
                 <StackPanel Margin="3" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="Person:" />
-                    <TextBlock />
+                    <TextBlock FontWeight="Bold" Text="Number of Variables:" />
+                    <TextBlock Margin="3,0,0,0" Text="{Binding VariablesCount}"/>
                 </StackPanel>
                 <StackPanel Margin="3" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="Domain of Expertise:" />
-                    <TextBlock Margin="3,0,0,0" />
+                    <TextBlock FontWeight="Bold" Text="Server Start Time:" />
+                    <TextBlock Margin="3,0,0,0" Text="{Binding ServerStartTime}"/>
                 </StackPanel>
                 <StackPanel Margin="3" Orientation="Horizontal">
-                    <TextBlock FontWeight="Bold" Text="Source:" />
-                    <TextBlock Margin="3,0,0,0" Text="{Binding DataSource}" />
+                    <TextBlock FontWeight="Bold" Text="Current Server Time:" />
+                    <TextBlock Margin="3,0,0,0" Text="{Binding CurrentServerTime}"/>
                 </StackPanel>
             </StackPanel>
         </ToolTip>
@@ -37,27 +37,31 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Model: " />
-        <TextBlock Grid.Row="0" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="0" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Server Address: " />
+        <TextBlock Grid.Row="0" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding ServerAddress}" />
 
-        <TextBlock Grid.Row="0" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Data-Source:" />
-        <TextBlock Grid.Row="0" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" Text="{Binding DataSource}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="0" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Sampling Interval (ms): " />
+        <TextBlock Grid.Row="0" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding SamplingInterval}" />
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Iteration: " />
-        <TextBlock Grid.Row="1" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="1" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Number of Variables: " />
+        <TextBlock Grid.Row="1" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding VariablesCount}" />
 
-        <TextBlock Grid.Row="1" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Person: " />
-        <TextBlock Grid.Row="1" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="1" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Server Start Time: " />
+        <TextBlock Grid.Row="1" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding ServerStartTime}" />
 
-        <TextBlock Grid.Row="2" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Domain Of Expertise:" />
-        <TextBlock Grid.Row="2" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Row="2" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Current Server Time: " />
+        <TextBlock Grid.Row="2" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding CurrentServerTime}"/>
+
+        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Run" ToolTip="Call Run Method" Command="{Binding CallRunMethodCommand}"/>
+        <Button Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Reset" ToolTip="Call Reset Method" Command="{Binding CallResetMethodCommand}"/>
     </Grid>
 </UserControl>
