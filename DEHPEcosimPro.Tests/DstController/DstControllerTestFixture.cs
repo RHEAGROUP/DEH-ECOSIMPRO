@@ -153,7 +153,7 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyTransfert()
         {
-            Assert.DoesNotThrowAsync(async() => await this.controller.Transfert());
+            Assert.DoesNotThrowAsync(async() => await this.controller.Transfer());
             this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<bool>()), Times.Once);
             this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ExternalIdentifierMap>>(), It.IsAny<bool>()), Times.Once);
         }
