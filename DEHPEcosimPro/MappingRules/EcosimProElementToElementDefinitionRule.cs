@@ -26,6 +26,7 @@ namespace DEHPEcosimPro.MappingRules
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.ExceptionServices;
@@ -278,7 +279,9 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="valueSet">The <see cref="ParameterValueSetBase"/></param>
         private void UpdateValueSet(VariableRowViewModel variable, Thing parameter, ParameterValueSetBase valueSet)
         {
-            valueSet.Computed = new ValueArray<string>(variable.SelectedValues.Select(x => x.Value.ToString()));
+            valueSet.Computed = new ValueArray<string>(
+                variable.SelectedValues.Select(
+                    x => FormattableString.Invariant($"{x.Value}")));
 
             this.AddToExternalIdentifierMap(parameter.Iid, this.dstParameterName);
         }
