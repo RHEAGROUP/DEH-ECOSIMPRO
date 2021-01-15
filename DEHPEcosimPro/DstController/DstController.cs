@@ -27,11 +27,13 @@ namespace DEHPEcosimPro.DstController
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Threading.Tasks;
 
     using CDP4Common.EngineeringModelData;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Exceptions;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
 
@@ -287,7 +289,7 @@ namespace DEHPEcosimPro.DstController
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Transfer()
+        public async Task Transfert()
         {
             await this.hubController.CreateOrUpdate(this.ElementDefinitionParametersDstVariablesMaps, true);
             await this.hubController.CreateOrUpdate(this.ExternalIdentifierMaps, false);

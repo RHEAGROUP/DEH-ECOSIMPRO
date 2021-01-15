@@ -22,7 +22,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Tests.MappingRules
+namespace DEHPEcosimPro.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -104,7 +104,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             var (elements, maps) = this.rule.Transform(this.variables);
-            Assert.AreEqual("0.2", elements.Last().Parameter.First().ValueSet.First().ActualValue.First());
+            Assert.AreEqual("0,2", elements.Last().Parameter.First().ValueSet.First().ActualValue.First());
             Assert.IsNotEmpty(maps);
         }
         
@@ -141,7 +141,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             var (elements, maps) = this.rule.Transform(this.variables);
-            Assert.AreEqual("0.2", elements.Last().ContainedElement.First().ParameterOverride.First().ValueSet.First().ActualValue.First());
+            Assert.AreEqual("0,2", elements.Last().ContainedElement.First().ParameterOverride.First().ValueSet.First().ActualValue.First());
             Assert.IsNotEmpty(maps);
         }
     }
