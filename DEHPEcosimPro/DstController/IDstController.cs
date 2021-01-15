@@ -32,7 +32,6 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.MappingEngine;
 
     using DEHPEcosimPro.ViewModel.Rows;
-
     using DEHPEcosimPro.Services.OpcConnector;
 
     using Opc.Ua;
@@ -103,7 +102,7 @@ namespace DEHPEcosimPro.DstController
         /// Adds one subscription for the <paramref name="nodeId"/>
         /// </summary>
         /// <param name="nodeId">The <see cref="NodeId"/></param>
-        public void AddSubscription(NodeId nodeId);
+        void AddSubscription(NodeId nodeId);
 
         /// <summary>
         /// Adds one subscription for the <paramref name="reference"/>
