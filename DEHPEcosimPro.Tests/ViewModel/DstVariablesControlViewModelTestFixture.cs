@@ -27,6 +27,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System;
     using System.Collections.Generic;
 
+    using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.Services.NavigationService;
+
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
 
@@ -42,6 +45,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
     {
         private DstVariablesControlViewModel viewModel;
         private Mock<IDstController> dstController;
+        private Mock<INavigationService> navigationService;
+        private Mock<IHubController> hubController;
 
         [SetUp]
         public void Setup()
@@ -66,8 +71,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
                         NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "DummyVariable2")
                     }, new DataValue()),
                 });
-            
-            this.viewModel = new DstVariablesControlViewModel(this.dstController.Object);
+
+            this.navigationService = new Mock<INavigationService>();
+            this.hubController = new Mock<IHubController>();
+
+            this.viewModel = new DstVariablesControlViewModel(this.dstController.Object, this.navigationService.Object, this.hubController.Object);
         }
 
         [Test]

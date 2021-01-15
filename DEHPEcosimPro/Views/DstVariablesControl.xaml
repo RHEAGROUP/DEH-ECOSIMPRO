@@ -6,17 +6,21 @@
              xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid" 
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:DEHPEcosimPro.ViewModel.Rows"
+             xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+             xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
              d:DesignHeight="450" d:DesignWidth="800" mc:Ignorable="d">
     <UserControl.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/DEHPCommon;component/UserInterfaces/Views/ContextMenu/ContextMenuStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
             <Style x:Key="ThingIcon" TargetType="{x:Type Image}">
                 <Setter Property="Width" Value="28" />
                 <Setter Property="Height" Value="16" />
                 <Setter Property="Margin" Value="1" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
-
-            <HierarchicalDataTemplate DataType="{x:Type viewModels:VariableRowViewModel}" ItemsSource="{Binding ContainedRows, UpdateSourceTrigger=PropertyChanged}">
+            <HierarchicalDataTemplate DataType="{x:Type viewModels:VariableRowViewModel}">
                 <dx:MeasurePixelSnapper>
                     <StackPanel Orientation="Horizontal">
                         <dx:PixelSnapper>
@@ -35,7 +39,11 @@
         <Grid>
             <dxg:TreeListControl ItemsSource="{Binding Variables}"
                                  SelectedItem="{Binding SelectedThing}"
-                                 SelectionMode="Row">
+                                 SelectedItems="{Binding SelectedThings}"
+                                 SelectionMode="MultipleRow">
+                <dxmvvm:Interaction.Behaviors>
+                    <behaviors:ContextMenuBehavior/>
+                </dxmvvm:Interaction.Behaviors>
                 <dxg:TreeListControl.View>
                     <dxg:TreeListView Name="View"
                                       AllowEditing="False"
@@ -53,6 +61,9 @@
                                       TreeDerivationMode="HierarchicalDataTemplate"
                                       TreeLineStyle="Solid"
                                       VerticalScrollbarVisibility="Auto">
+                        <dxg:TreeListView.ContextMenu>
+                            <ContextMenu Name="RowContextMenu" />
+                        </dxg:TreeListView.ContextMenu>
                     </dxg:TreeListView>
                 </dxg:TreeListControl.View>
                 <dxg:TreeListControl.Columns>
@@ -62,6 +73,7 @@
                     <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
+
             </dxg:TreeListControl>
         </Grid>
     </dx:LoadingDecorator>

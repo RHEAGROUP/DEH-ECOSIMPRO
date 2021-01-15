@@ -28,11 +28,15 @@ namespace DEHPEcosimPro.DstController
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using DEHPCommon.Enumerators;
+    using DEHPCommon.MappingEngine;
+
+    using DEHPEcosimPro.ViewModel.Rows;
+
     using DEHPEcosimPro.Services.OpcConnector;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
-
+    
     /// <summary>
     /// Interface definition for <see cref="DstController"/>
     /// </summary>
@@ -67,6 +71,11 @@ namespace DEHPEcosimPro.DstController
         /// Gets the all references available from the connected OPC server
         /// </summary>
         IList<ReferenceDescription> References { get; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="MappingDirection"/>
+        /// </summary>
+        MappingDirection MappingDirection { get; set; }
 
         /// <summary>
         /// Connects to the provided endpoint
@@ -118,5 +127,12 @@ namespace DEHPEcosimPro.DstController
         /// Closes the <see cref="OpcSessionHandler.OpcSession"/>
         /// </summary>
         void CloseSession();
+
+        /// <summary>
+        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
+        /// <returns>A awaitable assert whether the mapping was successful</returns>
+        bool Map(List<VariableRowViewModel> dstVariables);
     }
 }

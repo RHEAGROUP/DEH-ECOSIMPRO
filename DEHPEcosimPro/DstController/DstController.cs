@@ -27,13 +27,20 @@ namespace DEHPEcosimPro.DstController
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using System.Threading.Tasks;
 
+    using CDP4Common.EngineeringModelData;
+
+    using DEHPCommon.Enumerators;
+    using DEHPCommon.Exceptions;
     using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.MappingEngine;
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using Opc.Ua;
 
@@ -65,6 +72,12 @@ namespace DEHPEcosimPro.DstController
         private bool isSessionOpen;
 
         /// <summary>
+        /// The <see cref="IMappingEngine"/>
+        /// </summary>
+        private readonly IMappingEngine mappingEngine;
+
+        /// <summary>
+        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         public bool IsSessionOpen
@@ -84,6 +97,20 @@ namespace DEHPEcosimPro.DstController
         public int RefreshInterval => this.opcClientService.RefreshInterval;
 
         /// <summary>
+        /// Backing field for the <see cref="MappingDirection"/>
+        /// </summary>
+        private MappingDirection mappingDirection;
+
+        /// <summary>
+        /// Gets or sets the <see cref="MappingDirection"/>
+        /// </summary>
+        public MappingDirection MappingDirection
+        {
+            get => this.mappingDirection;
+            set => this.RaiseAndSetIfChanged(ref this.mappingDirection, value);
+        }
+
+        /// <summary>
         /// Gets the references variables available from the connected OPC server
         /// </summary>
         public IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; private set; } = new List<(ReferenceDescription, DataValue)>();
@@ -97,18 +124,30 @@ namespace DEHPEcosimPro.DstController
         /// Gets the all references available from the connected OPC server
         /// </summary>
         public IList<ReferenceDescription> References => this.opcClientService.References;
+        
+        /// <summary>
+        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
+        /// </summary>
+        public IEnumerable<ExternalIdentifierMap> ExternalIdentifierMaps { get; private set; } = new List<ExternalIdentifierMap>();
 
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
+        /// </summary>
+        public IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new List<ElementDefinition>();
+        
         /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="sessionHandler">The <<see cref="IOpcSessionHandler"/></param>
-        public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler)
+        /// <param name="mappingEngine">The <<see cref="IMappingEngine"/></param>
+        public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
             this.sessionHandler = sessionHandler;
+            this.mappingEngine = mappingEngine;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -210,7 +249,7 @@ namespace DEHPEcosimPro.DstController
                     string.Empty);
             }
 
-            return null;
+            return default;
         }
 
         /// <summary>
@@ -229,6 +268,31 @@ namespace DEHPEcosimPro.DstController
             this.Methods.Clear();
             this.Variables.Clear();
             this.opcClientService.CloseSession();
+        }
+
+        /// <summary>
+        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
+        /// <returns>A assert whether the mapping was successful</returns>
+        public bool Map(List<VariableRowViewModel> dstVariables)
+        {
+            var (elements, maps) = ((IEnumerable<ElementDefinition>, IEnumerable<ExternalIdentifierMap>)) 
+                this.mappingEngine.Map(dstVariables);
+
+            this.ElementDefinitionParametersDstVariablesMaps = elements;
+            this.ExternalIdentifierMaps = maps;
+            return true;
+        }
+
+        /// <summary>
+        /// Transfers the mapped variables to the Hub data source
+        /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
+        public async Task Transfert()
+        {
+            await this.hubController.CreateOrUpdate(this.ElementDefinitionParametersDstVariablesMaps, true);
+            await this.hubController.CreateOrUpdate(this.ExternalIdentifierMaps, false);
         }
     }
 }

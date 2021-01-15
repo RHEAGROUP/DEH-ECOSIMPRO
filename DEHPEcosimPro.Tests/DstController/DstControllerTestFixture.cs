@@ -27,19 +27,27 @@ namespace DEHPEcosimPro.Tests.DstController
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Collections;
     using System.Threading.Tasks;
 
+    using CDP4Common.EngineeringModelData;
+
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.MappingEngine;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using Moq;
 
     using NUnit.Framework;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
+
+    using Node = DevExpress.XtraCharts.Native.Node;
 
     [TestFixture]
     public class DstControllerTestFixture
@@ -48,8 +56,9 @@ namespace DEHPEcosimPro.Tests.DstController
         private Mock<IOpcClientService> opcClient;
         private Mock<IHubController> hubController;
         private Mock<IOpcSessionHandler> opcSessionHandler;
+        private Mock<IMappingEngine> mappingEngine;
 
-        private List<ReferenceDescription> referenceDescriptionCollection = new List<ReferenceDescription>
+        private readonly List<ReferenceDescription> referenceDescriptionCollection = new List<ReferenceDescription>
         {
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("server_methods"), BrowseName = new QualifiedName("server_methods"), NodeClass = NodeClass.Object},
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_run"), BrowseName = new QualifiedName("method_run"), NodeClass = NodeClass.Method},
@@ -60,26 +69,40 @@ namespace DEHPEcosimPro.Tests.DstController
         public void Setup()
         {
             this.hubController = new Mock<IHubController>();
+            this.hubController.Setup(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<bool>())).Returns(Task.CompletedTask);
+            this.hubController.Setup(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ExternalIdentifierMap>>(), It.IsAny<bool>())).Returns(Task.CompletedTask);
             this.opcSessionHandler = new Mock<IOpcSessionHandler>();
+
+            this.mappingEngine = new Mock<IMappingEngine>();
 
             this.opcClient = new Mock<IOpcClientService>();
             this.opcClient.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
+            this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
             this.opcClient.Setup(x => x.CloseSession());
             this.opcClient.Setup(x => x.ReadNode(Variables.Server_ServerStatus_StartTime)).Returns(new DataValue(new DateTime(2021, 1, 1)));
             this.opcClient.Setup(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime)).Returns(new DataValue(new DateTime(2021, 1, 3)));
-
-            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object);
+            
+            this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(new List<ReferenceDescription>()
+            {
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable},
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 2), BrowseName = new QualifiedName("dummy"), NodeClass = NodeClass.Method}
+            }));
+            
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object, this.mappingEngine.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            Assert.IsFalse(this.controller.IsSessionOpen);
-            Assert.IsEmpty(this.controller.Variables);
-            Assert.IsNull(this.controller.References);
-            Assert.IsEmpty(this.controller.Methods);
             Assert.Null(this.controller.ServerAddress);
             Assert.Zero(this.controller.RefreshInterval);
+            Assert.IsTrue(this.controller.IsSessionOpen);
+            Assert.IsNotEmpty(this.controller.Variables);
+            Assert.IsNotNull(this.controller.References);
+            Assert.IsNotEmpty(this.controller.Methods);
+            Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
+            Assert.IsEmpty(this.controller.ExternalIdentifierMaps);
+            Assert.IsEmpty(this.controller.ElementDefinitionParametersDstVariablesMaps);
         }
 
         [Test]
@@ -112,6 +135,30 @@ namespace DEHPEcosimPro.Tests.DstController
         }
 
         [Test]
+        public void VerifyMap()
+        {
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue());
+
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns((new Mock<IEnumerable<ElementDefinition>>().Object, new Mock<IEnumerable<ExternalIdentifierMap>>().Object));
+
+            Assert.IsTrue(this.controller.Map(new List<VariableRowViewModel>()));
+
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();
+            Assert.Throws<InvalidOperationException>(() => this.controller.Map(null));
+
+            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyTransfert()
+        {
+            Assert.DoesNotThrowAsync(async() => await this.controller.Transfert());
+            this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<bool>()), Times.Once);
+            this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ExternalIdentifierMap>>(), It.IsAny<bool>()), Times.Once);
+        }
+
+        [Test]
         public void VerifyCallServerMethod()
         {
             this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(this.referenceDescriptionCollection));
@@ -133,6 +180,7 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyGetServerStartTime()
         {
+            this.controller.IsSessionOpen = false;
             Assert.IsNull(this.controller.GetServerStartTime());
 
             this.controller.IsSessionOpen = true;
@@ -143,6 +191,7 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyGetCurrentServerTime()
         {
+            this.controller.IsSessionOpen = false;
             Assert.IsNull(this.controller.GetCurrentServerTime());
 
             this.controller.IsSessionOpen = true;

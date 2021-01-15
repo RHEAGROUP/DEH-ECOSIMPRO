@@ -27,8 +27,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using Autofac;
 
     using DEHPCommon;
+    using DEHPCommon.Enumerators;
+    using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel;
@@ -44,6 +47,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
         private Mock<IHubDataSourceViewModel> hubDataSourceViewModel;
         private Mock<IDstDataSourceViewModel> dstDataSourceViewModel;
+        private Mock<INetChangePreviewViewModel> netChangePreviewViewModel;
+        private Mock<IDstController> dstController;
+        private MainWindowViewModel viewModel;
 
         [SetUp]
         public void Setup()
@@ -51,15 +57,37 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.hubDataSourceViewModel = new Mock<IHubDataSourceViewModel>();
             this.dstDataSourceViewModel = new Mock<IDstDataSourceViewModel>();
+            this.netChangePreviewViewModel = new Mock<INetChangePreviewViewModel>();
+            this.dstController = new Mock<IDstController>();
+
+            this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
+                this.statusBarViewModel.Object, this.netChangePreviewViewModel.Object, this.dstController.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            var viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object, this.statusBarViewModel.Object);
-            Assert.IsNotNull(viewModel.HubDataSourceViewModel);
-            Assert.IsNotNull(viewModel.DstSourceViewModel);
-            Assert.IsNotNull(viewModel.StatusBarControlViewModel);
+            Assert.IsNotNull(this.viewModel.HubDataSourceViewModel);
+            Assert.IsNotNull(this.viewModel.DstSourceViewModel);
+            Assert.IsNotNull(this.viewModel.StatusBarControlViewModel);
+            Assert.IsNotNull(this.viewModel.NetChangePreviewViewModel);
+            Assert.IsNull(this.viewModel.SwitchPanelBehavior);
+            Assert.IsNotNull(this.viewModel.ChangeMappingDirection);
+        }
+
+        [Test]
+        public void VerifyChangeMappingDirectionCommand()
+        {
+            Assert.IsTrue(this.viewModel.ChangeMappingDirection.CanExecute(null));
+            this.viewModel.ChangeMappingDirection.Execute(null);
+            Assert.AreEqual(MappingDirection.FromDstToHub, this.dstController.Object.MappingDirection);
+            var mock = new Mock<ISwitchLayoutPanelOrderBehavior>();
+            mock.Setup(x => x.Switch());
+            mock.Setup(x => x.MappingDirection).Returns(MappingDirection.FromHubToDst);
+            this.viewModel.SwitchPanelBehavior = mock.Object;
+
+            this.viewModel.ChangeMappingDirection.Execute(null);
+            Assert.AreEqual(MappingDirection.FromDstToHub, this.dstController.Object.MappingDirection);
         }
     }
 }

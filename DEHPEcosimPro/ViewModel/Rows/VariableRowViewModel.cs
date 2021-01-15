@@ -29,13 +29,15 @@ namespace DEHPEcosimPro.ViewModel.Rows
     using System.Linq;
     using System.Reactive.Linq;
 
+    using CDP4Common.EngineeringModelData;
+    using CDP4Common.SiteDirectoryData;
+
     using CDP4Dal;
 
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Views;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
 
     using ReactiveUI;
 
@@ -71,20 +73,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Gets the values that the represented variable has held
         /// </summary>
-        public List<(object Value, DateTime TimeStamp)> Values { get; } = new List<(object Value, DateTime TimeStamp)>();
+        public ReactiveList<TimeTaggedValueRowViewModel> Values { get; } = new ReactiveList<TimeTaggedValueRowViewModel>();
+
+        /// <summary>
+        /// Gets the values that has been selected to map
+        /// </summary>
+        public ReactiveList<TimeTaggedValueRowViewModel> SelectedValues { get; set; } = new ReactiveList<TimeTaggedValueRowViewModel>();
 
         /// <summary>
         /// Backing field for <see cref="InitialValue"/>
         /// </summary>
-        private object initialCurrentValue;
+        private object initialValue;
 
         /// <summary>
         /// Gets the initial value of the represented reference
         /// </summary>
         public object InitialValue
         {
-            get => this.initialCurrentValue;
-            set => this.RaiseAndSetIfChanged(ref this.initialCurrentValue, value);
+            get => this.initialValue;
+            set => this.RaiseAndSetIfChanged(ref this.initialValue, value);
         }
 
         /// <summary>
@@ -130,6 +137,81 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="SelectedOption"/>
+        /// </summary>
+        private Option selectedOption;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="Option"/>
+        /// </summary>
+        public Option SelectedOption
+        {
+            get => this.selectedOption;
+            set => this.RaiseAndSetIfChanged(ref this.selectedOption, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedParameter"/>
+        /// </summary>
+        private Parameter selectedParameter;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="Parameter"/>
+        /// </summary>
+        public Parameter SelectedParameter
+        {
+            get => this.selectedParameter;
+            set => this.RaiseAndSetIfChanged(ref this.selectedParameter, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedParameterType"/>
+        /// </summary>
+        private ParameterType selectedParameterType;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="Parameter"/>
+        /// </summary>
+        public ParameterType SelectedParameterType
+        {
+            get => this.selectedParameterType;
+            set => this.RaiseAndSetIfChanged(ref this.selectedParameterType, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedElementDefinition"/>
+        /// </summary>
+        private ElementDefinition selectedElementDefinition;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="ElementDefinition"/>
+        /// </summary>
+        public ElementDefinition SelectedElementDefinition
+        {
+            get => this.selectedElementDefinition;
+            set => this.RaiseAndSetIfChanged(ref this.selectedElementDefinition, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedActualFiniteState"/>
+        /// </summary>
+        private ActualFiniteState selectedActualFiniteState;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="ActualFiniteState"/>
+        /// </summary>
+        public ActualFiniteState SelectedActualFiniteState
+        {
+            get => this.selectedActualFiniteState;
+            set => this.RaiseAndSetIfChanged(ref this.selectedActualFiniteState, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the collection of selected <see cref="ElementUsage"/>s
+        /// </summary>
+        public ReactiveList<ElementUsage> SelectedElementUsages { get; set; } = new ReactiveList<ElementUsage>();
+
+        /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
@@ -157,7 +239,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
-                this.Values.Add((this.data.Value, this.data.ServerTimestamp));
+                this.Values.Add(new TimeTaggedValueRowViewModel(this.data.Value, this.data.ServerTimestamp));
             }
         }
         
@@ -166,18 +248,32 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         private void OnNotification(OpcVariableChangedEvent update)
         {
-            this.Values.Add((update.Value, update.TimeStamp));
+            this.UpdateValueCollection(update.Value, update.TimeStamp);
+
             this.ActualValue = update.Value;
             this.AverageValue = this.ComputeAverageValue();
-        
+
             this.actualValue = update.Value;
-            this.LastNotificationTime = update.TimeStamp.ToLongTimeString();
+            this.LastNotificationTime = update.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fffffff");
         }
 
         /// <summary>
-            /// Computes the average value for this represented variable
-            /// </summary>
-            /// <returns>An <see cref="object"/> holding the average</returns>
+        /// Updates the <see cref="Values"/> collection
+        /// </summary>
+        /// <param name="value">The value to add</param>
+        /// <param name="timeStamp">The <see cref="DateTime"/> time stamp associated with the <paramref name="value"/></param>
+        private void UpdateValueCollection(object value, DateTime timeStamp)
+        {
+            if (!this.Values.Any(x => x.Value == value && x.TimeStamp == timeStamp))
+            {
+                this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStamp));
+            }
+        }
+
+        /// <summary>
+        /// Computes the average value for this represented variable
+        /// </summary>
+        /// <returns>An <see cref="object"/> holding the average</returns>
         public object ComputeAverageValue()
         {
             var valuesInDouble = new List<double>();

@@ -25,16 +25,23 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
-    using System.Reactive;
-    using System.Threading.Tasks;
+    using System.Reactive.Linq;
+    using System.Windows.Input;
 
+    using Autofac;
+
+    using DEHPCommon;
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views;
 
+    using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using ReactiveUI;
 
@@ -55,6 +62,11 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IObjectBrowserTreeSelectorService treeSelectorService;
 
         /// <summary>
+        /// The <see cref="IDstController"/>
+        /// </summary>
+        private readonly IDstController dstController;
+
+        /// <summary>
         /// The <see cref="IObjectBrowserViewModel"/>
         /// </summary>
         public IObjectBrowserViewModel ObjectBrowser { get; set; }
@@ -63,7 +75,7 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IHubBrowserHeaderViewModel"/>
         /// </summary>
         public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
-        
+
         /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
         /// </summary>
@@ -72,16 +84,44 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="objectBrowser">The <see cref="IObjectBrowserViewModel"/></param>
         /// <param name="treeSelectorService">The <see cref="IObjectBrowserTreeSelectorService"/></param>
         /// <param name="hubBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
         public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, 
-            IObjectBrowserTreeSelectorService treeSelectorService, IHubBrowserHeaderViewModel hubBrowserHeader) : base(navigationService)
+            IObjectBrowserTreeSelectorService treeSelectorService, IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController) : base(navigationService)
         {
             this.hubController = hubController;
             this.treeSelectorService = treeSelectorService;
+            this.dstController = dstController;
             this.ObjectBrowser = objectBrowser;
             this.HubBrowserHeader = hubBrowserHeader;
+
             this.InitializeCommands();
         }
 
+        /// <summary>
+        /// Initializes this view model <see cref="ICommand"/>
+        /// </summary>
+        protected override void InitializeCommands()
+        {
+            base.InitializeCommands();
+
+            var canMap = this.ObjectBrowser.CanMap.Merge(this.WhenAny(x => x.dstController.MappingDirection,
+                x => x.dstController.IsSessionOpen,
+                (m, s) => 
+                    m.Value is MappingDirection.FromHubToDst && s.Value));
+
+            this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
+            this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
+        }
+
+        /// <summary>
+        /// Executes the <see cref="IObjectBrowserViewModel.MapCommand"/>
+        /// </summary>
+        private void MapCommandExecute()
+        {
+            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
+            this.NavigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
+        }
+        
         /// <summary>
         /// Executes the <see cref="DataSourceViewModel.ConnectCommand"/>
         /// </summary>
@@ -89,6 +129,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (this.hubController.IsSessionOpen)
             {
+                this.ObjectBrowser.Things.Clear();
                 this.hubController.Close();
             }
             else
