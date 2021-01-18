@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DstController.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -27,13 +27,11 @@ namespace DEHPEcosimPro.DstController
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
     using System.Threading.Tasks;
 
     using CDP4Common.EngineeringModelData;
 
     using DEHPCommon.Enumerators;
-    using DEHPCommon.Exceptions;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
 
@@ -77,6 +75,11 @@ namespace DEHPEcosimPro.DstController
         private readonly IMappingEngine mappingEngine;
 
         /// <summary>
+        /// Backing field for the <see cref="MappingDirection"/>
+        /// </summary>
+        private MappingDirection mappingDirection;
+
+        /// <summary>
         /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
@@ -95,11 +98,6 @@ namespace DEHPEcosimPro.DstController
         /// The refresh interval for subscriptions in milliseconds
         /// </summary>
         public int RefreshInterval => this.opcClientService.RefreshInterval;
-
-        /// <summary>
-        /// Backing field for the <see cref="MappingDirection"/>
-        /// </summary>
-        private MappingDirection mappingDirection;
 
         /// <summary>
         /// Gets or sets the <see cref="MappingDirection"/>
@@ -289,7 +287,7 @@ namespace DEHPEcosimPro.DstController
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Transfert()
+        public async Task Transfer()
         {
             await this.hubController.CreateOrUpdate(this.ElementDefinitionParametersDstVariablesMaps, true);
             await this.hubController.CreateOrUpdate(this.ExternalIdentifierMaps, false);
