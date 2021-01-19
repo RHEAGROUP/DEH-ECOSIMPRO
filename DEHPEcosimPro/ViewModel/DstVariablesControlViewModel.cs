@@ -26,22 +26,49 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Linq;
+    using System.Reactive.Linq;
+    using System.Windows.Input;
+
+    using Autofac;
+
+    using CDP4Common.CommonData;
+
+    using DEHPCommon;
+    using DEHPCommon.Enumerators;
+    using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using Opc.Ua;
 
     using ReactiveUI;
 
     /// <summary>
     /// The <see cref="DstVariablesControlViewModel"/> is the view model for displaying OPC references
     /// </summary>
-    public class DstVariablesControlViewModel : ReactiveObject, IDstVariablesControlViewModel
+    public class DstVariablesControlViewModel : ReactiveObject, IDstVariablesControlViewModel, IHaveContextMenuViewModel
     {
+        /// <summary>
+        /// The <see cref="IHubController"/>
+        /// </summary>
+        private readonly IHubController hubController;
+
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+
+        /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigationService;
 
         /// <summary>
         /// Backing field for <see cref="IsBusy"/>
@@ -56,20 +83,86 @@ namespace DEHPEcosimPro.ViewModel
             get => this.isBusy;
             set => this.RaiseAndSetIfChanged(ref this.isBusy, value);
         }
+        
+        /// <summary>
+        /// Backing field for <see cref="SelectedThing"/>
+        /// </summary>
+        private VariableRowViewModel selectedThing;
+
+        /// <summary>
+        /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
+        /// </summary>
+        public VariableRowViewModel SelectedThing
+        {
+            get => this.selectedThing;
+            set => this.RaiseAndSetIfChanged(ref this.selectedThing, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
+        /// </summary>
+        public ReactiveList<VariableRowViewModel> SelectedThings { get; set; } = new ReactiveList<VariableRowViewModel>();
+
+        /// <summary>
+        /// Gets the Context Menu for this browser
+        /// </summary>
+        public ReactiveList<ContextMenuItemViewModel> ContextMenu { get; } = new ReactiveList<ContextMenuItemViewModel>();
 
         /// <summary>
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
         public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
+        
+        /// <summary>
+        /// Gets the command that allows to map the selected things
+        /// </summary>
+        public ReactiveCommand<object> MapCommand { get; set; }
 
         /// <summary>
         /// Initializes a new <see cref="DstVariablesControlViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public DstVariablesControlViewModel(IDstController dstController)
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        /// <param name="hubController">The <see cref="IHubController"/></param>
+        public DstVariablesControlViewModel(IDstController dstController, INavigationService navigationService, IHubController hubController)
         {
             this.dstController = dstController;
+            this.navigationService = navigationService;
+            this.hubController = hubController;
+
             this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
+
+            this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.Changed)
+                .Subscribe(_ => this.PopulateContextMenu());
+
+            this.InitializeCommands();
+        }
+
+        /// <summary>
+        /// Initializes the <see cref="ICommand"/> of this view model
+        /// </summary>
+        private void InitializeCommands()
+        {
+            var canMap = this.WhenAny(
+                vm => vm.SelectedThing,
+                vm => vm.SelectedThings.CountChanged,
+                vm => vm.hubController.OpenIteration,
+                vm => vm.dstController.MappingDirection,
+                (selected, selection, iteration, mappingDirection) =>
+                    iteration.Value != null && (selected.Value != null || this.SelectedThings.Any()) && mappingDirection.Value is MappingDirection.FromDstToHub);
+
+            this.MapCommand = ReactiveCommand.Create(canMap);
+            this.MapCommand.Subscribe(_ => this.MapCommandExecute());
+        }
+
+        /// <summary>
+        /// Executes the <see cref="MapCommand"/>
+        /// </summary>
+        private void MapCommandExecute()
+        {
+            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
+            viewModel.Variables.AddRange(this.SelectedThings);
+            this.navigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
         }
 
         /// <summary>
@@ -103,6 +196,22 @@ namespace DEHPEcosimPro.ViewModel
             {
                 this.dstController.AddSubscription(variable.Reference);
             }
+        }
+
+        /// <summary>
+        /// Populate the context menu for this browser
+        /// </summary>
+        public void PopulateContextMenu()
+        {
+            this.ContextMenu.Clear();
+
+            if (this.SelectedThing == null)
+            {
+                return;
+            }
+
+            this.ContextMenu.Add(new ContextMenuItemViewModel("Map selection", "", this.MapCommand,
+                MenuItemKind.Export, ClassKind.NotThing));
         }
     }
 }

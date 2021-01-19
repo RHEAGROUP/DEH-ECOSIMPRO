@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IMainWindowViewModel.cs" company="RHEA System S.A.">
-//    Copyright (c) 2020-2020 RHEA System S.A.
+// <copyright file="RowDetailsControl.xaml.cs" company="RHEA System S.A.">
+//    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
 // 
@@ -22,33 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Views.Dialogs
 {
-    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using System.Windows.Controls;
 
     /// <summary>
-    /// Interface definitions of methods and properties of <see cref="Views.MainWindow"/>
+    /// Interaction logic for RowDetailsControl.xaml
     /// </summary>
-    public interface IMainWindowViewModel : ISwitchLayoutPanelOrderViewModel
+    public partial class RowDetailsControl : UserControl
     {
         /// <summary>
-        /// Gets the view model that represents the net change preview panel
+        /// Initializes a new <see cref="RowDetailsControl"/>
         /// </summary>
-        INetChangePreviewViewModel NetChangePreviewViewModel { get; }
-
-        /// <summary>
-        /// Gets the view model that represents the 10-25 data source
-        /// </summary>
-        IHubDataSourceViewModel HubDataSourceViewModel { get; }
-
-        /// <summary>
-        /// Gets the view model that represents the EcosimPro data source
-        /// </summary>
-        IDstDataSourceViewModel DstSourceViewModel { get; }
-
-        /// <summary>
-        /// Gets the view model that represents the status bar
-        /// </summary>
-        IStatusBarControlViewModel StatusBarControlViewModel { get; }
+        public RowDetailsControl()
+        {
+            this.InitializeComponent();
+        }
     }
 }

@@ -26,7 +26,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
 
     using CDP4Dal;
 
@@ -95,21 +94,21 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 DisplayName = new LocalizedText("", "DummyVariable0")
             }, new DataValue() { Value = .2 }));
 
-            var newValues = new List<(object Value, DateTime When)>()
+            var newValues = new List<TimeTaggedValueRowViewModel>()
             {
-                (131234, DateTime.MinValue.AddDays(1)), 
-                (-143298.5224323, DateTime.MinValue.AddDays(1)),
-                (2u, DateTime.MinValue.AddDays(1)),
-                (44.87613, DateTime.MinValue.AddDays(1)),
-                (0.42e2, DateTime.MinValue.AddDays(1)),
-                (.12387, DateTime.MinValue.AddDays(1)),
-                (2ul, DateTime.MinValue.AddDays(1))
+                new TimeTaggedValueRowViewModel(131234, DateTime.MinValue.AddDays(1)), 
+                new TimeTaggedValueRowViewModel(-143298.5224323, DateTime.MinValue.AddDays(1)),
+                new TimeTaggedValueRowViewModel(2u, DateTime.MinValue.AddDays(1)),
+                new TimeTaggedValueRowViewModel(44.87613, DateTime.MinValue.AddDays(1)),
+                new TimeTaggedValueRowViewModel(0.42e2, DateTime.MinValue.AddDays(1)),
+                new TimeTaggedValueRowViewModel(.12387, DateTime.MinValue.AddDays(1)),
+                new TimeTaggedValueRowViewModel(2ul, DateTime.MinValue.AddDays(1))
             };
 
             viewModel.Values.AddRange(newValues);
 
             Assert.AreEqual(-1496.6653040374986d, viewModel.ComputeAverageValue());
-            viewModel.Values.Add(("15%", DateTime.MinValue.AddDays(2)));
+            viewModel.Values.Add(new TimeTaggedValueRowViewModel("15%", DateTime.MinValue.AddDays(2)));
             Assert.AreEqual("-", viewModel.ComputeAverageValue());
         }
     }

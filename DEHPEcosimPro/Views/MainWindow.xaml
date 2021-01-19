@@ -7,7 +7,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
-        xmlns:views="clr-namespace:DEHPEcosimPro.Views" 
+        xmlns:views="clr-namespace:DEHPEcosimPro.Views"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
@@ -17,6 +19,9 @@
             </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
+    <dxmvvm:Interaction.Behaviors>
+        <behaviors:SwitchLayoutPanelOrderBehavior/>
+    </dxmvvm:Interaction.Behaviors>
     <DockPanel>
         <Grid>
             <Grid.RowDefinitions>
@@ -26,8 +31,8 @@
             </Grid.RowDefinitions>
             <dxdo:DockLayoutManager Grid.Row="0" AutoHideMode="Inline" FloatingMode="Desktop">
                 <dxdo:LayoutGroup AllowSplitters="True" Orientation="Vertical">
-                    <dxdo:LayoutGroup x:Name="LayoutGroup" ItemHeight="7*" Orientation="Horizontal">
-                        <dxdo:LayoutPanel x:Name="EcosimProPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="EcosimPro">
+                    <dxdo:LayoutGroup Name="LayoutGroup" ItemHeight="7*" Orientation="Horizontal">
+                        <dxdo:LayoutPanel Name="DstPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="EcosimPro">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>
@@ -59,13 +64,13 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Path Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
-                                    <Button Grid.Column="1" Height="40" HorizontalAlignment="Center" Content="Change Transfert Direction"/>
+                                    <Button Grid.Column="1" Height="40" HorizontalAlignment="Center" Content="Change Transfer Direction" Command="{Binding ChangeMappingDirection}"/>
                                     <Path Grid.Column="2" Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
                                 </Grid>
-                                <views:DstVariablesControl  Grid.Row="1"></views:DstVariablesControl>
+                                <views:DstVariablesControl Grid.Row="1"></views:DstVariablesControl>
                             </Grid>
                         </dxdo:LayoutPanel>
-                        <dxdo:LayoutPanel x:Name="HubPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
+                        <dxdo:LayoutPanel Name="HubPanel" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"></RowDefinition>
@@ -98,7 +103,7 @@
 
                                 <ListView x:Name="Mapping" Grid.Column="0" HorizontalContentAlignment="Stretch" ItemTemplate="{StaticResource MappedThingRowDataTemplate}" />
                                 <Button Grid.Column="1" Margin="10" Background="Transparent" BorderBrush="Transparent">
-                                    <TextBlock FontSize="18" Text="🕑 Mapping History" TextWrapping="Wrap" TextAlignment="Center"/>
+                                    <TextBlock FontSize="18" Text="🕑 Transfer History" TextWrapping="Wrap" TextAlignment="Center"/>
                                 </Button>
                             </Grid>
                         </dxdo:LayoutPanel>
@@ -119,7 +124,7 @@
                     <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Text="37%" />
                 </Grid>
                 <Button Grid.Row="1" Grid.Column="0" Height="40" Margin="10,5,5,10" Content="Cancel"/>
-                <Button Grid.Row="1" Grid.Column="1" Height="40" Margin="5,5,10,10" Content="Map"/>
+                <Button Grid.Row="1" Grid.Column="1" Height="40" Margin="5,5,10,10" Content="Transfer"/>
             </Grid>
 
             <common:StatusBarControl DataContext="{Binding StatusBarControlViewModel}" Grid.Row="2" />

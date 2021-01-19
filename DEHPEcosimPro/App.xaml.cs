@@ -24,11 +24,13 @@
 
 namespace DEHPEcosimPro
 {
+    using System.Reflection;
     using System.Windows;
 
     using Autofac;
 
     using DEHPCommon;
+    using DEHPCommon.MappingEngine;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
@@ -105,6 +107,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<OpcClientService>().As<IOpcClientService>().SingleInstance();
             containerBuilder.RegisterType<DstController.DstController>().As<IDstController>().SingleInstance();
             containerBuilder.RegisterType<UserPreferenceService<AppSettings>>().As<IUserPreferenceService<AppSettings>>().SingleInstance();
+            containerBuilder.RegisterType<MappingEngine>().As<IMappingEngine>().WithParameter(MappingEngine.ParameterName, Assembly.GetExecutingAssembly());
         }
 
         /// <summary>
@@ -119,6 +122,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>();
             containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
             containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>();
+            containerBuilder.RegisterType<MappingConfigurationDialogViewModel>().As<IMappingConfigurationDialogViewModel>();
         }
     }
 }
