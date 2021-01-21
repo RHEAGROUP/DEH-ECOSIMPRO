@@ -25,11 +25,15 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
+    using System.Linq;
     using System.Reactive;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
 
+    using CDP4Common.EngineeringModelData;
+
     using DEHPCommon.Enumerators;
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
@@ -136,7 +140,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Backing field for <see cref="RequiresAuthentication"/>
         /// </summary>
         private bool requiresAuthentication;
-
+        
         /// <summary>
         /// Gets or sets an assert whether the specified <see cref="Uri"/> endpoint requires authentication
         /// </summary>
@@ -160,11 +164,58 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Gets the server login command
         /// </summary>
         public ReactiveCommand<Unit> LoginCommand { get; private set; }
-
+        
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
         /// </summary>
         public ICloseWindowBehavior CloseWindowBehavior { get; set; }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedExternalIdentifierMap"/>
+        /// </summary>
+        private ExternalIdentifierMap selectedExternalIdentifierMap;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        public ExternalIdentifierMap SelectedExternalIdentifierMap
+        {
+            get => this.selectedExternalIdentifierMap;
+            set => this.RaiseAndSetIfChanged(ref this.selectedExternalIdentifierMap, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="ExternalIdentifierMapNewName"/>
+        /// </summary>
+        private string externalIdentifierMapNewName;
+
+        /// <summary>
+        /// Gets or sets the name for creating a new <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        public string ExternalIdentifierMapNewName
+        {
+            get => this.externalIdentifierMapNewName;
+            set => this.RaiseAndSetIfChanged(ref this.externalIdentifierMapNewName, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="CreateNewMappingConfigurationChecked"/>
+        /// </summary>
+        private bool createNewMappingConfigurationChecked;
+
+        /// <summary>
+        /// Gets or sets the checked checkbox assert that selects that a new mapping configuration will be created
+        /// </summary>
+        public bool CreateNewMappingConfigurationChecked
+        {
+            get => this.createNewMappingConfigurationChecked;
+            set => this.RaiseAndSetIfChanged(ref this.createNewMappingConfigurationChecked, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="ReactiveList{T}"/> of available <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        public ReactiveList<ExternalIdentifierMap> AvailableExternalIdentifierMap { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DstLoginViewModel"/> class.
@@ -172,7 +223,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarControlView">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="userPreferenceService">The <see cref="IUserPreferenceService{AppSettings}"/></param>
-        public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView, IUserPreferenceService<AppSettings> userPreferenceService)
+        /// <param name="hubController">The <see cref="IHubController"/></param>
+        public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView, 
+            IUserPreferenceService<AppSettings> userPreferenceService, IHubController hubController)
         {
             this.dstController = dstController;
             this.statusBarControlView = statusBarControlView;
@@ -186,16 +239,56 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.SaveCurrentUriCommand = ReactiveCommand.Create(canSaveUri);
             this.SaveCurrentUriCommand.Subscribe(_ => this.ExecuteSaveCurrentUri());
 
+            this.AvailableExternalIdentifierMap = new ReactiveList<ExternalIdentifierMap>(
+                hubController.AvailableExternalIdentifierMap(this.dstController.ThisToolName));
+
+            this.WhenAnyValue(x => x.SelectedExternalIdentifierMap).Subscribe(_ =>
+            {
+                if (this.SelectedExternalIdentifierMap != null)
+                {
+                    this.CreateNewMappingConfigurationChecked = false;
+                    this.ExternalIdentifierMapNewName = null;
+                }
+            });
+            
+            this.WhenAnyValue(x => x.ExternalIdentifierMapNewName).Subscribe(_ =>
+            {
+                if (!string.IsNullOrWhiteSpace(this.ExternalIdentifierMapNewName))
+                {
+                    this.CreateNewMappingConfigurationChecked = true;
+                    this.SelectedExternalIdentifierMap = null;
+                }
+            });
+
             var canLogin = this.WhenAnyValue(
                 vm => vm.UserName,
                 vm => vm.Password,
                 vm => vm.RequiresAuthentication,
                 vm => vm.Uri,
-                (username, password, requiresAuthentication, uri) =>
+                vm => vm.SelectedExternalIdentifierMap,
+                vm => vm.ExternalIdentifierMapNewName,
+                (username, password, requiresAuthentication, uri, map, mapNew) =>
                     (!string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(username) || !requiresAuthentication)
-                    && !string.IsNullOrWhiteSpace(uri));
+                    && !string.IsNullOrWhiteSpace(uri) && (map != null || !string.IsNullOrWhiteSpace(mapNew)));
 
             this.LoginCommand = ReactiveCommand.CreateAsyncTask(canLogin, async _ => await this.ExecuteLogin());
+
+            this.WhenAnyValue(x => x.CreateNewMappingConfigurationChecked).Subscribe(_ => this.UpdateExternalIdentifierSelectors());
+        }
+
+        /// <summary>
+        /// Updates the respective field depending on the user selection
+        /// </summary>
+        private void UpdateExternalIdentifierSelectors()
+        {
+            if (this.CreateNewMappingConfigurationChecked)
+            {
+                this.SelectedExternalIdentifierMap = null;
+            }
+            else
+            {
+                this.ExternalIdentifierMapNewName = null;
+            }
         }
 
         /// <summary>
@@ -225,6 +318,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private async Task ExecuteLogin()
         {
             this.IsBusy = true;
+
+            this.ProcessExternalIdentifierMap();
+
             this.statusBarControlView.Append("Loggin in...");
 
             try
@@ -252,6 +348,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.IsBusy = false;
             }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ExternalIdentifierMap"/> and or set the <see cref="IDstController.ExternalIdentifierMap"/>
+        /// </summary>
+        private void ProcessExternalIdentifierMap()
+        {
+            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ??
+                                                       this.dstController.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
         }
     }
 }

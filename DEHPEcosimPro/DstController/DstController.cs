@@ -30,6 +30,9 @@ namespace DEHPEcosimPro.DstController
     using System.Threading.Tasks;
 
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.SiteDirectoryData;
+
+    using CDP4Dal.Operations;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -78,9 +81,13 @@ namespace DEHPEcosimPro.DstController
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
-
+        
         /// <summary>
-        /// Assert whether the <see cref="Services.OpcConnector.OpcSessionHandler.Session"/> is Open
+        /// Gets this running tool name
+        /// </summary>
+        public string ThisToolName => this.GetType().Assembly.GetName().Name;
+        
+        /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         public bool IsSessionOpen
@@ -126,13 +133,24 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
         /// </summary>
-        public IEnumerable<ExternalIdentifierMap> ExternalIdentifierMaps { get; private set; } = new List<ExternalIdentifierMap>();
+        public IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap => 
+            this.hubController.AvailableExternalIdentifierMap(typeof(DstController).Assembly.GetName().Name);
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
         public IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new List<ElementDefinition>();
-        
+
+        /// <summary>
+        /// Gets or sets the <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        public ExternalIdentifierMap ExternalIdentifierMap { get; set; }
+
+        /// <summary>
+        /// Gets the collection of <see cref="IdCorrespondences"/>
+        /// </summary>
+        public List<IdCorrespondence> IdCorrespondences { get; } = new List<IdCorrespondence>();
+
         /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
@@ -275,11 +293,7 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A assert whether the mapping was successful</returns>
         public bool Map(List<VariableRowViewModel> dstVariables)
         {
-            var (elements, maps) = ((IEnumerable<ElementDefinition>, IEnumerable<ExternalIdentifierMap>)) 
-                this.mappingEngine.Map(dstVariables);
-
-            this.ElementDefinitionParametersDstVariablesMaps = elements;
-            this.ExternalIdentifierMaps = maps;
+            this.ElementDefinitionParametersDstVariablesMaps = (IEnumerable<ElementDefinition>)this.mappingEngine.Map(dstVariables);
             return true;
         }
 
@@ -289,8 +303,54 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Transfer()
         {
-            await this.hubController.CreateOrUpdate(this.ElementDefinitionParametersDstVariablesMaps, true);
-            await this.hubController.CreateOrUpdate(this.ExternalIdentifierMaps, false);
+            await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.ElementDefinitionParametersDstVariablesMaps,
+                    (i, e) => i.Element.Add(e), true);
+            
+            await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
+                (map, correspondence) => map.Correspondence.Remove(correspondence));
+
+            this.ExternalIdentifierMap.Correspondence.Clear();
+
+            foreach (var correspondence in this.IdCorrespondences)
+            {
+                correspondence.Container = this.ExternalIdentifierMap;
+            }
+
+            await this.hubController.CreateOrUpdate<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
+                (map, correspondence) => map.Correspondence.Add(correspondence));
+
+            this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
+            this.IdCorrespondences.Clear();
+        }
+
+        /// <summary>
+        /// Creates and sets the <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap"/></param>
+        /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
+        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
+        {
+            try
+            {
+                var externalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
+                {
+                    Name = newName,
+                    ExternalToolName = this.ThisToolName, 
+                    ExternalModelName = newName,
+                    Owner = this.hubController.CurrentDomainOfExpertise,
+                    Container = this.hubController.OpenIteration
+                };
+                
+                this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap, 
+                    (i, m) => i.ExternalIdentifierMap.Add(m), true);
+                
+                return externalIdentifierMap;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                return default;
+            }
         }
     }
 }

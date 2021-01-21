@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.Tests.ViewModel
 {
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
 
     using DEHPEcosimPro.DstController;
@@ -43,6 +44,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IDstBrowserHeaderViewModel> browserHeader;
         private Mock<IDstController> dstAdapter;
         private Mock<IDstVariablesControlViewModel> dstVariableControlViewModel;
+        private Mock<IHubController> hubController;
 
         [SetUp]
         public void Setup()
@@ -56,9 +58,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.browserHeader = new Mock<IDstBrowserHeaderViewModel>();
 
+            this.hubController = new Mock<IHubController>();
+
             this.dstVariableControlViewModel = new Mock<IDstVariablesControlViewModel>();
 
-            this.viewModel = new DstDataSourceViewModel(this.navigationService.Object, this.dstAdapter.Object, this.browserHeader.Object, this.dstVariableControlViewModel.Object);
+            this.viewModel = new DstDataSourceViewModel(this.navigationService.Object, this.dstAdapter.Object, 
+                this.browserHeader.Object, this.dstVariableControlViewModel.Object, this.hubController.Object);
         }
 
         [Test]

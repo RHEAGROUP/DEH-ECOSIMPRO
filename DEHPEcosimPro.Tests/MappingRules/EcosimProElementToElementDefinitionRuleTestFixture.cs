@@ -38,6 +38,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPCommon;
     using DEHPCommon.HubController.Interfaces;
 
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -59,6 +60,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private DomainOfExpertise domain;
         private Mock<ISession> session;
         private Iteration iteration;
+        private Mock<IDstController> dstController;
 
         [SetUp]
         public void Setup()
@@ -75,9 +77,14 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
             this.hubController.Setup(x => x.Session).Returns(this.session.Object);
             this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
+            this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
+
+            this.dstController = new Mock<IDstController>();
+            this.dstController.Setup(x => x.IdCorrespondences).Returns(new List<IdCorrespondence>());
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
+            containerBuilder.RegisterInstance(this.dstController.Object).As<IDstController>();
             AppContainer.Container = containerBuilder.Build();
 
             this.rule = new EcosimProElementToElementDefinitionRule();
@@ -103,9 +110,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedValues = { timeTaggedValueRowViewModel }
             });
 
-            var (elements, maps) = this.rule.Transform(this.variables);
+            var elements = this.rule.Transform(this.variables);
             Assert.AreEqual("0.2", elements.Last().Parameter.First().ValueSet.First().ActualValue.First());
-            Assert.IsNotEmpty(maps);
         }
         
         [Test]
@@ -140,9 +146,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedElementUsages = { elementDefinition.ContainedElement.First() }
             });
 
-            var (elements, maps) = this.rule.Transform(this.variables);
+            var elements = this.rule.Transform(this.variables);
             Assert.AreEqual("0.2", elements.Last().ContainedElement.First().ParameterOverride.First().ValueSet.First().ActualValue.First());
-            Assert.IsNotEmpty(maps);
         }
     }
 }

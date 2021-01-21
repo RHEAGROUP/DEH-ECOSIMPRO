@@ -26,9 +26,8 @@ namespace DEHPEcosimPro.MappingRules
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using System.Linq;
-    using System.Reflection;
+
     using System.Runtime.ExceptionServices;
 
     using Autofac;
@@ -43,9 +42,8 @@ namespace DEHPEcosimPro.MappingRules
     using DEHPCommon.MappingEngine;
     using DEHPCommon.MappingRules.Core;
 
+    using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Xpf.Printing;
 
     using NLog;
 
@@ -53,7 +51,7 @@ namespace DEHPEcosimPro.MappingRules
     /// The <see cref="EcosimProElementToElementDefinitionRule"/> is a <see cref="IMappingRule"/> for the <see cref="MappingEngine"/>
     /// That takes a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> as input and outputs a E-TM-10-25 <see cref="ElementDefinition"/>
     /// </summary>
-    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, (IEnumerable<ElementDefinition> Element, IEnumerable<ExternalIdentifierMap> Maps)>
+    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, IEnumerable<ElementDefinition>>
     {
         /// <summary>
         /// The current class logger
@@ -66,9 +64,9 @@ namespace DEHPEcosimPro.MappingRules
         private readonly IHubController hubController = AppContainer.Container.Resolve<IHubController>();
 
         /// <summary>
-        /// The  collection of <see cref="ExternalIdentifierMap"/>
+        /// Gets the <see cref="idCorrespondences"/>
         /// </summary>
-        private readonly List<ExternalIdentifierMap> externalIdentifierMap = new List<ExternalIdentifierMap>();
+        private List<IdCorrespondence> idCorrespondences;
 
         /// <summary>
         /// The current <see cref="DomainOfExpertise"/>
@@ -90,16 +88,18 @@ namespace DEHPEcosimPro.MappingRules
         /// </summary>
         /// <param name="input">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> to transform</param>
         /// <returns>An <see cref="ElementDefinition"/></returns>
-        public override (IEnumerable<ElementDefinition> Element, IEnumerable<ExternalIdentifierMap> Maps) Transform(List<VariableRowViewModel> input)
+        public override IEnumerable<ElementDefinition> Transform(List<VariableRowViewModel> input)
         {
             try
             {
+                this.idCorrespondences = AppContainer.Container.Resolve<IDstController>().IdCorrespondences;
+
                 this.owner = this.hubController.CurrentDomainOfExpertise;
 
                 foreach (var variable in input.ToList())
                 {
-                    this.dstElementName = variable.Name.Split('.')[0];
-                    this.dstParameterName = variable.Name.Split('.')[1];
+                    this.dstElementName = variable.ElementName;
+                    this.dstParameterName = variable.ParameterName;
 
                     if (variable.SelectedElementUsages.Any())
                     {
@@ -123,7 +123,7 @@ namespace DEHPEcosimPro.MappingRules
                     }
                 }
 
-                return (input.Select(x => x.SelectedElementDefinition), this.externalIdentifierMap);
+                return input.Select(x => x.SelectedElementDefinition);
             }
             catch (Exception exception)
             {
@@ -144,7 +144,7 @@ namespace DEHPEcosimPro.MappingRules
                 foreach (var parameter in elementUsage.ParameterOverride
                     .Where(x => x.ParameterType is CompoundParameterType parameterType 
                                 && parameterType.Component.Count == 2 
-                                && parameterType.Component.SingleOrDefault(x => x.ParameterType is DateTimeParameterType) != null))
+                                && parameterType.Component.SingleOrDefault(c => c.ParameterType is DateTimeParameterType) != null))
                 {
                     this.UpdateValueSet(variable, parameter);
                     this.AddToExternalIdentifierMap(parameter.Iid, this.dstParameterName);
@@ -164,7 +164,7 @@ namespace DEHPEcosimPro.MappingRules
             {
                 if (variable.SelectedParameterType is null)
                 {
-                    if (this.hubController.Session.OpenReferenceDataLibraries
+                    if (this.hubController.GetSiteDirectory().AvailableReferenceDataLibraries()
                         .SelectMany(x => x.QueryParameterTypesFromChainOfRdls())
                         .FirstOrDefault(x => x.Name == "TimeTaggedValue") is CompoundParameterType parameterType)
                     {
@@ -250,7 +250,7 @@ namespace DEHPEcosimPro.MappingRules
             }
             else
             {
-                valueSet = parameter.ValueSets.LastOrDefault();
+                valueSet = parameter.ValueSets.FirstOrDefault();
                 
                 if (valueSet is null)
                 {
@@ -287,27 +287,17 @@ namespace DEHPEcosimPro.MappingRules
         }
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="externalIdentifierMap"/>
+        /// Adds one correspondance to the <see cref="idCorrespondences"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
         private void AddToExternalIdentifierMap(Guid internalId, string externalId)
         {
-            var identifierMap = this.Bake<ExternalIdentifierMap>(x =>
-            {
-                x.ExternalToolName = typeof(EcosimProElementToElementDefinitionRule).Assembly.GetName().Name;
-                x.Container = this.hubController.OpenIteration;
-            });
-
-            var idCorrespondence = this.Bake<IdCorrespondence>(x =>
+            this.idCorrespondences.Add(this.Bake<IdCorrespondence>(x =>
             {
                 x.ExternalId = externalId;
                 x.InternalThing = internalId;
-            });
-
-            identifierMap.Correspondence.Add(idCorrespondence);
-
-            this.externalIdentifierMap.Add(identifierMap);
+            }));
         }
     }
 }

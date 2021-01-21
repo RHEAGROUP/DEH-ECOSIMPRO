@@ -25,11 +25,12 @@
 namespace DEHPEcosimPro.Tests.DstController
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Collections;
     using System.Threading.Tasks;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
 
     using DEHPCommon.Enumerators;
@@ -69,8 +70,22 @@ namespace DEHPEcosimPro.Tests.DstController
         public void Setup()
         {
             this.hubController = new Mock<IHubController>();
-            this.hubController.Setup(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<bool>())).Returns(Task.CompletedTask);
-            this.hubController.Setup(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ExternalIdentifierMap>>(), It.IsAny<bool>())).Returns(Task.CompletedTask);
+
+            this.hubController.Setup(
+                x => x.CreateOrUpdate(
+                    It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<Action<Iteration, ElementDefinition>>(), It.IsAny<bool>()))
+                .Returns(Task.CompletedTask);
+
+            this.hubController.Setup(
+                x => x.CreateOrUpdate(
+                    It.IsAny<IEnumerable<IdCorrespondence>>(), It.IsAny<Action<ExternalIdentifierMap, IdCorrespondence>>(), It.IsAny<bool>()))
+                .Returns(Task.CompletedTask);
+
+            this.hubController.Setup(
+                x => x.Delete(
+                    It.IsAny<IEnumerable<IdCorrespondence>>(), It.IsAny<Action<ExternalIdentifierMap, IdCorrespondence>>(), It.IsAny<bool>()))
+                .Returns(Task.CompletedTask);
+
             this.opcSessionHandler = new Mock<IOpcSessionHandler>();
 
             this.mappingEngine = new Mock<IMappingEngine>();
@@ -101,8 +116,10 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsNotNull(this.controller.References);
             Assert.IsNotEmpty(this.controller.Methods);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
-            Assert.IsEmpty(this.controller.ExternalIdentifierMaps);
             Assert.IsEmpty(this.controller.ElementDefinitionParametersDstVariablesMaps);
+            Assert.IsEmpty(this.controller.AvailablExternalIdentifierMap);
+            Assert.IsEmpty(this.controller.IdCorrespondences);
+            Assert.IsNull(this.controller.ExternalIdentifierMap);
         }
 
         [Test]
@@ -140,7 +157,7 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue());
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
-                .Returns((new Mock<IEnumerable<ElementDefinition>>().Object, new Mock<IEnumerable<ExternalIdentifierMap>>().Object));
+                .Returns(new Mock<IEnumerable<ElementDefinition>>().Object);
 
             Assert.IsTrue(this.controller.Map(new List<VariableRowViewModel>()));
 
@@ -153,9 +170,37 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyTransfert()
         {
+            const string oldCorrespondenceExternalId = "old";
+
+            this.controller.ExternalIdentifierMap = new ExternalIdentifierMap()
+            {
+                Correspondence = { new IdCorrespondence() { ExternalId = oldCorrespondenceExternalId } }
+            };
+
+            this.controller.IdCorrespondences.AddRange(new []
+            {
+                new IdCorrespondence() { ExternalId = "0"}, new IdCorrespondence() { ExternalId = "1" }
+            });
+
             Assert.DoesNotThrowAsync(async() => await this.controller.Transfer());
-            this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<bool>()), Times.Once);
-            this.hubController.Verify(x => x.CreateOrUpdate(It.IsAny<IEnumerable<ExternalIdentifierMap>>(), It.IsAny<bool>()), Times.Once);
+
+            this.hubController.Verify(
+                x => x.CreateOrUpdate(
+                    It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<Action<Iteration, ElementDefinition>>(), It.IsAny<bool>()),
+                Times.Once);
+
+            this.hubController.Verify(
+                x => x.CreateOrUpdate(
+                    It.IsAny<IEnumerable<IdCorrespondence>>(), It.IsAny<Action<ExternalIdentifierMap, IdCorrespondence>>(), It.IsAny<bool>()),
+                Times.Once);
+
+            this.hubController.Verify(
+                x => x.Delete(
+                    It.IsAny<IEnumerable<IdCorrespondence>>(), It.IsAny<Action<ExternalIdentifierMap, IdCorrespondence>>(), It.IsAny<bool>()),
+                Times.Once);
+
+            Assert.AreEqual(2, this.controller.ExternalIdentifierMap.Correspondence.Count());
+            Assert.IsFalse(this.controller.ExternalIdentifierMap.Correspondence.Any(x => x.ExternalId == oldCorrespondenceExternalId));
         }
 
         [Test]
