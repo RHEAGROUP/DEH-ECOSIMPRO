@@ -39,6 +39,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using DevExpress.Mvvm.Native;
+
     using Moq;
 
     using NUnit.Framework;
@@ -55,6 +57,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Iteration iteration;
         private DomainOfExpertise domain;
         private Mock<ICloseWindowBehavior> closeBehavior;
+        private ElementDefinition elementDefinition;
+        private ElementUsage elementUsage;
+        private Option option;
+        private ActualFiniteState actualFiniteState;
+        private Parameter parameter;
+        private CompoundParameterType parameterType;
 
         [SetUp]
         public void Setup()
@@ -71,13 +79,19 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Thing>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ElementDefinition>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ElementUsage>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Option>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ActualFiniteState>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Parameter>.IsAny)).Returns(true);
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), out It.Ref<CompoundParameterType>.IsAny)).Returns(true);
+
+            this.elementDefinition = new ElementDefinition();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out this.elementDefinition)).Returns(true);
+            this.elementUsage = new ElementUsage();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out this.elementUsage)).Returns(true);
+            this.option = new Option();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out this.option)).Returns(true);
+            this.actualFiniteState = new ActualFiniteState();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out this.actualFiniteState)).Returns(true);
+            this.parameter = new Parameter();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out this.parameter)).Returns(true);
+            this.parameterType = new CompoundParameterType();
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), out this.parameterType)).Returns(true);
 
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(true);
@@ -168,7 +182,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             Assert.DoesNotThrow(() => this.viewModel.UpdatePropertiesBasedOnMappingConfiguration());
             this.hubController.Verify(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Thing>.IsAny), Times.Exactly(3));
-            this.hubController.Verify(x => x.GetThingById(It.IsAny<Guid>(), out It.Ref<CompoundParameterType>.IsAny), Times.Exactly(3));
         }
     }
 }

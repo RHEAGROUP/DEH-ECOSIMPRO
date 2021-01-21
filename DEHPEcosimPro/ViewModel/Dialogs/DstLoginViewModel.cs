@@ -319,7 +319,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.IsBusy = true;
 
-            this.ProcessExternalIdentifierMap();
+            await this.ProcessExternalIdentifierMap();
 
             this.statusBarControlView.Append("Loggin in...");
 
@@ -353,9 +353,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Creates a new <see cref="ExternalIdentifierMap"/> and or set the <see cref="IDstController.ExternalIdentifierMap"/>
         /// </summary>
-        private void ProcessExternalIdentifierMap()
+        private async Task ProcessExternalIdentifierMap()
         {
-            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ??
+            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ?? await
                                                        this.dstController.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
         }
     }

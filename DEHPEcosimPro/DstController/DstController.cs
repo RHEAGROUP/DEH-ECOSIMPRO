@@ -328,29 +328,21 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap"/></param>
         /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
-        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
+        public async Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName)
         {
-            try
+            var externalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
             {
-                var externalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
-                {
-                    Name = newName,
-                    ExternalToolName = this.ThisToolName, 
-                    ExternalModelName = newName,
-                    Owner = this.hubController.CurrentDomainOfExpertise,
-                    Container = this.hubController.OpenIteration
-                };
-                
-                this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap, 
-                    (i, m) => i.ExternalIdentifierMap.Add(m), true);
-                
-                return externalIdentifierMap;
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception);
-                return default;
-            }
+                Name = newName,
+                ExternalToolName = this.ThisToolName, 
+                ExternalModelName = newName,
+                Owner = this.hubController.CurrentDomainOfExpertise,
+                Container = this.hubController.OpenIteration
+            };
+            
+            await this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap, 
+                (i, m) => i.ExternalIdentifierMap.Add(m), true);
+            
+            return externalIdentifierMap;
         }
     }
 }

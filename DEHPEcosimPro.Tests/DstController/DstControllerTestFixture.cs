@@ -32,6 +32,7 @@ namespace DEHPEcosimPro.Tests.DstController
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.SiteDirectoryData;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -70,6 +71,14 @@ namespace DEHPEcosimPro.Tests.DstController
         public void Setup()
         {
             this.hubController = new Mock<IHubController>();
+
+            this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(new DomainOfExpertise());
+            this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
+
+            this.hubController.Setup(
+                    x => x.CreateOrUpdate(
+                        It.IsAny<ExternalIdentifierMap>(), It.IsAny<Action<Iteration, ExternalIdentifierMap>>(), It.IsAny<bool>()))
+                .Returns(Task.CompletedTask);
 
             this.hubController.Setup(
                 x => x.CreateOrUpdate(
@@ -120,6 +129,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsEmpty(this.controller.AvailablExternalIdentifierMap);
             Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
+            Assert.IsNotEmpty(this.controller.ThisToolName);
         }
 
         [Test]
@@ -242,6 +252,16 @@ namespace DEHPEcosimPro.Tests.DstController
             this.controller.IsSessionOpen = true;
             Assert.AreEqual(new DateTime(2021, 1, 3), this.controller.GetCurrentServerTime());
             this.opcClient.Verify(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime), Times.Once);
+        }
+
+        [Test]
+        public void VerifyCreateExternalIdentifierMap()
+        {
+            Assert.DoesNotThrowAsync(async () => await this.controller.CreateExternalIdentifierMap("Name"));
+
+            this.hubController.Verify(x => x.CreateOrUpdate(
+                It.IsAny<ExternalIdentifierMap>(), It.IsAny<Action<Iteration, ExternalIdentifierMap>>(), 
+                It.IsAny<bool>()), Times.Once);
         }
     }
 }

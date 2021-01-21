@@ -170,7 +170,7 @@ namespace DEHPEcosimPro.DstController
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
-        /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
-        ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
+        /// <returns>A awaitable <see cref="ExternalIdentifierMap"/></returns>
+        Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
     }
 }
