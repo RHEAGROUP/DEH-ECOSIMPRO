@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System.Windows;
     using System.Windows.Input;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
@@ -290,6 +291,42 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.selectedThing.SelectedElementDefinition.ContainedElement.Where(
                         this.AreTheseOwnedByTheDomain<ElementUsage>()).Distinct());
             }
+        }
+
+        /// <summary>
+        /// Updates the mapping based on the available 10-25 elements
+        /// </summary>
+        public void UpdatePropertiesBasedOnMappingConfiguration()
+        {
+            this.IsBusy = true;
+
+            foreach (var variable in this.Variables)
+            {
+                foreach (var idCorrespondence in variable.MappingConfigurations)
+                {
+                    if (this.hubController.GetThingById(idCorrespondence.InternalThing, this.hubController.OpenIteration, out Thing thing))
+                    {
+                        Action action = thing switch
+                        {
+                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = elementDefinition),
+                            ElementUsage elementUsage => (() => variable.SelectedElementUsages.Add(elementUsage)),
+                            Parameter parameter => (() => variable.SelectedParameter = parameter),
+                            Option option => (() => variable.SelectedOption = option),
+                            ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+                            _ => null
+                        };
+                        
+                        action?.Invoke();
+                        
+                        if (action is null && this.hubController.GetThingById(idCorrespondence.InternalThing, out CompoundParameterType parameterType))
+                        {
+                            variable.SelectedParameterType = parameterType;
+                        }
+                    }
+                }
+            }
+
+            this.IsBusy = false;
         }
 
         /// <summary>

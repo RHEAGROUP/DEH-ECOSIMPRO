@@ -28,6 +28,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using System.Collections.Generic;
     using System.Linq;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
@@ -50,7 +51,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private MappingConfigurationDialogViewModel viewModel;
         private Mock<IDstController> dstController;
         private Mock<IHubController> hubController;
-        private VariableRowViewModel variableRowViewModel;
+        private List<VariableRowViewModel> variableRowViewModels;
         private Iteration iteration;
         private DomainOfExpertise domain;
         private Mock<ICloseWindowBehavior> closeBehavior;
@@ -62,8 +63,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.iteration = new Iteration()
             {
-                Option = { new Option() { Name = "TestOption" }},
-                Element = { new ElementDefinition() { Owner = this.domain }}
+                Option = { new Option() { Name = "TestOption" } },
+                Element = { new ElementDefinition() { Owner = this.domain } }
             };
 
             this.hubController = new Mock<IHubController>();
@@ -71,25 +72,43 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
 
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Thing>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ElementDefinition>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ElementUsage>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Option>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<ActualFiniteState>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Parameter>.IsAny)).Returns(true);
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), out It.Ref<CompoundParameterType>.IsAny)).Returns(true);
+
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(true);
 
-            this.variableRowViewModel = new VariableRowViewModel((
-                new ReferenceDescription()
-                {
-                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), 
-                    NodeClass = NodeClass.Variable, 
-                    DisplayName = new LocalizedText(null, "Name")
-                },
-                new DataValue() {Value = .2}));
+            this.variableRowViewModels = new List<VariableRowViewModel> 
+            { 
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "el.DummyVariable0")
+                    }, new DataValue() { Value = .2 })),
 
-            this.viewModel = new MappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object)
-            {
-                Variables = 
-                {
-                    this.variableRowViewModel
-                }
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "res0.DummyVariable1")
+                    }, new DataValue())),
+
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable2")
+                    }, new DataValue()))
             };
+
+            this.viewModel = new MappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object);
+            this.viewModel.Variables.AddRange(this.variableRowViewModels);
 
             this.closeBehavior = new Mock<ICloseWindowBehavior>();
             this.closeBehavior.Setup(x => x.Close());
@@ -115,8 +134,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         public void VerifyContinueCommand()
         {
             Assert.IsFalse(this.viewModel.ContinueCommand.CanExecute(null));
-            this.viewModel.SelectedThing = this.variableRowViewModel;
-            this.viewModel.Variables.First().SelectedValues.AddRange(this.viewModel.Variables.First().Values);
+            this.viewModel.SelectedThing = this.variableRowViewModels.First();
+            this.viewModel.Variables.First().SelectedValues.AddRange(this.variableRowViewModels.First().Values);
             Assert.IsTrue(this.viewModel.ContinueCommand.CanExecute(null));
 
             this.viewModel.CloseWindowBehavior = this.closeBehavior.Object;
@@ -128,6 +147,29 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.closeBehavior.Verify(x => x.Close(), Times.Once);
             this.dstController.Verify(x => x.Map(It.IsAny<List<VariableRowViewModel>>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public void VerifyUpdatePropertiesBasedOnMappingConfiguration()
+        {
+            var correspondences = new List<IdCorrespondence>
+            {
+                new IdCorrespondence() { ExternalId = "trans0" },
+                new IdCorrespondence() { ExternalId = "Gain.DummyVariable2" },
+                new IdCorrespondence() { ExternalId = "res0" },
+            };
+
+            foreach (var variable in this.viewModel.Variables)
+            {
+                variable.MappingConfigurations.AddRange(
+                    correspondences.Where(
+                        x => x.ExternalId == variable.ElementName ||
+                             x.ExternalId == variable.ParameterName));
+            }
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdatePropertiesBasedOnMappingConfiguration());
+            this.hubController.Verify(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Thing>.IsAny), Times.Exactly(3));
+            this.hubController.Verify(x => x.GetThingById(It.IsAny<Guid>(), out It.Ref<CompoundParameterType>.IsAny), Times.Exactly(3));
         }
     }
 }

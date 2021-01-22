@@ -91,11 +91,11 @@
                                             <Grid Margin="5" Grid.Column="1">
                                                 <dxg:GridControl AutoGenerateColumns="None" 
                                                      EnableSmartColumnsGeneration="False"
-                                                     HorizontalAlignment="Left" 
+                                                     HorizontalAlignment="Left"
                                                      VerticalAlignment="Stretch"
                                                      ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.Values}"
                                                      SelectionMode="Row"
-                                                     SelectedItems="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedValues, Mode=TwoWay}">
+                                                     SelectedItems="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                                 <dxg:GridControl.View>
                                                     <dxg:TableView HorizontalAlignment="Stretch"
                                                                    VerticalAlignment="Stretch"
@@ -107,7 +107,8 @@
                                                                    IsDetailButtonVisibleBinding="{x:Null}"
                                                                    VerticalScrollbarVisibility="Auto"
                                                                    ShowGroupPanel="False"
-                                                                   ShowCheckBoxSelectorColumn="True">
+                                                                   ShowCheckBoxSelectorColumn="true"
+                                                                   RetainSelectionOnClickOutsideCheckBoxSelector="True">
                                                     </dxg:TableView>
                                                 </dxg:GridControl.View>
                                                 <dxg:GridControl.Columns>
