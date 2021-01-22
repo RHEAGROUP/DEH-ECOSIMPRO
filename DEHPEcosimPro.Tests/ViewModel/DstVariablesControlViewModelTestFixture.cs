@@ -26,70 +26,115 @@ namespace DEHPEcosimPro.Tests.ViewModel
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Reactive.Concurrency;
+    using System.Threading;
 
+    using Autofac;
+
+    using CDP4Common.EngineeringModelData;
+
+    using DEHPCommon;
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Dialogs;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using Moq;
 
     using NUnit.Framework;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
 
-    [TestFixture]
+    using ReactiveUI;
+
+    [TestFixture, Apartment(ApartmentState.STA)]
     public class DstVariablesControlViewModelTestFixture
     {
         private DstVariablesControlViewModel viewModel;
         private Mock<IDstController> dstController;
         private Mock<INavigationService> navigationService;
         private Mock<IHubController> hubController;
+        private Mock<IStatusBarControlViewModel> statusBar;
+        private Mock<IMappingConfigurationDialogViewModel> mappingConfigurationDialog;
 
         [SetUp]
         public void Setup()
         {
+            RxApp.MainThreadScheduler = Scheduler.CurrentThread;
+
+            this.statusBar = new Mock<IStatusBarControlViewModel>();
+
             this.dstController = new Mock<IDstController>();
 
             this.dstController.Setup(x => x.AddSubscription(It.IsAny<ReferenceDescription>()));
+            this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
             
             this.dstController.Setup(x => x.Variables).Returns(
                 new List<(ReferenceDescription Reference, DataValue Value)>()
                 {
                     (new ReferenceDescription()
                     {
-                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "DummyVariable0")
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "el.DummyVariable0")
                     }, new DataValue()),
                     (new ReferenceDescription()
                     {
-                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "DummyVariable1")
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "res0.DummyVariable1")
                     }, new DataValue()),
                     (new ReferenceDescription()
                     {
-                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "DummyVariable2")
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable2")
                     }, new DataValue()),
                 });
 
-            this.navigationService = new Mock<INavigationService>();
-            this.hubController = new Mock<IHubController>();
+            this.dstController.Setup(x => x.ExternalIdentifierMap).Returns(
+                new ExternalIdentifierMap()
+                {
+                    Correspondence =
+                    {
+                        new IdCorrespondence() { ExternalId = "trans0"},
+                        new IdCorrespondence() { ExternalId = "Gain.DummyVariable2"},
+                        new IdCorrespondence() { ExternalId = "res0"},
+                    }
+                });
 
-            this.viewModel = new DstVariablesControlViewModel(this.dstController.Object, this.navigationService.Object, this.hubController.Object);
+            this.dstController.Setup(x => x.MappingDirection).Returns(MappingDirection.FromDstToHub);
+
+            this.mappingConfigurationDialog = new Mock<IMappingConfigurationDialogViewModel>();
+            this.mappingConfigurationDialog.Setup(x => x.Variables).Returns(new ReactiveList<VariableRowViewModel>());
+            this.mappingConfigurationDialog.Setup(x => x.UpdatePropertiesBasedOnMappingConfiguration());
+
+            this.navigationService = new Mock<INavigationService>();
+            this.navigationService.Setup(x => x.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(It.IsAny<MappingConfigurationDialogViewModel>()));
+            this.hubController = new Mock<IHubController>();
+            this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
+
+            var containerBuilder = new ContainerBuilder();
+            containerBuilder.RegisterInstance(this.mappingConfigurationDialog.Object).As<IMappingConfigurationDialogViewModel>();
+            AppContainer.Container = containerBuilder.Build();
+
+            this.viewModel = new DstVariablesControlViewModel(this.dstController.Object, this.navigationService.Object, 
+                this.hubController.Object, this.statusBar.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
-            Assert.IsEmpty(this.viewModel.Variables);
+            Assert.IsNotEmpty(this.viewModel.Variables);
             Assert.IsFalse(this.viewModel.IsBusy);
+            Assert.IsNotNull(this.viewModel.MapCommand);
         }
 
         [Test]
         public void VerifyUpdateProperties()
         {
-            this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.viewModel.UpdateProperties();
             Assert.AreEqual(3, this.viewModel.Variables.Count);
 
             this.dstController.Verify(x => x.AddSubscription(It.IsAny<ReferenceDescription>()), Times.Exactly(3));
@@ -97,8 +142,29 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.UpdateProperties();
 
-            this.dstController.Verify(x => x.IsSessionOpen, Times.Exactly(5));
-            this.dstController.Verify(x => x.ClearSubscriptions(), Times.Exactly(2));
+            this.dstController.Verify(x => x.IsSessionOpen, Times.Exactly(4));
+            this.dstController.Verify(x => x.ClearSubscriptions(), Times.Exactly(1));
+        }
+
+        [Test]
+        public void VerifyMapCommandExecute()
+        {
+            Assert.IsFalse(this.viewModel.MapCommand.CanExecute(null));
+            this.viewModel.SelectedThings.Clear();
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            this.viewModel.InitializeCommands();
+            Assert.IsTrue(this.viewModel.MapCommand.CanExecute(null));
+            this.viewModel.SelectedThings.AddRange(this.viewModel.Variables);
+            this.viewModel.SelectedThing = null;
+            this.viewModel.InitializeCommands();
+            Assert.IsTrue(this.viewModel.MapCommand.CanExecute(null));
+
+            Assert.DoesNotThrow(() => this.viewModel.MapCommand.Execute(null));
+
+            this.dstController.Verify(x => x.ExternalIdentifierMap, Times.Exactly(3));
+            this.mappingConfigurationDialog.Verify(x => x.Variables, Times.Once);
+            this.mappingConfigurationDialog.Verify(x => x.UpdatePropertiesBasedOnMappingConfiguration(), Times.Once);
+            this.navigationService.Verify(x => x.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(It.IsAny<IMappingConfigurationDialogViewModel>()), Times.Once());
         }
     }
 }

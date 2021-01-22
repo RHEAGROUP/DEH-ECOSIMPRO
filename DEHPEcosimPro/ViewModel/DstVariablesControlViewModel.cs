@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Diagnostics;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -59,6 +60,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IHubController"/>
         /// </summary>
         private readonly IHubController hubController;
+
+        /// <summary>
+        /// The <see cref="IStatusBarControlViewModel"/>
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBar;
 
         /// <summary>
         /// The <see cref="IDstController"/>
@@ -124,13 +130,18 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
-        public DstVariablesControlViewModel(IDstController dstController, INavigationService navigationService, IHubController hubController)
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        public DstVariablesControlViewModel(IDstController dstController, INavigationService navigationService, 
+            IHubController hubController, IStatusBarControlViewModel statusBar)
         {
             this.dstController = dstController;
             this.navigationService = navigationService;
             this.hubController = hubController;
+            this.statusBar = statusBar;
 
-            this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateProperties());
 
             this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.Changed)
                 .Subscribe(_ => this.PopulateContextMenu());
@@ -141,7 +152,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Initializes the <see cref="ICommand"/> of this view model
         /// </summary>
-        private void InitializeCommands()
+        public void InitializeCommands()
         {
             var canMap = this.WhenAny(
                 vm => vm.SelectedThing,
@@ -149,7 +160,7 @@ namespace DEHPEcosimPro.ViewModel
                 vm => vm.hubController.OpenIteration,
                 vm => vm.dstController.MappingDirection,
                 (selected, selection, iteration, mappingDirection) =>
-                    iteration.Value != null && (selected.Value != null || this.SelectedThings.Any()) && mappingDirection.Value is MappingDirection.FromDstToHub);
+                    iteration.Value != null && (selected.Value != null || this.SelectedThings.Any()) && mappingDirection.Value is MappingDirection.FromDstToHub).ObserveOn(RxApp.MainThreadScheduler);
 
             this.MapCommand = ReactiveCommand.Create(canMap);
             this.MapCommand.Subscribe(_ => this.MapCommandExecute());
@@ -161,10 +172,30 @@ namespace DEHPEcosimPro.ViewModel
         private void MapCommandExecute()
         {
             var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
+            this.AssignMapping();
+            var timer = new Stopwatch();
+            timer.Start();
             viewModel.Variables.AddRange(this.SelectedThings);
+            viewModel.UpdatePropertiesBasedOnMappingConfiguration();
+            timer.Stop();
+            this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
             this.navigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
         }
 
+        /// <summary>
+        /// Assings a mapping configuration if any to each of the selected variables
+        /// </summary>
+        private void AssignMapping()
+        {
+            foreach (var variable in this.SelectedThings)
+            {
+                variable.MappingConfigurations.AddRange(
+                    this.dstController.ExternalIdentifierMap.Correspondence.Where(
+                        x => x.ExternalId == variable.ElementName || 
+                             x.ExternalId == variable.ParameterName));
+            }
+        }
+        
         /// <summary>
         /// Updates this view model properties
         /// </summary>

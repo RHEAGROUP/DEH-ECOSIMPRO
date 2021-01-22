@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.DstController
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using CDP4Common.EngineeringModelData;
+
     using DEHPCommon.Enumerators;
     using DEHPCommon.MappingEngine;
 
@@ -42,6 +44,11 @@ namespace DEHPEcosimPro.DstController
     public interface IDstController
     {
         /// <summary>
+        /// Gets this running tool name
+        /// </summary>
+        string ThisToolName { get; }
+
+        /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
         bool IsSessionOpen { get; set; }
@@ -55,6 +62,11 @@ namespace DEHPEcosimPro.DstController
         /// The refresh interval for subscriptions in milliseconds
         /// </summary>
         int RefreshInterval { get; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="MappingDirection"/>
+        /// </summary>
+        MappingDirection MappingDirection { get; set; }
 
         /// <summary>
         /// Gets the references variables available from the connected OPC server
@@ -72,9 +84,24 @@ namespace DEHPEcosimPro.DstController
         IList<ReferenceDescription> References { get; }
 
         /// <summary>
-        /// Gets or sets the <see cref="MappingDirection"/>
+        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
         /// </summary>
-        MappingDirection MappingDirection { get; set; }
+        IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap { get; }
+
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
+        /// </summary>
+        IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="ExternalIdentifierMap"/>
+        /// </summary>
+        ExternalIdentifierMap ExternalIdentifierMap { get; set; }
+
+        /// <summary>
+        /// Gets the collection of <see cref="IdCorrespondences"/>
+        /// </summary>
+        List<IdCorrespondence> IdCorrespondences { get; }
 
         /// <summary>
         /// Connects to the provided endpoint
@@ -95,7 +122,6 @@ namespace DEHPEcosimPro.DstController
         /// Reads and returns the current server time, in UTC, of the currently open session
         /// </summary>
         /// <returns>null if the session is closed or the ServerStatus.CurrentTime node was not found</returns>
-
         DateTime? GetCurrentServerTime();
 
         /// <summary>
@@ -131,7 +157,20 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A awaitable assert whether the mapping was successful</returns>
+        /// <returns>A assert whether the mapping was successful</returns>
         bool Map(List<VariableRowViewModel> dstVariables);
+
+        /// <summary>
+        /// Transfers the mapped variables to the Hub data source
+        /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
+        Task Transfer();
+
+        /// <summary>
+        /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
+        /// </summary>
+        /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
+        /// <returns>A awaitable <see cref="ExternalIdentifierMap"/></returns>
+        Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
     }
 }

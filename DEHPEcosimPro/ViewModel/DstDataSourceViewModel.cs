@@ -24,12 +24,17 @@
 
 namespace DEHPEcosimPro.ViewModel
 {
+    using System;
+
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views.Dialogs;
+
+    using ReactiveUI;
 
     /// <summary>
     /// The <see cref="DstDataSourceViewModel"/> is the view model for the panel that will display controls and data relative to EcosimPro
@@ -40,6 +45,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+        
+        /// <summary>
+        /// The <see cref="IHubController"/>
+        /// </summary>
+        private readonly IHubController hubController;
 
         /// <summary>
         /// Gets the <see cref="IDstBrowserHeaderViewModel"/>
@@ -58,12 +68,30 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="dstBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
         /// <param name="dstVariablesViewModel">The <see cref="IDstVariablesControlViewModel"/></param>
-        public DstDataSourceViewModel(INavigationService navigationService, IDstController dstController, IDstBrowserHeaderViewModel dstBrowserHeader, IDstVariablesControlViewModel dstVariablesViewModel) : base(navigationService)
+        /// <param name="hubController">The <see cref="IHubController"/></param>
+        public DstDataSourceViewModel(INavigationService navigationService, IDstController dstController, 
+            IDstBrowserHeaderViewModel dstBrowserHeader, IDstVariablesControlViewModel dstVariablesViewModel, IHubController hubController) : base(navigationService)
         {
             this.dstController = dstController;
+            this.hubController = hubController;
             this.DstVariablesViewModel = dstVariablesViewModel;
             this.DstBrowserHeader = dstBrowserHeader;
             this.InitializeCommands();
+        }
+
+        /// <summary>
+        /// Initializes the <see cref="ReactiveCommand{T}"/>
+        /// </summary>
+        protected override void InitializeCommands()
+        {
+            var canExecute = this.WhenAny(x => x.hubController.OpenIteration,
+                x => x.dstController.IsSessionOpen,
+                x => x.hubController.IsSessionOpen, 
+                (i,d , s) 
+                    => d.Value || (i.Value != null && s.Value));
+
+            this.ConnectCommand = ReactiveCommand.Create(canExecute);
+            this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
         }
 
         /// <summary>

@@ -212,6 +212,21 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public ReactiveList<ElementUsage> SelectedElementUsages { get; set; } = new ReactiveList<ElementUsage>();
 
         /// <summary>
+        /// Gets or sets the mapping configurations
+        /// </summary>
+        public ReactiveList<IdCorrespondence> MappingConfigurations { get; set; } = new ReactiveList<IdCorrespondence>();
+
+        /// <summary>
+        /// Gets this represented ElementName
+        /// </summary>
+        public string ElementName => this.Name.Split('.')[0];
+
+        /// <summary>
+        /// Gets this reprensented ParameterName
+        /// </summary>
+        public string ParameterName => string.Join(".", this.Name.Split('.').Skip(1));
+
+        /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
@@ -227,7 +242,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.OnNotification);
         }
-
+        
         /// <summary>
         /// Sets the properties of this view model
         /// </summary>

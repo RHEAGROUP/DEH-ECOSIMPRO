@@ -9,7 +9,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         Title="Connections"
-        mc:Ignorable="d" Height="422" d:DesignWidth="409" MinWidth="600"  Width="400">
+        mc:Ignorable="d" Height="600" d:DesignWidth="409" MinWidth="600"  Width="400">
     <dxmvvm:Interaction.Behaviors>
         <behaviors:CloseWindowBehavior/>
     </dxmvvm:Interaction.Behaviors>
@@ -42,9 +42,10 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="220" />
                     <ColumnDefinition />
                     <ColumnDefinition Width="50" />
                 </Grid.ColumnDefinitions>
@@ -73,16 +74,43 @@
                     </StackPanel>
                 </Button>
 
-                <dxe:CheckEdit IsChecked="{Binding RequiresAuthentication}" Padding="5" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Content="The server requires authentication"></dxe:CheckEdit>
+                <dxe:CheckEdit IsChecked="{Binding RequiresAuthentication}" Padding="5" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" 
+                               Content="The server requires authentication"></dxe:CheckEdit>
 
                 <!--  Username  -->
                 <dxlc:LayoutItemLabel Grid.Row="2" Grid.Column="0" Height="Auto" Margin="5" Content="Username" FontSize="12" />
-                <dxe:TextEdit Style="{StaticResource IsReadOnlyStyle}" IsEnabled="{Binding RequiresAuthentication}" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Height="Auto" Margin="5" FontSize="12" Text="{Binding Path=UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <dxe:TextEdit Style="{StaticResource IsReadOnlyStyle}" IsEnabled="{Binding RequiresAuthentication}" Grid.Row="2" Grid.Column="1" 
+                              Grid.ColumnSpan="2" Height="Auto" Margin="5" FontSize="12" 
+                              Text="{Binding Path=UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                 <!--  Password  -->
                 <dxlc:LayoutItemLabel Grid.Row="3" Grid.Column="0" Height="Auto" Margin="5" Content="Password" FontSize="12" />
-                <dxe:PasswordBoxEdit Style="{StaticResource IsReadOnlyStyle}" IsEnabled="{Binding RequiresAuthentication}" Name="PasswordBoxEdit" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Height="Auto" Margin="5" FontSize="12"
+                <dxe:PasswordBoxEdit Style="{StaticResource IsReadOnlyStyle}" IsEnabled="{Binding RequiresAuthentication}" Name="PasswordBoxEdit"
+                                     Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Height="Auto" Margin="5" FontSize="12"
                                      Text="{Binding Path=Password, Mode=TwoWay}" />
+
+                <!--  Model  -->
+                <dxlc:LayoutItemLabel Grid.RowSpan="2" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Height="Auto" Margin="5" Content="EcosimPro Model / Experiment Name" FontSize="12"
+                                      ToolTip="This will identify the mapping configuration to be saved"/>
+                <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox Grid.Column="0" Grid.Row="1" Margin="5" Style="{StaticResource IsReadOnlyStyle}" Content="New Configuration" IsChecked="{Binding CreateNewMappingConfigurationChecked}"></CheckBox>
+                    <dxe:ComboBoxEdit Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource IsReadOnlyStyle}" Name="ModelBoxEdit"  DisplayMember="ExternalModelName" ShowNullTextForEmptyValue="True"
+                                      Height="Auto" Margin="5" FontSize="12" SelectedItem="{Binding SelectedExternalIdentifierMap}"
+                                      ItemsSource="{Binding AvailableExternalIdentifierMap}" IncrementalFiltering="True" NullValueButtonPlacement="EditBox" NullText="No Mapping Configuration Selected"/>
+
+                    <dxe:TextEdit Grid.Column="1" Style="{StaticResource IsReadOnlyStyle}" Grid.Row="1" Height="Auto" Margin="5" FontSize="12" ShowNullTextForEmptyValue="True"
+                                  ToolTip="This will identify the mapping configuration to be saved" NullText="Enter A Name That Will Identify The Configuration"
+                                  Text="{Binding Path=ExternalIdentifierMapNewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                </Grid>
 
             </Grid>
 

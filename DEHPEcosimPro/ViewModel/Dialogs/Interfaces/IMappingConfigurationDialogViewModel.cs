@@ -24,14 +24,14 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
+    using System.Windows.Input;
+
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
     using DEHPCommon.UserInterfaces.Behaviors;
 
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Xpf.Editors;
 
     using ReactiveUI;
 
@@ -94,5 +94,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets the <see cref="ICommand"/> to continue
         /// </summary>
         ReactiveCommand<object> ContinueCommand { get; set; }
+
+        /// <summary>
+        /// Updates the mapping based on the available 10-25 elements
+        /// </summary>
+        void UpdatePropertiesBasedOnMappingConfiguration();
     }
 }
