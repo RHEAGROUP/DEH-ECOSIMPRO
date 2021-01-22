@@ -36,6 +36,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
@@ -72,6 +73,11 @@ namespace DEHPEcosimPro.ViewModel
         public IObjectBrowserViewModel ObjectBrowser { get; set; }
 
         /// <summary>
+        /// The <see cref="IPublicationBrowserViewModel"/>
+        /// </summary>
+        public IPublicationBrowserViewModel PublicationBrowser { get; set; }
+
+        /// <summary>
         /// The <see cref="IHubBrowserHeaderViewModel"/>
         /// </summary>
         public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
@@ -82,16 +88,18 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="objectBrowser">The <see cref="IObjectBrowserViewModel"/></param>
+        /// <param name="publicationBrowser">The <see cref="IPublicationBrowserViewModel"/></param>
         /// <param name="treeSelectorService">The <see cref="IObjectBrowserTreeSelectorService"/></param>
         /// <param name="hubBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, 
+        public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, IPublicationBrowserViewModel publicationBrowser,
             IObjectBrowserTreeSelectorService treeSelectorService, IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController) : base(navigationService)
         {
             this.hubController = hubController;
             this.treeSelectorService = treeSelectorService;
             this.dstController = dstController;
             this.ObjectBrowser = objectBrowser;
+            this.PublicationBrowser = publicationBrowser;
             this.HubBrowserHeader = hubBrowserHeader;
 
             this.InitializeCommands();
@@ -106,7 +114,7 @@ namespace DEHPEcosimPro.ViewModel
 
             var canMap = this.ObjectBrowser.CanMap.Merge(this.WhenAny(x => x.dstController.MappingDirection,
                 x => x.dstController.IsSessionOpen,
-                (m, s) => 
+                (m, s) =>
                     m.Value is MappingDirection.FromHubToDst && s.Value));
 
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
@@ -121,7 +129,7 @@ namespace DEHPEcosimPro.ViewModel
             var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
             this.NavigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
         }
-        
+
         /// <summary>
         /// Executes the <see cref="DataSourceViewModel.ConnectCommand"/>
         /// </summary>

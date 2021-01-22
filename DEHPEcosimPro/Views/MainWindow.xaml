@@ -5,11 +5,12 @@
         xmlns:dataTemplate="clr-namespace:DEHPEcosimPro.Views.Rows"
         xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
-        xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
-        xmlns:views="clr-namespace:DEHPEcosimPro.Views"
         xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:views="clr-namespace:DEHPEcosimPro.Views"
+        xmlns:common="clr-namespace:DEHPCommon.UserInterfaces.Views;assembly=DEHPCommon"
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+        xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
+        xmlns:publicationBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.PublicationBrowser;assembly=DEHPCommon"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
@@ -84,11 +85,28 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
                                     <common:HubBrowserHeader DataContext="{Binding HubDataSourceViewModel.HubBrowserHeader}" Grid.Row="1" />
-                                    <objectBrowser:ObjectBrowser Grid.Row="2">
-                                        <objectBrowser:ObjectBrowser.DataContext>
-                                            <Binding Path="HubDataSourceViewModel.ObjectBrowser"></Binding>
-                                        </objectBrowser:ObjectBrowser.DataContext>
-                                    </objectBrowser:ObjectBrowser>
+                                    <TabControl Grid.Row="2">
+                                        <TabItem>
+                                            <TabItem.Header>
+                                                <TextBlock Text="Engineering Model" />
+                                            </TabItem.Header>
+                                            <objectBrowser:ObjectBrowser>
+                                                <objectBrowser:ObjectBrowser.DataContext>
+                                                    <Binding Path="HubDataSourceViewModel.ObjectBrowser"></Binding>
+                                                </objectBrowser:ObjectBrowser.DataContext>
+                                            </objectBrowser:ObjectBrowser>
+                                        </TabItem>
+                                        <TabItem>
+                                            <TabItem.Header>
+                                                <TextBlock Text="Publications" />
+                                            </TabItem.Header>
+                                            <publicationBrowser:PublicationBrowser>
+                                                <publicationBrowser:PublicationBrowser.DataContext>
+                                                    <Binding Path="HubDataSourceViewModel.PublicationBrowser"></Binding>
+                                                </publicationBrowser:PublicationBrowser.DataContext>
+                                            </publicationBrowser:PublicationBrowser>
+                                        </TabItem>
+                                    </TabControl>
                                 </Grid>
                             </Grid>
                         </dxdo:LayoutPanel>
