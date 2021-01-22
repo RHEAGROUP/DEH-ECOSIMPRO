@@ -34,6 +34,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
@@ -54,6 +55,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IHubController> hubController;
         private Mock<INavigationService> navigationService;
         private Mock<IObjectBrowserViewModel> objectBrowser;
+        private Mock<IPublicationBrowserViewModel> publicationBrowser;
         private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
         private IHubDataSourceViewModel viewModel;
         private Mock<IHubBrowserHeaderViewModel> hubBrowserHeader;
@@ -65,18 +67,24 @@ namespace DEHPEcosimPro.Tests.ViewModel
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
             this.navigationService = new Mock<INavigationService>();
             this.navigationService.Setup(x => x.ShowDialog<Login>());
+
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.hubController.Setup(x => x.Close());
+
             this.objectBrowser = new Mock<IObjectBrowserViewModel>();
             this.objectBrowser.Setup(x => x.CanMap).Returns(new Mock<IObservable<bool>>().Object);
             this.objectBrowser.Setup(x => x.MapCommand).Returns(ReactiveCommand.Create());
             this.objectBrowser.Setup(x => x.Things).Returns(new ReactiveList<BrowserViewModelBase>());
+
+            this.publicationBrowser = new Mock<IPublicationBrowserViewModel>();
+
             this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
+
             this.hubBrowserHeader = new Mock<IHubBrowserHeaderViewModel>();
             this.dstController = new Mock<IDstController>();
 
-            this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, 
+            this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object, 
                 this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object);
         }
 

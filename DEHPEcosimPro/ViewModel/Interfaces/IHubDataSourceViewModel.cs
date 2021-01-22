@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Interfaces
 {
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
 
     using ReactiveUI;
 
@@ -37,6 +38,11 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// The <see cref="IObjectBrowserViewModel"/>
         /// </summary>
         IObjectBrowserViewModel ObjectBrowser { get; set; }
+
+        /// <summary>
+        /// The <see cref="IPublicationBrowserViewModel"/>
+        /// </summary>
+        IPublicationBrowserViewModel PublicationBrowser { get; set; }
 
         /// <summary>
         /// Gets or sets the name
