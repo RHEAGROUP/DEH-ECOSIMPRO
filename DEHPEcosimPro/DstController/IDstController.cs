@@ -157,8 +157,8 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A assert whether the mapping was successful</returns>
-        bool Map(List<VariableRowViewModel> dstVariables);
+        /// <returns>A <see cref="Task"/></returns>
+        Task Map(List<VariableRowViewModel> dstVariables);
 
         /// <summary>
         /// Transfers the mapped variables to the Hub data source

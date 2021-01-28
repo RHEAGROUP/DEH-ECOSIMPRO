@@ -262,7 +262,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private void UpdateAvailableOptions()
         {
             this.AvailableOptions.AddRange(this.hubController.OpenIteration.Option.Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
-            this.Variables.ForEach(x => x.SelectedOption = this.AvailableOptions.Last());
+            
+            this.Variables.ForEach(x =>
+            {
+                if (x.SelectedOption is null)
+                {
+                    x.SelectedOption = this.AvailableOptions.Last();
+                }
+            });
         }
 
         /// <summary>

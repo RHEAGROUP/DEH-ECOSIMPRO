@@ -37,11 +37,14 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
+
+    using DevExpress.Xpf.CodeView;
 
     using Opc.Ua;
 
@@ -78,10 +81,20 @@ namespace DEHPEcosimPro.DstController
         private readonly IMappingEngine mappingEngine;
 
         /// <summary>
+        /// The <see cref="IStatusBarControlViewModel"/>
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBar;
+
+        /// <summary>
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
-        
+
+        /// <summary>
+        /// Backing field for the <see cref="HasSomeMappedThingsReadyToTransfert"/>
+        /// </summary>
+        private bool hasSomeReadyToTransfertMapping;
+
         /// <summary>
         /// Gets this running tool name
         /// </summary>
@@ -116,6 +129,15 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Gets or sets an assert indicating whether the are some reference that have been mapped but not yet transfered
+        /// </summary>
+        public bool HasSomeMappedThingsReadyToTransfert
+        {
+            get => this.hasSomeReadyToTransfertMapping;
+            set => this.RaiseAndSetIfChanged(ref this.hasSomeReadyToTransfertMapping, value);
+        }
+
+        /// <summary>
         /// Gets the references variables available from the connected OPC server
         /// </summary>
         public IList<(ReferenceDescription Reference, DataValue Node)> Variables { get; private set; } = new List<(ReferenceDescription, DataValue)>();
@@ -131,15 +153,9 @@ namespace DEHPEcosimPro.DstController
         public IList<ReferenceDescription> References => this.opcClientService.References;
         
         /// <summary>
-        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
-        /// </summary>
-        public IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap => 
-            this.hubController.AvailableExternalIdentifierMap(typeof(DstController).Assembly.GetName().Name);
-
-        /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        public IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new List<ElementDefinition>();
+        public ReactiveList<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new ReactiveList<ElementDefinition>();
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -156,14 +172,19 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
-        /// <param name="sessionHandler">The <<see cref="IOpcSessionHandler"/></param>
-        /// <param name="mappingEngine">The <<see cref="IMappingEngine"/></param>
-        public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine)
+        /// <param name="sessionHandler">The <see cref="IOpcSessionHandler"/></param>
+        /// <param name="mappingEngine">The <see cref="IMappingEngine"/></param>
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        public DstController(IOpcClientService opcClientService, IHubController hubController, 
+            IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine, IStatusBarControlViewModel statusBar)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
             this.sessionHandler = sessionHandler;
             this.mappingEngine = mappingEngine;
+            this.statusBar = statusBar;
+
+            this.ElementDefinitionParametersDstVariablesMaps.ChangeTrackingEnabled = true;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -290,11 +311,13 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A assert whether the mapping was successful</returns>
-        public bool Map(List<VariableRowViewModel> dstVariables)
+        /// <returns>A <see cref="Task"/></returns>
+        public async Task Map(List<VariableRowViewModel> dstVariables)
         {
-            this.ElementDefinitionParametersDstVariablesMaps = (IEnumerable<ElementDefinition>)this.mappingEngine.Map(dstVariables);
-            return true;
+            this.ElementDefinitionParametersDstVariablesMaps.AddRange(
+                (IEnumerable<ElementDefinition>)this.mappingEngine.Map(dstVariables));
+
+            await this.UpdateExternalIdentifierMap();
         }
 
         /// <summary>
@@ -305,7 +328,14 @@ namespace DEHPEcosimPro.DstController
         {
             await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.ElementDefinitionParametersDstVariablesMaps,
                     (i, e) => i.Element.Add(e), true);
-            
+        }
+
+        /// <summary>
+        /// Updates the configured mapping
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdateExternalIdentifierMap()
+        {
             await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
                 (map, correspondence) => map.Correspondence.Remove(correspondence));
 
@@ -321,6 +351,7 @@ namespace DEHPEcosimPro.DstController
 
             this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
             this.IdCorrespondences.Clear();
+            this.statusBar.Append("Mapping configuration saved");
         }
 
         /// <summary>

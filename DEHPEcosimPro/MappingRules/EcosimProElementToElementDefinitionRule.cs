@@ -109,13 +109,22 @@ namespace DEHPEcosimPro.MappingRules
                     {
                         if (variable.SelectedElementDefinition is null)
                         {
-                            variable.SelectedElementDefinition = this.Bake<ElementDefinition>(x =>
+                            if (input.FirstOrDefault(x => x.SelectedElementDefinition?.Name == this.dstElementName)
+                                is { } existingElement)
                             {
-                                x.Name = this.dstElementName;
-                                x.ShortName = this.dstElementName;
-                                x.Owner = this.owner;
-                                x.Container = this.hubController.OpenIteration;
-                            });
+                                variable.SelectedElementDefinition = existingElement.SelectedElementDefinition;
+                            }
+                            else
+                            {
+                                variable.SelectedElementDefinition = this.Bake<ElementDefinition>(x =>
+                                {
+                                    x.Name = this.dstElementName;
+                                    x.ShortName = this.dstElementName;
+                                    x.Owner = this.owner;
+                                    x.Container = this.hubController.OpenIteration;
+                                });
+                            }
+                            
                         }
 
                         this.AddsValueSetToTheSelectectedParameter(variable);
@@ -203,21 +212,21 @@ namespace DEHPEcosimPro.MappingRules
         {
             return this.Bake<CompoundParameterType>(x =>
             {
-                x.ShortName = "TimeTaggedValue";
+                x.ShortName = this.dstParameterName;
                 x.Name = "TimeTaggedValue";
                 x.Symbol = "ttv";
 
                 x.Component.Add(this.Bake<ParameterTypeComponent>(
                     p =>
                     {
-                        p.ShortName = "TtvDateTime";
+                        p.ShortName = "TimeStamp";
                         p.ParameterType = this.Bake<DateTimeParameterType>();
                     }));
 
                 x.Component.Add(this.Bake<ParameterTypeComponent>(
                     p =>
                     {
-                        p.ShortName = "TtvValue";
+                        p.ShortName = "Value";
                         p.ParameterType = this.Bake<SimpleQuantityKind>();
                     }));
             });

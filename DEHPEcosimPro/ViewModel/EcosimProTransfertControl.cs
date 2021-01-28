@@ -65,6 +65,7 @@ namespace DEHPEcosimPro.ViewModel
         public EcosimProTransferControlViewModel(IDstController dstController)
         {
             this.dstController = dstController;
+
             var canTransfert = this.WhenAnyValue(x => x.dstController.HasSomeMappedThingsReadyToTransfert);
             this.TransferCommand = ReactiveCommand.CreateAsyncTask(canTransfert, async _ => await this.TransfertCommandExecute());
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);

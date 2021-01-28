@@ -4,12 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
-        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
         xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
-        xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
         xmlns:converters="clr-namespace:DEHPCommon.Converters;assembly=DEHPCommon"
         xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm" 
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+        xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
+        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
         mc:Ignorable="d"
         Title="Mapping Configuration Dialog" Height="450" Width="800">
     <Window.Resources>
@@ -24,6 +24,7 @@
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
@@ -47,131 +48,6 @@
                                       TreeDerivationMode="HierarchicalDataTemplate"
                                       TreeLineStyle="Solid"
                                       VerticalScrollbarVisibility="Auto">
-                            <dxg:TreeListView.RowDetailsTemplate>
-                                <DataTemplate>
-                                    <GroupBox Header="Select value set" Margin="10" Padding="10">
-                                        <Grid Height="150">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="2*" />
-                                                <ColumnDefinition Width="4*"/>
-                                                <ColumnDefinition Width="4*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <dxc:ChartControl Margin="5"  MaxHeight="150" DataSource="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.Values}" 
-                                                                  SelectionMode="Multiple" 
-                                                                  SelectedItems="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedValues}" AnimationMode="OnLoad">
-                                                <dxc:ChartControl.Diagram>
-                                                    <dxc:XYDiagram2D SeriesItemsSource="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.Values}">
-                                                        <dxc:XYDiagram2D.AxisX>
-                                                            <dxc:AxisX2D GridLinesMinorVisible="True" GridLinesVisible="True">
-                                                                <dxc:AxisX2D.DateTimeScaleOptions>
-                                                                    <dxc:ManualDateTimeScaleOptions AggregateFunction="Maximum" AutoGrid="False"
-                                                                                                    GridAlignment="Second" MeasureUnit="Millisecond" 
-                                                                                                    GridSpacing="3" GridOffset="1"/>
-                                                                </dxc:AxisX2D.DateTimeScaleOptions>
-                                                            </dxc:AxisX2D>
-                                                        </dxc:XYDiagram2D.AxisX>
-                                                        <dxc:XYDiagram2D.AxisY>
-                                                            <dxc:AxisY2D GridLinesMinorVisible="True" GridLinesVisible="True">
-                                                                <dxc:AxisY2D.NumericScaleOptions>
-                                                                    <dxc:ContinuousNumericScaleOptions  AutoGrid="True" GridAlignment="0.1" GridSpacing="2" GridOffset="1"/>
-                                                                </dxc:AxisY2D.NumericScaleOptions>
-                                                            </dxc:AxisY2D>
-                                                        </dxc:XYDiagram2D.AxisY>
-                                                        <dxc:XYDiagram2D.SeriesItemTemplate>
-                                                            <DataTemplate>
-                                                                <dxc:LineSeries2D AnimationAutoStartMode="SetStartState"
-                                                                                      ValueScaleType="Numerical" ArgumentScaleType="DateTime" 
-                                                                                      ArgumentDataMember="TimeStamp"
-                                                                                      ValueDataMember="Value"/>
-                                                            </DataTemplate>
-                                                        </dxc:XYDiagram2D.SeriesItemTemplate>
-                                                    </dxc:XYDiagram2D>
-                                                </dxc:ChartControl.Diagram>
-                                            </dxc:ChartControl>
-                                            <Grid Margin="5" Grid.Column="1">
-                                                <dxg:GridControl AutoGenerateColumns="None" 
-                                                     EnableSmartColumnsGeneration="False"
-                                                     HorizontalAlignment="Left"
-                                                     VerticalAlignment="Stretch"
-                                                     ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.Values}"
-                                                     SelectionMode="Row"
-                                                     SelectedItems="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                                <dxg:GridControl.View>
-                                                    <dxg:TableView HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
-                                                                   AllowColumnMoving="True"
-                                                                   AllowEditing="False"
-                                                                   AllowGrouping="True"
-                                                                   ShowFilterPanelMode="Never"
-                                                                   AutoWidth="true"
-                                                                   IsDetailButtonVisibleBinding="{x:Null}"
-                                                                   VerticalScrollbarVisibility="Auto"
-                                                                   ShowGroupPanel="False"
-                                                                   ShowCheckBoxSelectorColumn="true"
-                                                                   RetainSelectionOnClickOutsideCheckBoxSelector="True">
-                                                    </dxg:TableView>
-                                                </dxg:GridControl.View>
-                                                <dxg:GridControl.Columns>
-                                                    <dxg:GridColumn FieldName="TimeStamp">
-                                                        <dxg:GridColumn.EditSettings>
-                                                                <dxe:DateEditSettings Mask="yy-MM-dd HH:mm:ss.fffffff" MaskUseAsDisplayFormat="True"/>
-                                                        </dxg:GridColumn.EditSettings>
-                                                    </dxg:GridColumn>
-                                                    <dxg:GridColumn FieldName="Value"/>
-                                                </dxg:GridControl.Columns>
-                                            </dxg:GridControl>
-                                            </Grid>
-                                            <Grid Margin="5" Grid.Column="2">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="4*"></ColumnDefinition>
-                                                    <ColumnDefinition Width="6*"></ColumnDefinition>
-                                                </Grid.ColumnDefinitions>
-
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition></RowDefinition>
-                                                    <RowDefinition></RowDefinition>
-                                                    <RowDefinition></RowDefinition>
-                                                    <RowDefinition></RowDefinition>
-                                                    <RowDefinition></RowDefinition>
-                                                    <RowDefinition></RowDefinition>
-                                                </Grid.RowDefinitions>
-                                                <Label Grid.Row="0" Grid.Column="0" Content="Option:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="0" DisplayMember="ShortName" ValueMember="Name"
-                                                                  AutoComplete="True" SelectedItem="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedOption}"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableOptions}"/>
-                                                <Label Grid.Row="1" Grid.Column="0" Content="Element Definition:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="1" DisplayMember="ShortName" ValueMember="Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
-                                                                  AutoComplete="True" SelectedItem="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedElementDefinition}" NullText="Create New Element Definition" AllowNullInput="True"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableElementDefinitions}"/>
-                                                <Label Grid.Row="2" Grid.Column="0" Content="Update Element Usages:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="2" DisplayMember="ElementDefinition.ShortName"  ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
-                                                                  AutoComplete="True" EditValue="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}" NullText="Create New Element Usage" AllowNullInput="True"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableElementUsages}">
-                                                    <dxe:ComboBoxEdit.StyleSettings>
-                                                        <dxe:CheckedTokenComboBoxStyleSettings NewTokenPosition="Far" AllowEditTokens="False"/>
-                                                    </dxe:ComboBoxEdit.StyleSettings>
-                                                </dxe:ComboBoxEdit>
-                                                    <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" DisplayMember="ShortName" ValueMember="Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
-                                                                  AutoComplete="True" SelectedItem="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedParameterType}" NullText="Create New Parameter Type" AllowNullInput="True"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableParameterTypes}"/>
-                                                <Label Grid.Row="4" Grid.Column="0" Content="Parameter:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
-                                                                  AutoComplete="True" SelectedItem="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedParameter}" NullText="Create New Parameter" AllowNullInput="True"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableParameters}"
-                                                                  ApplyItemTemplateToSelectedItem="True">
-                                                </dxe:ComboBoxEdit>
-                                                <Label Grid.Row="5" Grid.Column="0" Content="Actual Finite State:"></Label>
-                                                <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="5" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
-                                                                  AutoComplete="True" SelectedItem="{Binding ElementName=MainContainer, Path=DataContext.SelectedThing.SelectedActualFiniteState}"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding ElementName=MainContainer, Path=DataContext.AvailableActualFiniteStates}"
-                                                                  ApplyItemTemplateToSelectedItem="True">
-                                                </dxe:ComboBoxEdit>
-                                            </Grid>
-                                        </Grid>
-                                    </GroupBox>
-                                </DataTemplate>
-                            </dxg:TreeListView.RowDetailsTemplate>
                         </dxg:TreeListView>
                     </dxg:TreeListControl.View>
                     <dxg:TreeListControl.Columns>
@@ -183,7 +59,127 @@
                     </dxg:TreeListControl.Columns>
                 </dxg:TreeListControl>
             </GroupBox>
-            <Grid Grid.Row="1">
+            <GroupBox Grid.Row="1" Header="Select value set" Margin="10" Padding="10">
+                <Grid Height="150">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="4*"/>
+                        <ColumnDefinition Width="4*"/>
+                    </Grid.ColumnDefinitions>
+                    <dxc:ChartControl Margin="5"  MaxHeight="150" DataSource="{Binding SelectedThing.ChartValues}" 
+                                                                  SelectionMode="Multiple" 
+                                                                  SelectedItems="{Binding SelectedThing.SelectedValues}" AnimationMode="OnLoad">
+                        <dxc:ChartControl.Diagram>
+                            <dxc:XYDiagram2D SeriesItemsSource="{Binding SelectedThing.Values}">
+                                <dxc:XYDiagram2D.AxisX>
+                                    <dxc:AxisX2D GridLinesMinorVisible="True" GridLinesVisible="True">
+                                        <dxc:AxisX2D.DateTimeScaleOptions>
+                                            <dxc:ManualDateTimeScaleOptions AggregateFunction="Maximum" AutoGrid="False"
+                                                                            GridAlignment="Second" MeasureUnit="Millisecond"
+                                                                            GridSpacing="3" GridOffset="1"/>
+                                        </dxc:AxisX2D.DateTimeScaleOptions>
+                                    </dxc:AxisX2D>
+                                </dxc:XYDiagram2D.AxisX>
+                                <dxc:XYDiagram2D.AxisY>
+                                    <dxc:AxisY2D GridLinesMinorVisible="True" GridLinesVisible="True">
+                                        <dxc:AxisY2D.NumericScaleOptions>
+                                            <dxc:ContinuousNumericScaleOptions  AutoGrid="True" GridAlignment="0.1" GridSpacing="2" GridOffset="1"/>
+                                        </dxc:AxisY2D.NumericScaleOptions>
+                                    </dxc:AxisY2D>
+                                </dxc:XYDiagram2D.AxisY>
+                                <dxc:XYDiagram2D.SeriesItemTemplate>
+                                    <DataTemplate>
+                                        <dxc:LineSeries2D AnimationAutoStartMode="SetStartState" DisplayName="Name"
+                                                          ValueScaleType="Numerical" ArgumentScaleType="DateTime"
+                                                          ArgumentDataMember="TimeStamp" ValueDataMember="Value"/>
+                                    </DataTemplate>
+                                </dxc:XYDiagram2D.SeriesItemTemplate>
+                            </dxc:XYDiagram2D>
+                        </dxc:ChartControl.Diagram>
+                    </dxc:ChartControl>
+                    <Grid Margin="5" Grid.Column="1">
+                        <dxg:GridControl AutoGenerateColumns="None" 
+                                                     EnableSmartColumnsGeneration="False"
+                                                     HorizontalAlignment="Left"
+                                                     VerticalAlignment="Stretch"
+                                                     ItemsSource="{Binding SelectedThing.Values}"
+                                                     SelectionMode="Row"
+                                                     SelectedItems="{Binding SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <dxg:GridControl.View>
+                                <dxg:TableView HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Stretch"
+                                                                   AllowColumnMoving="True"
+                                                                   AllowEditing="False"
+                                                                   AllowGrouping="True"
+                                                                   ShowFilterPanelMode="Never"
+                                                                   AutoWidth="true"
+                                                                   IsDetailButtonVisibleBinding="{x:Null}"
+                                                                   VerticalScrollbarVisibility="Auto"
+                                                                   ShowGroupPanel="False"
+                                                                   ShowCheckBoxSelectorColumn="true"
+                                                                   RetainSelectionOnClickOutsideCheckBoxSelector="True">
+                                </dxg:TableView>
+                            </dxg:GridControl.View>
+                            <dxg:GridControl.Columns>
+                                <dxg:GridColumn FieldName="TimeStamp">
+                                    <dxg:GridColumn.EditSettings>
+                                        <dxe:DateEditSettings Mask="yy-MM-dd HH:mm:ss.fffffff" MaskUseAsDisplayFormat="True"/>
+                                    </dxg:GridColumn.EditSettings>
+                                </dxg:GridColumn>
+                                <dxg:GridColumn FieldName="Value"/>
+                            </dxg:GridControl.Columns>
+                        </dxg:GridControl>
+                    </Grid>
+                    <Grid Margin="5" Grid.Column="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="4*"></ColumnDefinition>
+                            <ColumnDefinition Width="6*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0" Content="Option:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="0" DisplayMember="ShortName" ValueMember="Name"
+                                                                  AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedOption}"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableOptions}"/>
+                        <Label Grid.Row="1" Grid.Column="0" Content="Element Definition:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="1" DisplayMember="ShortName" ValueMember="Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedElementDefinition}" NullText="Create New Element Definition" AllowNullInput="True"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableElementDefinitions}"/>
+                        <Label Grid.Row="2" Grid.Column="0" Content="Update Element Usages:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="2" DisplayMember="ElementDefinition.ShortName"  ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  AutoComplete="True" EditValue="{Binding SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}" NullText="Create New Element Usage" AllowNullInput="True"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableElementUsages}">
+                            <dxe:ComboBoxEdit.StyleSettings>
+                                <dxe:CheckedTokenComboBoxStyleSettings NewTokenPosition="Far" AllowEditTokens="False"/>
+                            </dxe:ComboBoxEdit.StyleSettings>
+                        </dxe:ComboBoxEdit>
+                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" DisplayMember="ShortName" ValueMember="Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameterType}" NullText="Create New Parameter Type" AllowNullInput="True"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}"/>
+                        <Label Grid.Row="4" Grid.Column="0" Content="Parameter:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameter}" NullText="Create New Parameter" AllowNullInput="True"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameters}"
+                                                                  ApplyItemTemplateToSelectedItem="True">
+                        </dxe:ComboBoxEdit>
+                        <Label Grid.Row="5" Grid.Column="0" Content="Actual Finite State:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="5" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
+                                                                  AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedActualFiniteState}"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableActualFiniteStates}"
+                                                                  ApplyItemTemplateToSelectedItem="True">
+                        </dxe:ComboBoxEdit>
+                    </Grid>
+                </Grid>
+            </GroupBox>
+            <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition></ColumnDefinition>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>

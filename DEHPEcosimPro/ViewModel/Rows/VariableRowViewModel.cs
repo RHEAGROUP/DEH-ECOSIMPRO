@@ -81,6 +81,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public ReactiveList<TimeTaggedValueRowViewModel> SelectedValues { get; set; } = new ReactiveList<TimeTaggedValueRowViewModel>();
 
         /// <summary>
+        /// Gets or sets the collection of value collection to display in the chart view
+        /// </summary>
+        public ReactiveList<object> ChartValues { get; private set; }
+
+        /// <summary>
         /// Backing field for <see cref="InitialValue"/>
         /// </summary>
         private object initialValue;
@@ -306,6 +311,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
             }
 
             return valuesInDouble.Sum() / this.Values.Count;
+        }
+
+        /// <summary>
+        /// Updates the <see cref="ChartValues"/> properties
+        /// </summary>
+        public void SetChartValues()
+        {
+            this.ChartValues = new ReactiveList<object>(new List<object>()
+            {
+                new { this.Name, this.Values } 
+            });
         }
     }
 }

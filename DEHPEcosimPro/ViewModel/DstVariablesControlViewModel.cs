@@ -175,7 +175,13 @@ namespace DEHPEcosimPro.ViewModel
             this.AssignMapping();
             var timer = new Stopwatch();
             timer.Start();
-            viewModel.Variables.AddRange(this.SelectedThings);
+
+            viewModel.Variables.AddRange(this.SelectedThings.Select(x =>
+            {
+                x.SetChartValues();
+                return x;
+            }));
+
             viewModel.UpdatePropertiesBasedOnMappingConfiguration();
             timer.Stop();
             this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");

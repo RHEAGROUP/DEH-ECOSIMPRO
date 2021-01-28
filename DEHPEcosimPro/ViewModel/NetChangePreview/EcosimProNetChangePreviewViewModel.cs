@@ -59,25 +59,24 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             this.dstController = dstController;
 
-            this.WhenAnyValue(x => x.dstController.HasSomeMappedThingsReadyToTransfert)
-                .Skip(1)
+            CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateTree);
+                .Subscribe(x => this.UpdateTree(x.Reset));
         }
 
         /// <summary>
         /// Updates the tree
         /// </summary>
-        /// <param name="shouldShowPreview">A value indicating whether the tree should show a preview</param>
-        public void UpdateTree(bool shouldShowPreview)
+        /// <param name="shouldReset">A value indicating whether the tree should remove the element in preview</param>
+        public void UpdateTree(bool shouldReset)
         {
-            if (shouldShowPreview)
+            if (shouldReset)
             {
-                this.ComputeValues();
+                this.Reload();
             }
             else
             {
-                this.Reload(true);
+                this.ComputeValues();
             }
         }
 
@@ -126,7 +125,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             elementUsage.ParameterOverride.AddRange(elementUsageToUpdate.Thing.ParameterOverride.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
                         }
 
-                        CDPMessageBus.Current.SendMessage(new HighlightEvent(elementUsageToUpdate.Thing), elementUsageToUpdate.Thing);
+                        CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsageToUpdate.Thing.ElementDefinition), elementUsageToUpdate.Thing);
                         elementUsageToUpdate.UpdateThing(elementUsage);
                         elementUsageToUpdate.UpdateChildren();
                     }

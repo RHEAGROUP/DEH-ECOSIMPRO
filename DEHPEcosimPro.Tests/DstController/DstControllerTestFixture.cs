@@ -37,6 +37,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
@@ -66,6 +67,8 @@ namespace DEHPEcosimPro.Tests.DstController
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_run"), BrowseName = new QualifiedName("method_run"), NodeClass = NodeClass.Method},
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_reset"),BrowseName = new QualifiedName("method_reset"), NodeClass = NodeClass.Method},
         };
+
+        private Mock<IStatusBarControlViewModel> statusBarViewModel;
 
         [SetUp]
         public void Setup()
@@ -111,8 +114,11 @@ namespace DEHPEcosimPro.Tests.DstController
                 new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable},
                 new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 2), BrowseName = new QualifiedName("dummy"), NodeClass = NodeClass.Method}
             }));
-            
-            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object, this.mappingEngine.Object);
+
+            this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
+            this.statusBarViewModel.Setup(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()));
+
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object);
         }
 
         [Test]
@@ -126,7 +132,6 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsNotEmpty(this.controller.Methods);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
             Assert.IsEmpty(this.controller.ElementDefinitionParametersDstVariablesMaps);
-            Assert.IsEmpty(this.controller.AvailablExternalIdentifierMap);
             Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
             Assert.IsNotEmpty(this.controller.ThisToolName);
@@ -169,10 +174,10 @@ namespace DEHPEcosimPro.Tests.DstController
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
                 .Returns(new Mock<IEnumerable<ElementDefinition>>().Object);
 
-            Assert.IsTrue(this.controller.Map(new List<VariableRowViewModel>()));
+            Assert.DoesNotThrowAsync(() => this.controller.Map(new List<VariableRowViewModel>()));
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();
-            Assert.Throws<InvalidOperationException>(() => this.controller.Map(null));
+            Assert.ThrowsAsync<InvalidOperationException>(() => this.controller.Map(null));
 
             this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(2));
         }
