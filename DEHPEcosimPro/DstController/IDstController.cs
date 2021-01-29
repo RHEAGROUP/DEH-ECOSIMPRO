@@ -99,11 +99,6 @@ namespace DEHPEcosimPro.DstController
         List<IdCorrespondence> IdCorrespondences { get; }
 
         /// <summary>
-        /// 
-        /// </summary>
-        bool HasSomeMappedThingsReadyToTransfert { get; set; }
-
-        /// <summary>
         /// Connects to the provided endpoint
         /// </summary>
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>

@@ -110,8 +110,18 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedValues = { timeTaggedValueRowViewModel }
             });
 
-            var elements = this.rule.Transform(this.variables);
+            this.variables.Add(new VariableRowViewModel((
+                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.b") },
+                new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+            {
+                Values = { timeTaggedValueRowViewModel },
+                SelectedValues = { timeTaggedValueRowViewModel }
+            });
+
+            var elements = this.rule.Transform(this.variables).ToList();
+            Assert.AreEqual(3, elements.Count);
             var parameter = elements.Last().Parameter.First();
+            Assert.AreEqual("a", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
             Assert.AreEqual("0.2", parameterValueSet.Computed.First());
         }

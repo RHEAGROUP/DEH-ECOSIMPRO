@@ -89,11 +89,6 @@ namespace DEHPEcosimPro.DstController
         private MappingDirection mappingDirection;
 
         /// <summary>
-        /// Backing field for the <see cref="HasSomeMappedThingsReadyToTransfert"/>
-        /// </summary>
-        private bool hasSomeReadyToTransfertMapping;
-
-        /// <summary>
         /// Gets this running tool name
         /// </summary>
         public string ThisToolName => this.GetType().Assembly.GetName().Name;
@@ -124,15 +119,6 @@ namespace DEHPEcosimPro.DstController
         {
             get => this.mappingDirection;
             set => this.RaiseAndSetIfChanged(ref this.mappingDirection, value);
-        }
-
-        /// <summary>
-        /// Gets or sets an assert indicating whether the are some reference that have been mapped but not yet transfered
-        /// </summary>
-        public bool HasSomeMappedThingsReadyToTransfert
-        {
-            get => this.hasSomeReadyToTransfertMapping;
-            set => this.RaiseAndSetIfChanged(ref this.hasSomeReadyToTransfertMapping, value);
         }
 
         /// <summary>

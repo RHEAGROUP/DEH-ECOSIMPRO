@@ -161,6 +161,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             Assert.DoesNotThrow(() => this.viewModel.MapCommand.Execute(null));
 
+            Assert.IsTrue(this.viewModel.Variables.All(x => x.ChartValues.Count == 1));
             this.dstController.Verify(x => x.ExternalIdentifierMap, Times.Exactly(3));
             this.mappingConfigurationDialog.Verify(x => x.Variables, Times.Once);
             this.mappingConfigurationDialog.Verify(x => x.UpdatePropertiesBasedOnMappingConfiguration(), Times.Once);

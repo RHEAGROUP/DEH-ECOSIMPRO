@@ -76,6 +76,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsNotNull(this.viewModel.NetChangePreviewViewModel);
             Assert.IsNull(this.viewModel.SwitchPanelBehavior);
             Assert.IsNotNull(this.viewModel.ChangeMappingDirection);
+            Assert.IsNotNull(this.viewModel.TransferControlViewModel);
         }
 
         [Test]

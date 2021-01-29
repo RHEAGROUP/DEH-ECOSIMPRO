@@ -213,7 +213,7 @@ namespace DEHPEcosimPro.MappingRules
             return this.Bake<CompoundParameterType>(x =>
             {
                 x.ShortName = this.dstParameterName;
-                x.Name = "TimeTaggedValue";
+                x.Name = this.dstParameterName;
                 x.Symbol = "ttv";
 
                 x.Component.Add(this.Bake<ParameterTypeComponent>(
@@ -265,9 +265,9 @@ namespace DEHPEcosimPro.MappingRules
                         valueSet = this.Bake<ParameterOverrideValueSet>();
                         parameterOverride.ValueSet.Add((ParameterOverrideValueSet)valueSet);
                         break;
-                    case ParameterSubscription parameterOverride:
+                    case ParameterSubscription parameterSubscription:
                         valueSet = this.Bake<ParameterSubscriptionValueSet>();
-                        parameterOverride.ValueSet.Add((ParameterSubscriptionValueSet)valueSet);
+                        parameterSubscription.ValueSet.Add((ParameterSubscriptionValueSet)valueSet);
                         break;
                     case Parameter parameterBase:
                         valueSet = this.Bake<ParameterValueSet>();

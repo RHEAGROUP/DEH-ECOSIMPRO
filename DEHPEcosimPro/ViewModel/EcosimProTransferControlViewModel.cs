@@ -73,7 +73,7 @@ namespace DEHPEcosimPro.ViewModel
             var canTransfert = CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
                 .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler);
             
-            this.TransferCommand = ReactiveCommand.CreateAsyncTask(canTransfert, async _ => await this.TransfertCommandExecute());
+            this.TransferCommand = ReactiveCommand.CreateAsyncTask(canTransfert, async _ => await this.TransferCommandExecute());
 
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
             this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel, async _ => await this.CancelTransfer());
@@ -92,9 +92,11 @@ namespace DEHPEcosimPro.ViewModel
         /// Executes the transfert command
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        private async Task TransfertCommandExecute()
+        private async Task TransferCommandExecute()
         {
+            this.AreThereAnyTransferInProgress = true;
             await this.dstController.Transfer();
+            this.AreThereAnyTransferInProgress = false;
         }
     }
 }
