@@ -32,6 +32,7 @@ namespace DEHPEcosimPro
     using DEHPCommon;
     using DEHPCommon.MappingEngine;
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
@@ -42,6 +43,7 @@ namespace DEHPEcosimPro
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.NetChangePreview;
     using DEHPEcosimPro.Views;
 
     using DevExpress.Xpf.Core;
@@ -123,6 +125,8 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
             containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>();
             containerBuilder.RegisterType<MappingConfigurationDialogViewModel>().As<IMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<EcosimProTransferControlViewModel>().As<ITransferControlViewModel>();
+            containerBuilder.RegisterType<EcosimProNetChangePreviewViewModel>().As<IEcosimProNetChangePreviewViewModel>();
         }
     }
 }

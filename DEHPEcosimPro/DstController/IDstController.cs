@@ -84,14 +84,9 @@ namespace DEHPEcosimPro.DstController
         IList<ReferenceDescription> References { get; }
 
         /// <summary>
-        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
-        /// </summary>
-        IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap { get; }
-
-        /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; }
+        List<ElementDefinition> MapResult { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -102,6 +97,11 @@ namespace DEHPEcosimPro.DstController
         /// Gets the collection of <see cref="IdCorrespondences"/>
         /// </summary>
         List<IdCorrespondence> IdCorrespondences { get; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        bool HasSomeMappedThingsReadyToTransfert { get; set; }
 
         /// <summary>
         /// Connects to the provided endpoint

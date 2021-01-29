@@ -111,7 +111,9 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             var elements = this.rule.Transform(this.variables);
-            Assert.AreEqual("0.2", elements.Last().Parameter.First().ValueSet.First().ActualValue.First());
+            var parameter = elements.Last().Parameter.First();
+            var parameterValueSet = parameter.ValueSet.Last();
+            Assert.AreEqual("0.2", parameterValueSet.Computed.First());
         }
         
         [Test]

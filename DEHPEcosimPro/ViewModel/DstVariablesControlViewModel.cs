@@ -209,8 +209,6 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (this.dstController.IsSessionOpen)
             {
-                this.IsBusy = true;
-
                 this.Variables.AddRange(this.dstController.Variables.Select(r => new VariableRowViewModel(r)));
 
                 this.AddSubscriptions();
@@ -220,8 +218,6 @@ namespace DEHPEcosimPro.ViewModel
                 this.Variables.Clear();
                 this.dstController.ClearSubscriptions();
             }
-
-            this.IsBusy = false;
         }
 
         /// <summary>

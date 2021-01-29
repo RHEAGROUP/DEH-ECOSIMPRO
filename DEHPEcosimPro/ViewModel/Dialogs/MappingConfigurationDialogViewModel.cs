@@ -157,7 +157,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             var canContinue = this.WhenAnyValue(x => x.SelectedThing.SelectedValues.CountChanged)
                 .SelectMany(x => x.Select(c => c > 0)).ObserveOn(RxApp.MainThreadScheduler);
 
-            this.Variables.ForEach(x => canContinue.Merge(
+            this.Variables.ForEach(x => canContinue = canContinue.Merge(
                 x.WhenAny(v => v.SelectedValues, v => v.Value.Any())
                     .ObserveOn(RxApp.MainThreadScheduler)));
 
@@ -201,10 +201,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             try
             {
-                if (this.dstController.Map(this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList()))
-                {
-                    this.CloseWindowBehavior?.Close();
-                }
+                this.dstController.Map(this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList());
+                this.CloseWindowBehavior?.Close();
             }
             catch (Exception e)
             {

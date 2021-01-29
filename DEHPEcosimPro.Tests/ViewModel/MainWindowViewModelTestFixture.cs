@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
@@ -47,9 +48,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
         private Mock<IHubDataSourceViewModel> hubDataSourceViewModel;
         private Mock<IDstDataSourceViewModel> dstDataSourceViewModel;
-        private Mock<INetChangePreviewViewModel> netChangePreviewViewModel;
+        private Mock<IEcosimProNetChangePreviewViewModel> netChangePreviewViewModel;
         private Mock<IDstController> dstController;
         private MainWindowViewModel viewModel;
+        private Mock<ITransferControlViewModel> transferControlViewModel;
 
         [SetUp]
         public void Setup()
@@ -57,11 +59,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.hubDataSourceViewModel = new Mock<IHubDataSourceViewModel>();
             this.dstDataSourceViewModel = new Mock<IDstDataSourceViewModel>();
-            this.netChangePreviewViewModel = new Mock<INetChangePreviewViewModel>();
+            this.netChangePreviewViewModel = new Mock<IEcosimProNetChangePreviewViewModel>();
+            this.transferControlViewModel = new Mock<ITransferControlViewModel>();
             this.dstController = new Mock<IDstController>();
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
-                this.statusBarViewModel.Object, this.netChangePreviewViewModel.Object, this.dstController.Object);
+                this.statusBarViewModel.Object, this.netChangePreviewViewModel.Object, this.dstController.Object, this.transferControlViewModel.Object);
         }
 
         [Test]

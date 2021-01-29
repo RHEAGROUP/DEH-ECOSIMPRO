@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
@@ -45,16 +46,21 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
-
+        
         /// <summary>
         /// Gets or sets the <see cref="ISwitchLayoutPanelOrderBehavior"/>
         /// </summary>
         public ISwitchLayoutPanelOrderBehavior SwitchPanelBehavior { get; set; }
 
         /// <summary>
+        /// Gets the <see cref="ITransferControlViewModel"/>
+        /// </summary>
+        public ITransferControlViewModel TransferControlViewModel { get; }
+
+        /// <summary>
         /// Gets the view model that represents the net change preview panel
         /// </summary>
-        public INetChangePreviewViewModel NetChangePreviewViewModel { get; }
+        public IEcosimProNetChangePreviewViewModel NetChangePreviewViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
@@ -82,12 +88,15 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="hubDataSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="dstSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="netChangePreviewViewModel">The <see cref="INetChangePreviewViewModel"/></param>
+        /// <param name="netChangePreviewViewModel">The <see cref="IEcosimProNetChangePreviewViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
+        /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
-            IStatusBarControlViewModel statusBarControlViewModel, INetChangePreviewViewModel netChangePreviewViewModel, IDstController dstController)
+            IStatusBarControlViewModel statusBarControlViewModel, IEcosimProNetChangePreviewViewModel netChangePreviewViewModel,
+            IDstController dstController, ITransferControlViewModel transferControlViewModel)
         {
             this.dstController = dstController;
+            this.TransferControlViewModel = transferControlViewModel;
             this.NetChangePreviewViewModel = netChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;

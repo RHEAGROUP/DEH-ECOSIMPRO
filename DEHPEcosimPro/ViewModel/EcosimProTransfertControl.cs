@@ -26,8 +26,12 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Reactive;
+    using System.Reactive.Linq;
     using System.Threading.Tasks;
 
+    using CDP4Dal;
+
+    using DEHPCommon.Events;
     using DEHPCommon.UserInterfaces.ViewModels;
 
     using DEHPEcosimPro.DstController;
@@ -66,8 +70,11 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.dstController = dstController;
 
-            var canTransfert = this.WhenAnyValue(x => x.dstController.HasSomeMappedThingsReadyToTransfert);
+            var canTransfert = CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
+                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler);
+            
             this.TransferCommand = ReactiveCommand.CreateAsyncTask(canTransfert, async _ => await this.TransfertCommandExecute());
+
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
             this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel, async _ => await this.CancelTransfer());
         }

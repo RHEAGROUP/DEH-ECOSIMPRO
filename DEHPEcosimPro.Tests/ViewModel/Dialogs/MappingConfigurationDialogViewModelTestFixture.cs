@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -81,7 +82,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), out It.Ref<CompoundParameterType>.IsAny)).Returns(true);
 
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(true);
+            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(Task.CompletedTask);
 
             this.variableRowViewModels = new List<VariableRowViewModel> 
             { 
@@ -140,12 +141,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel.CloseWindowBehavior = this.closeBehavior.Object;
             this.viewModel.ContinueCommand.Execute(null);
-            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(false);
+            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(Task.CompletedTask);
             this.viewModel.ContinueCommand.Execute(null);
             this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Throws<InvalidOperationException>();
             this.viewModel.ContinueCommand.Execute(null);
 
-            this.closeBehavior.Verify(x => x.Close(), Times.Once);
+            this.closeBehavior.Verify(x => x.Close(), Times.Exactly(2));
             this.dstController.Verify(x => x.Map(It.IsAny<List<VariableRowViewModel>>()), Times.Exactly(3));
         }
 

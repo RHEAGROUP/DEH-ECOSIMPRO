@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using System.Linq;
     using System.Reactive.Linq;
 
+    using CDP4Common.EngineeringModelData;
+
     using CDP4Dal;
 
     using DEHPCommon.Events;
@@ -39,6 +41,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
+
+    using DevExpress.Xpf.Reports.UserDesigner.Native;
 
     using ReactiveUI;
 
@@ -87,7 +91,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             foreach (var iterationRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>())
             {
-                foreach (var thing in this.dstController.ElementDefinitionParametersDstVariablesMaps)
+                foreach (var thing in this.dstController.MapResult)
                 {
                     var elementToUpdate = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
                         .FirstOrDefault(x => x.Thing.Iid == thing.Iid);
@@ -134,7 +138,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Not available for the nset change preview panel
+        /// Not available for the net change preview panel
         /// </summary>
         public override void PopulateContextMenu()
         {

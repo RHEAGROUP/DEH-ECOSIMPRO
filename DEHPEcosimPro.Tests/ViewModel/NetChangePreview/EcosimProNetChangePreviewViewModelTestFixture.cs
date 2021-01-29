@@ -132,6 +132,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 {
                     new Parameter(Guid.NewGuid(), null,null)
                     {
+                        ValueSet =
+                        {
+                            new ParameterValueSet(Guid.NewGuid(), null, null)
+                            {
+                                ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>()
+                            }
+                        },
                         ParameterType = this.parameterType
                     }
                 },
@@ -184,8 +191,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             
             this.dstController = new Mock<IDstController>();
 
-            this.dstController.Setup(x => x.ElementDefinitionParametersDstVariablesMaps)
-                .Returns(new ReactiveList<ElementDefinition>() 
+            this.dstController.Setup(x => x.MapResult)
+                .Returns(new List<ElementDefinition>() 
                 {
                     new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                     {
@@ -291,7 +298,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         {
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(false));
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(true));
-            this.hubController.Verify(x => x.Reload(), Times.Once);
         }
     }
 }

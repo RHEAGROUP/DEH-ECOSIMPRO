@@ -320,7 +320,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             this.ChartValues = new ReactiveList<object>(new List<object>()
             {
-                new { this.Name, this.Values } 
+                new { this.Name, this.Values }
             });
         }
     }

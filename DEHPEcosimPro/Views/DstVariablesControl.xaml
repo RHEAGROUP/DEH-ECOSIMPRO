@@ -35,7 +35,6 @@
             </HierarchicalDataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
-    <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid>
             <dxg:TreeListControl ItemsSource="{Binding Variables}"
                                  SelectedItem="{Binding SelectedThing}"
@@ -76,5 +75,4 @@
 
             </dxg:TreeListControl>
         </Grid>
-    </dx:LoadingDecorator>
 </UserControl>

@@ -30,11 +30,11 @@ namespace DEHPEcosimPro.DstController
     using System.Threading.Tasks;
 
     using CDP4Common.EngineeringModelData;
-    using CDP4Common.SiteDirectoryData;
 
-    using CDP4Dal.Operations;
+    using CDP4Dal;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
@@ -43,8 +43,6 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Xpf.CodeView;
 
     using Opc.Ua;
 
@@ -155,7 +153,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        public ReactiveList<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new ReactiveList<ElementDefinition>();
+        public List<ElementDefinition> MapResult { get; private set; } = new List<ElementDefinition>();
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -183,8 +181,6 @@ namespace DEHPEcosimPro.DstController
             this.sessionHandler = sessionHandler;
             this.mappingEngine = mappingEngine;
             this.statusBar = statusBar;
-
-            this.ElementDefinitionParametersDstVariablesMaps.ChangeTrackingEnabled = true;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -314,10 +310,15 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Map(List<VariableRowViewModel> dstVariables)
         {
-            this.ElementDefinitionParametersDstVariablesMaps.AddRange(
-                (IEnumerable<ElementDefinition>)this.mappingEngine.Map(dstVariables));
+            var mapResult = (this.mappingEngine.Map(dstVariables) as IEnumerable<ElementDefinition>)?.ToList();
+
+            if (mapResult?.Any() == true)
+            {
+                this.MapResult.AddRange(mapResult);
+            }
 
             await this.UpdateExternalIdentifierMap();
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
         }
 
         /// <summary>
@@ -326,17 +327,20 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Transfer()
         {
-            await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.ElementDefinitionParametersDstVariablesMaps,
+            await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.MapResult,
                     (i, e) => i.Element.Add(e), true);
+
+            await this.hubController.Reload();
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
         }
 
         /// <summary>
         /// Updates the configured mapping
         /// </summary>
-        /// <returns></returns>
-        private async Task UpdateExternalIdentifierMap()
+        /// <returns>A <see cref="Task"/></returns>
+        public async Task UpdateExternalIdentifierMap()
         {
-            await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
+            await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.ExternalIdentifierMap.Correspondence.ToList(),
                 (map, correspondence) => map.Correspondence.Remove(correspondence));
 
             this.ExternalIdentifierMap.Correspondence.Clear();

@@ -24,8 +24,8 @@
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid Margin="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="8*" />
+                <RowDefinition Height="3*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox Grid.Row="0" x:Name="MainContainer" Header="Select Value Set To Map" Margin="10" Padding="10">
@@ -66,11 +66,12 @@
                         <ColumnDefinition Width="4*"/>
                         <ColumnDefinition Width="4*"/>
                     </Grid.ColumnDefinitions>
-                    <dxc:ChartControl Margin="5"  MaxHeight="150" DataSource="{Binding SelectedThing.ChartValues}" 
-                                                                  SelectionMode="Multiple" 
-                                                                  SelectedItems="{Binding SelectedThing.SelectedValues}" AnimationMode="OnLoad">
+                    <dxc:ChartControl Margin="5" MaxHeight="150"
+                                      SelectionMode="Multiple" 
+                                      SelectedItems="{Binding SelectedThing.SelectedValues}" 
+                                      AnimationMode="OnDataChanged">
                         <dxc:ChartControl.Diagram>
-                            <dxc:XYDiagram2D SeriesItemsSource="{Binding SelectedThing.Values}">
+                            <dxc:XYDiagram2D SeriesItemsSource="{Binding SelectedThing.ChartValues}">
                                 <dxc:XYDiagram2D.AxisX>
                                     <dxc:AxisX2D GridLinesMinorVisible="True" GridLinesVisible="True">
                                         <dxc:AxisX2D.DateTimeScaleOptions>
@@ -89,7 +90,8 @@
                                 </dxc:XYDiagram2D.AxisY>
                                 <dxc:XYDiagram2D.SeriesItemTemplate>
                                     <DataTemplate>
-                                        <dxc:LineSeries2D AnimationAutoStartMode="SetStartState" DisplayName="Name"
+                                        <dxc:LineSeries2D AnimationAutoStartMode="PlayOnce"
+                                                          DataSource="{Binding Values}" DisplayName="{Binding Name}"
                                                           ValueScaleType="Numerical" ArgumentScaleType="DateTime"
                                                           ArgumentDataMember="TimeStamp" ValueDataMember="Value"/>
                                     </DataTemplate>
@@ -98,13 +100,14 @@
                         </dxc:ChartControl.Diagram>
                     </dxc:ChartControl>
                     <Grid Margin="5" Grid.Column="1">
-                        <dxg:GridControl AutoGenerateColumns="None" 
-                                                     EnableSmartColumnsGeneration="False"
-                                                     HorizontalAlignment="Left"
-                                                     VerticalAlignment="Stretch"
-                                                     ItemsSource="{Binding SelectedThing.Values}"
-                                                     SelectionMode="Row"
-                                                     SelectedItems="{Binding SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <dxg:GridControl AutoGenerateColumns="None"
+                                         EnableSmartColumnsGeneration="False"
+                                         HorizontalAlignment="Left"
+                                         VerticalAlignment="Stretch"
+                                         AllowUpdateTwoWayBoundPropertiesOnSynchronization="False"
+                                         ItemsSource="{Binding SelectedThing.Values}"
+                                         SelectionMode="Row"
+                                         SelectedItems="{Binding SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <dxg:GridControl.View>
                                 <dxg:TableView HorizontalAlignment="Stretch"
                                                                    VerticalAlignment="Stretch"

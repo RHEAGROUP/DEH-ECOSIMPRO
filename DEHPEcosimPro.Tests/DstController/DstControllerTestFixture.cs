@@ -131,7 +131,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsNotNull(this.controller.References);
             Assert.IsNotEmpty(this.controller.Methods);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
-            Assert.IsEmpty(this.controller.ElementDefinitionParametersDstVariablesMaps);
+            Assert.IsEmpty(this.controller.MapResult);
             Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
             Assert.IsNotEmpty(this.controller.ThisToolName);
@@ -172,7 +172,8 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue());
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
-                .Returns(new Mock<IEnumerable<ElementDefinition>>().Object);
+                .Returns(new List<ElementDefinition>());
+            this.controller.ExternalIdentifierMap = new ExternalIdentifierMap();
 
             Assert.DoesNotThrowAsync(() => this.controller.Map(new List<VariableRowViewModel>()));
 
@@ -185,6 +186,17 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyTransfert()
         {
+            Assert.DoesNotThrowAsync(async() => await this.controller.Transfer());
+
+            this.hubController.Verify(
+                x => x.CreateOrUpdate(
+                    It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<Action<Iteration, ElementDefinition>>(), It.IsAny<bool>()),
+                Times.Once);
+        }
+
+        [Test]
+        public void VerifyUpdateExternalIdentifierMap()
+        {
             const string oldCorrespondenceExternalId = "old";
 
             this.controller.ExternalIdentifierMap = new ExternalIdentifierMap()
@@ -192,17 +204,12 @@ namespace DEHPEcosimPro.Tests.DstController
                 Correspondence = { new IdCorrespondence() { ExternalId = oldCorrespondenceExternalId } }
             };
 
-            this.controller.IdCorrespondences.AddRange(new []
+            this.controller.IdCorrespondences.AddRange(new[]
             {
                 new IdCorrespondence() { ExternalId = "0"}, new IdCorrespondence() { ExternalId = "1" }
             });
 
-            Assert.DoesNotThrowAsync(async() => await this.controller.Transfer());
-
-            this.hubController.Verify(
-                x => x.CreateOrUpdate(
-                    It.IsAny<IEnumerable<ElementDefinition>>(), It.IsAny<Action<Iteration, ElementDefinition>>(), It.IsAny<bool>()),
-                Times.Once);
+            this.controller.UpdateExternalIdentifierMap();
 
             this.hubController.Verify(
                 x => x.CreateOrUpdate(

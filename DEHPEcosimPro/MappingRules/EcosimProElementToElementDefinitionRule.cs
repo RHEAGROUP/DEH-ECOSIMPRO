@@ -259,21 +259,22 @@ namespace DEHPEcosimPro.MappingRules
             }
             else
             {
-                valueSet = parameter.ValueSets.FirstOrDefault();
-                
-                if (valueSet is null)
+                switch (parameter)
                 {
-                    switch (parameter)
-                    {
-                        case ParameterOverride parameterOverride:
-                            valueSet = this.Bake<ParameterOverrideValueSet>();
-                            parameterOverride.ValueSet.Add((ParameterOverrideValueSet)valueSet);
-                            break;
-                        case Parameter parameterBase:
-                            valueSet = this.Bake<ParameterValueSet>();
-                            parameterBase.ValueSet.Add((ParameterValueSet)valueSet);
-                            break;
-                    }
+                    case ParameterOverride parameterOverride:
+                        valueSet = this.Bake<ParameterOverrideValueSet>();
+                        parameterOverride.ValueSet.Add((ParameterOverrideValueSet)valueSet);
+                        break;
+                    case ParameterSubscription parameterOverride:
+                        valueSet = this.Bake<ParameterSubscriptionValueSet>();
+                        parameterOverride.ValueSet.Add((ParameterSubscriptionValueSet)valueSet);
+                        break;
+                    case Parameter parameterBase:
+                        valueSet = this.Bake<ParameterValueSet>();
+                        parameterBase.ValueSet.Add((ParameterValueSet)valueSet);
+                        break;
+                    default:
+                        return;
                 }
             }
 
@@ -291,6 +292,8 @@ namespace DEHPEcosimPro.MappingRules
             valueSet.Computed = new ValueArray<string>(
                 variable.SelectedValues.Select(
                     x => FormattableString.Invariant($"{x.Value}")));
+
+            valueSet.ValueSwitch = ParameterSwitchKind.COMPUTED;
 
             this.AddToExternalIdentifierMap(parameter.Iid, this.dstParameterName);
         }
