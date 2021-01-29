@@ -36,11 +36,6 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     public interface IMainWindowViewModel : ISwitchLayoutPanelOrderViewModel
     {
         /// <summary>
-        /// Gets or sets the <see cref="ISwitchLayoutPanelOrderBehavior"/>
-        /// </summary>
-        ISwitchLayoutPanelOrderBehavior SwitchPanelBehavior { get; set; }
-
-        /// <summary>
         /// Gets the <see cref="ITransferControlViewModel"/>
         /// </summary>
         ITransferControlViewModel TransferControlViewModel { get; }
