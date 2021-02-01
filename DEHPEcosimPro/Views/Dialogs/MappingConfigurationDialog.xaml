@@ -11,7 +11,7 @@
         xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
         xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
         mc:Ignorable="d"
-        Title="Mapping Configuration Dialog" Height="450" Width="800">
+        Title="Mapping Configuration Dialog" MinHeight="450" MinWidth="800">
     <Window.Resources>
         <ResourceDictionary>
             <dx:NullableToVisibilityConverter x:Key="NullToVisibilityConverter"></dx:NullableToVisibilityConverter>
@@ -24,8 +24,8 @@
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid Margin="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="8*" />
-                <RowDefinition Height="3*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="220" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox Grid.Row="0" x:Name="MainContainer" Header="Select Value Set To Map" Margin="10" Padding="10">

@@ -42,6 +42,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
 
+    using DevExpress.Mvvm.Native;
     using DevExpress.Xpf.Reports.UserDesigner.Native;
 
     using ReactiveUI;
@@ -80,7 +81,9 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             }
             else
             {
+                this.IsBusy = true;
                 this.ComputeValues();
+                this.IsBusy = false;
             }
         }
 
@@ -104,7 +107,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         }
 
                         CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
-                        elementToUpdate.UpdateThing(thing);
+
+                        foreach (var parameterOrOverrideBaseRowViewModel in elementToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
+                        {
+                            parameterOrOverrideBaseRowViewModel.SetProperties();
+                        }
+
                         elementToUpdate.UpdateChildren();
                     }
                     else
@@ -130,7 +138,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         }
 
                         CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsageToUpdate.Thing.ElementDefinition), elementUsageToUpdate.Thing);
-                        elementUsageToUpdate.UpdateThing(elementUsage);
+                        
+                        foreach (var parameterOrOverrideBaseRowViewModel in elementUsageToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
+                        {
+                            parameterOrOverrideBaseRowViewModel.SetProperties();
+                        }
+                        
                         elementUsageToUpdate.UpdateChildren();
                     }
                 }

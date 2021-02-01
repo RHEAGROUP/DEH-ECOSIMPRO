@@ -29,9 +29,12 @@ namespace DEHPEcosimPro.DstController
     using System.Linq;
     using System.Threading.Tasks;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.Types;
 
     using CDP4Dal;
+    using CDP4Dal.Operations;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.Events;
@@ -296,9 +299,7 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Map(List<VariableRowViewModel> dstVariables)
         {
-            var mapResult = (this.mappingEngine.Map(dstVariables) as IEnumerable<ElementDefinition>)?.ToList();
-
-            if (mapResult?.Any() == true)
+            if (this.mappingEngine.Map(dstVariables) is List<ElementDefinition> mapResult && mapResult.Any())
             {
                 this.MapResult.AddRange(mapResult);
             }
@@ -313,11 +314,76 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Transfer()
         {
-            await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.MapResult,
-                    (i, e) => i.Element.Add(e), true);
+            try
+            {
+                var iterationClone = this.hubController.OpenIteration.Clone(false);
+                var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(iterationClone), iterationClone);
 
-            await this.hubController.Reload();
-            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
+                foreach (var elementDefinition in this.MapResult)
+                {
+                    var elementDefinitionCloned = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
+
+                    foreach (var parameter in elementDefinition.Parameter)
+                    {
+                        var parameterCloned = this.TransactionCreateOrUpdate(transaction, parameter, elementDefinitionCloned.Parameter);
+
+                        foreach (var parameterValueSet in parameter.ValueSet)
+                        {
+                            _ = this.TransactionCreateOrUpdate(transaction, parameterValueSet, parameterCloned.ValueSet);
+                        }
+                    }
+
+                    foreach (var parameterOverride in elementDefinition.ContainedElement.SelectMany(x => x.ParameterOverride))
+                    {
+                        var elementUsageClone = (ElementUsage)parameterOverride.Container.Clone(false);
+                        transaction.CreateOrUpdate(elementUsageClone);
+
+                        var parameterOverrideCloned = this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
+
+                        foreach (var parameterOverrideValueSet in parameterOverride.ValueSet)
+                        {
+                            this.TransactionCreateOrUpdate(transaction, parameterOverrideValueSet, parameterOverrideCloned.ValueSet);
+                        }
+                    }
+                }
+                
+                transaction.CreateOrUpdate(iterationClone);
+                await this.hubController.Write(transaction);
+
+                await this.hubController.Reload();
+                CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Registers the provided <paramref cref="Thing"/> to be created or updated by the <paramref name="transaction"/>
+        /// </summary>
+        /// <typeparam name="TThing">The type of the <paramref name="containerClone"/></typeparam>
+        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
+        /// <param name="thing">The <see cref="Thing"/></param>
+        /// <param name="containerClone">The <see cref="ContainerList{T}"/> of the cloned container</param>
+        /// <returns>A cloned <typeparamref name="TThing"/></returns>
+        private TThing TransactionCreateOrUpdate<TThing>(IThingTransaction transaction, TThing thing, ContainerList<TThing> containerClone) where TThing : Thing
+        {
+            var clone = thing.Clone(false);
+            
+            if (clone.Iid == Guid.Empty)
+            {
+                clone.Iid = Guid.NewGuid();
+                transaction.Create(clone);
+                containerClone.Add((TThing)clone);
+            }
+            else
+            {
+                transaction.CreateOrUpdate(clone);
+            }
+
+            return (TThing)clone;
         }
 
         /// <summary>
