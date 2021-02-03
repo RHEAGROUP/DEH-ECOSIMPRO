@@ -42,6 +42,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
@@ -171,7 +172,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
+            var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
             this.AssignMapping();
             var timer = new Stopwatch();
             timer.Start();
@@ -185,7 +186,7 @@ namespace DEHPEcosimPro.ViewModel
             viewModel.UpdatePropertiesBasedOnMappingConfiguration();
             timer.Stop();
             this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
-            this.navigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
+            this.navigationService.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
         }
 
         /// <summary>
@@ -210,6 +211,10 @@ namespace DEHPEcosimPro.ViewModel
             if (this.dstController.IsSessionOpen)
             {
                 this.Variables.AddRange(this.dstController.Variables.Select(r => new VariableRowViewModel(r)));
+
+                AppContainer.Container.Resolve<IOpcClientService>().WriteNode(
+                    (NodeId) this.Variables.Single(x => x.Name == "C1_1.v").Reference.NodeId,
+                    99999d);
 
                 this.AddSubscriptions();
             }

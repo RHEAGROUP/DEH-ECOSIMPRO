@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// <copyright file="IDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -36,9 +36,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
     using ReactiveUI;
 
     /// <summary>
-    /// Interface definition for <see cref="MappingConfigurationDialogViewModel"/>
+    /// Interface definition for <see cref="DstMappingConfigurationDialogViewModel"/>
     /// </summary>
-    public interface IMappingConfigurationDialogViewModel
+    public interface IDstMappingConfigurationDialogViewModel
     {
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance

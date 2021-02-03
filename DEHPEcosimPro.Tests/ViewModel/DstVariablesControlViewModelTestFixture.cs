@@ -63,7 +63,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<INavigationService> navigationService;
         private Mock<IHubController> hubController;
         private Mock<IStatusBarControlViewModel> statusBar;
-        private Mock<IMappingConfigurationDialogViewModel> mappingConfigurationDialog;
+        private Mock<IDstMappingConfigurationDialogViewModel> mappingConfigurationDialog;
 
         [SetUp]
         public void Setup()
@@ -107,17 +107,17 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.MappingDirection).Returns(MappingDirection.FromDstToHub);
 
-            this.mappingConfigurationDialog = new Mock<IMappingConfigurationDialogViewModel>();
+            this.mappingConfigurationDialog = new Mock<IDstMappingConfigurationDialogViewModel>();
             this.mappingConfigurationDialog.Setup(x => x.Variables).Returns(new ReactiveList<VariableRowViewModel>());
             this.mappingConfigurationDialog.Setup(x => x.UpdatePropertiesBasedOnMappingConfiguration());
 
             this.navigationService = new Mock<INavigationService>();
-            this.navigationService.Setup(x => x.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(It.IsAny<MappingConfigurationDialogViewModel>()));
+            this.navigationService.Setup(x => x.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<DstMappingConfigurationDialogViewModel>()));
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
 
             var containerBuilder = new ContainerBuilder();
-            containerBuilder.RegisterInstance(this.mappingConfigurationDialog.Object).As<IMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterInstance(this.mappingConfigurationDialog.Object).As<IDstMappingConfigurationDialogViewModel>();
             AppContainer.Container = containerBuilder.Build();
 
             this.viewModel = new DstVariablesControlViewModel(this.dstController.Object, this.navigationService.Object, 
@@ -165,7 +165,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Verify(x => x.ExternalIdentifierMap, Times.Exactly(3));
             this.mappingConfigurationDialog.Verify(x => x.Variables, Times.Once);
             this.mappingConfigurationDialog.Verify(x => x.UpdatePropertiesBasedOnMappingConfiguration(), Times.Once);
-            this.navigationService.Verify(x => x.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(It.IsAny<IMappingConfigurationDialogViewModel>()), Times.Once());
+            this.navigationService.Verify(x => x.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<IDstMappingConfigurationDialogViewModel>()), Times.Once());
         }
     }
 }

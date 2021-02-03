@@ -35,6 +35,8 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
 
+    using DevExpress.CodeParser;
+
     using ReactiveUI;
 
     /// <summary>
@@ -46,7 +48,12 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
-        
+
+        /// <summary>
+        /// Backing field for <see cref="MappingDirection"/>
+        /// </summary>
+        private MappingDirection mappingDirection;
+
         /// <summary>
         /// Gets or sets the <see cref="ISwitchLayoutPanelOrderBehavior"/>
         /// </summary>
@@ -81,6 +88,15 @@ namespace DEHPEcosimPro.ViewModel
         /// Gets or sets the <see cref="ICommand"/> that will change the mapping direction
         /// </summary>
         public ReactiveCommand<object> ChangeMappingDirection { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="MappingDirection"/> for proper binding
+        /// </summary>
+        public MappingDirection MappingDirection
+        {
+            get => this.mappingDirection;
+            set => this.RaiseAndSetIfChanged(ref this.mappingDirection, value);
+        }
 
         /// <summary>
         /// Initializes a new <see cref="MainWindowViewModel"/>
@@ -121,6 +137,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.SwitchPanelBehavior?.Switch();
             this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection ?? MappingDirection.FromDstToHub;
+            this.MappingDirection = this.dstController.MappingDirection;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// <copyright file="HubMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,66 +24,45 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
-    using System.Security.Cryptography;
-    using System.Windows.Input;
+    using CDP4Common.EngineeringModelData;
 
     using DEHPCommon.HubController.Interfaces;
-    using DEHPCommon.UserInterfaces.Behaviors;
-    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using ReactiveUI;
 
     /// <summary>
-    /// Base mapping configuration dialog view model for the <see cref="DstMappingConfigurationDialogViewModel"/>
-    /// and the <see cref="HubMappingConfigurationDialogViewModel"/>
+    /// The <see cref="HubMappingConfigurationDialogViewModel"/> is the view model to let the user configure the mapping to the Ecosim source
     /// </summary>
-    public abstract class MappingConfigurationDialogViewModel : ReactiveObject, ICloseWindowViewModel
+    public class HubMappingConfigurationDialogViewModel : MappingConfigurationDialogViewModel, IHubMappingConfigurationDialogViewModel
     {
         /// <summary>
-        /// The <see cref="IHubController"/>
+        /// Gets or sets the collection of available variables
         /// </summary>
-        protected readonly IHubController hubController;
-
-        /// <summary>
-        /// The <see cref="IDstController"/>
-        /// </summary>
-        protected readonly IDstController dstController;
-
-        /// <summary>
-        /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
-        /// </summary>
-        public ICloseWindowBehavior CloseWindowBehavior { get; set; }
-
-        /// <summary>
-        /// Backing field for <see cref="IsBusy"/>
-        /// </summary>
-        private bool isBusy;
-
-        /// <summary>
-        /// Gets or sets the assert indicating whether the view is busy
-        /// </summary>
-        public bool IsBusy
-        {
-            get => this.isBusy;
-            set => this.RaiseAndSetIfChanged(ref this.isBusy, value);
-        }
+        public ReactiveList<VariableRowViewModel> AvailableVariables { get; set; }
         
         /// <summary>
-        /// Gets the <see cref="ICommand"/> to continue
+        /// Gets or sets the collection of ElementDefinition that hold parameter value to map
         /// </summary>
-        public ReactiveCommand<object> ContinueCommand { get; set; }
+        public ReactiveList<ElementDefinitionRowViewModel> Elements { get; set; }
 
         /// <summary>
-        /// Initializes a new <see cref="MappingConfigurationDialogViewModel"/>
+        /// Gets or sets the collection of <see cref="MappedElementDefinition"/>
+        /// </summary>
+        public ReactiveList<MappedElementDefinition> MappedElements { get; set; }
+
+        /// <summary>
+        /// Initializes a new <see cref="HubMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController)
+        public HubMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController) : 
+            base(hubController, dstController)
         {
-            this.hubController = hubController;
-            this.dstController = dstController;
         }
     }
 }

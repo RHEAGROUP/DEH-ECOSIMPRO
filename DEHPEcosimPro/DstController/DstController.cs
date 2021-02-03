@@ -290,6 +290,7 @@ namespace DEHPEcosimPro.DstController
             this.Methods.Clear();
             this.Variables.Clear();
             this.opcClientService.CloseSession();
+            this.IsSessionOpen = false;
         }
 
         /// <summary>

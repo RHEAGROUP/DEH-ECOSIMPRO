@@ -275,6 +275,8 @@ namespace DEHPEcosimPro.MappingRules
             {
                 x.Name = this.dstParameterName;
                 x.ShortName = this.dstParameterName;
+                x.Iid = Guid.NewGuid();
+                x.Container = this.ReferenceDataLibrary;
             });
             
             parameterType.IndependentParameterType.Add(
@@ -292,6 +294,15 @@ namespace DEHPEcosimPro.MappingRules
                     x.ParameterType = this.CreateParameterType<SimpleQuantityKind>(SampledFunctionParameterTypeValueMemberName, this.GetMeasurementScales());
                 })
             );
+
+            var clone = this.ReferenceDataLibrary.Clone(false);
+            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
+            clone.ParameterType.Add(parameterType);
+            transaction.CreateOrUpdate(clone);
+            transaction.CreateOrUpdate(parameterType);
+
+            this.hubController.Write(transaction);
+            this.ReferenceDataLibrary.ParameterType.Add(parameterType);
 
             return parameterType;
         }
@@ -315,6 +326,7 @@ namespace DEHPEcosimPro.MappingRules
             {
                 parameterType = this.Bake<TParameter>(x =>
                 {
+                    x.Iid = Guid.NewGuid();
                     x.Name = name;
                     x.ShortName = name;
                     x.Symbol = string.Concat(name.Take(3));
@@ -393,12 +405,9 @@ namespace DEHPEcosimPro.MappingRules
                 && parameterType.DependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeValueMemberName)
                 && parameterType.IndependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeTimestampMemberName))
             {
-                var values = new List<string>();
-
-                foreach (var row in variable.SelectedValues)
-                {
-                    values.Add($"{row.TimeStamp:s},{FormattableString.Invariant($"{row.Value}")}");
-                }
+                var values = 
+                    variable.SelectedValues.Select(row => 
+                        $"{row.TimeStamp:s},{FormattableString.Invariant($"{row.Value}")}");
 
                 valueSet.Computed = new ValueArray<string>(values);
             }

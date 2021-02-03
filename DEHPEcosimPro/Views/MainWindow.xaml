@@ -11,6 +11,9 @@
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
         xmlns:publicationBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.PublicationBrowser;assembly=DEHPCommon"
+        xmlns:dxlc="http://schemas.devexpress.com/winfx/2008/xaml/layoutcontrol"
+        xmlns:enumerators="clr-namespace:DEHPCommon.Enumerators;assembly=DEHPCommon"
+        xmlns:converters="clr-namespace:DEHPEcosimPro.Converters"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
@@ -18,6 +21,7 @@
             <DataTemplate x:Key="MappedThingRowDataTemplate">
                 <dataTemplate:MappingRow />
             </DataTemplate>
+            <converters:MappingDirectionToVisibilityConverter x:Key="MappingDirectionToVisibilityConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <dxmvvm:Interaction.Behaviors>
@@ -57,7 +61,7 @@
                                     <RowDefinition Height="Auto"></RowDefinition>
                                     <RowDefinition></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Grid>
+                                <Grid Margin="10">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition></ColumnDefinition>
                                         <ColumnDefinition Width="Auto"></ColumnDefinition>
@@ -68,7 +72,17 @@
                                     <Button Grid.Column="1" Height="40" HorizontalAlignment="Center" Content="Change Transfer Direction" Command="{Binding ChangeMappingDirection}"/>
                                     <Path Grid.Column="2" Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
                                 </Grid>
-                                <objectBrowser:ObjectBrowser DataContext="{Binding NetChangePreviewViewModel}" Grid.Row="1"></objectBrowser:ObjectBrowser>
+
+                                <TabControl Name="HubEngineeringModelPreview" Grid.Row="1">
+                                    <TabItem Header="Hub Engineering Model"
+                                             IsSelected="{Binding MappingDirection, Converter={StaticResource MappingDirectionToVisibilityConverter}, ConverterParameter=Hub, Mode=OneWay }">
+                                        <objectBrowser:ObjectBrowser DataContext="{Binding NetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
+                                    </TabItem>
+                                    <TabItem Name="EcosimProPreview" Header="EcosimPro Variables"
+                                             IsSelected="{Binding MappingDirection, Converter={StaticResource MappingDirectionToVisibilityConverter}, ConverterParameter=Dst, Mode=OneWay}">
+                                        <objectBrowser:ObjectBrowser DataContext="{Binding NetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
+                                    </TabItem>
+                                </TabControl>
                             </Grid>
                         </dxdo:LayoutPanel>
                         <dxdo:LayoutPanel Name="HubPanel" AllowHide="False" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">

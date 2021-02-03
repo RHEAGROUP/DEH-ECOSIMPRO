@@ -119,6 +119,13 @@ namespace DEHPEcosimPro.ViewModel
 
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
             this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
+
+            this.WhenAny(x => x.hubController.OpenIteration,
+                x => x.hubController.IsSessionOpen,
+                (i, o) => 
+                    i.Value != null && o.Value)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateConnectButtonText);
         }
 
         /// <summary>
@@ -126,8 +133,8 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
-            this.NavigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
+            var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
+            this.NavigationService.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
         }
 
         /// <summary>
@@ -144,8 +151,6 @@ namespace DEHPEcosimPro.ViewModel
             {
                 this.NavigationService.ShowDialog<Login>();
             }
-
-            this.UpdateConnectButtonText(this.hubController.IsSessionOpen);
         }
     }
 }
