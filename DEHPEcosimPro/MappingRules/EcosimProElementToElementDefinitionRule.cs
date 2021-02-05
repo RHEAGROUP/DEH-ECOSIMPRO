@@ -248,7 +248,7 @@ namespace DEHPEcosimPro.MappingRules
                     x.ParameterType = variable.SelectedParameterType;
                     x.Owner = this.owner;
                     x.Container = variable.SelectedElementDefinition;
-                    
+
                     x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                     {
                         set.Computed = new ValueArray<string>();
@@ -258,7 +258,7 @@ namespace DEHPEcosimPro.MappingRules
                         set.Published = new ValueArray<string>(new[] { "-" });
                     }));
                 });
-                
+
                 variable.SelectedElementDefinition.Parameter.Add(variable.SelectedParameter);
             }
             
@@ -283,14 +283,14 @@ namespace DEHPEcosimPro.MappingRules
                 this.Bake<IndependentParameterTypeAssignment>(x =>
                 {
                     x.ParameterType = this.CreateParameterType<DateTimeParameterType>(SampledFunctionParameterTypeTimestampMemberName);
-                    x.Container = parameterType;
+                    x.Iid = Guid.NewGuid();
                 }));
 
             parameterType.DependentParameterType.Add(
                 this.Bake<DependentParameterTypeAssignment>(x =>
                 {
                     x.MeasurementScale = this.GetMeasurementScales().FirstOrDefault();
-                    x.Container = parameterType;
+                    x.Iid = Guid.NewGuid();
                     x.ParameterType = this.CreateParameterType<SimpleQuantityKind>(SampledFunctionParameterTypeValueMemberName, this.GetMeasurementScales());
                 })
             );
@@ -299,7 +299,7 @@ namespace DEHPEcosimPro.MappingRules
             var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
             clone.ParameterType.Add(parameterType);
             transaction.CreateOrUpdate(clone);
-            transaction.CreateOrUpdate(parameterType);
+            transaction.Create(parameterType);
 
             this.hubController.Write(transaction);
             this.ReferenceDataLibrary.ParameterType.Add(parameterType);

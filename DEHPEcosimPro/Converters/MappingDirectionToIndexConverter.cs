@@ -31,31 +31,27 @@ namespace DEHPEcosimPro.Converters
     using DEHPCommon.Enumerators;
 
     /// <summary>
-    /// Convert a <see cref="MappingDirection"/> to a boolean depending on the caller name.
+    /// Convert a <see cref="MappingDirection"/> to a <see cref="int"/>
     /// this converter is used to determine
     /// </summary>
-    public class MappingDirectionToVisibilityConverter : IValueConverter
+    public class MappingDirectionToIndexConverter : IValueConverter
     {
         /// <summary>
-        /// Converts a <see cref="MappingDirection"/> to a boolean
+        /// Converts a <see cref="MappingDirection"/> to a <see cref="int"/>
         /// </summary>
         /// <param name="value">An instance of an object which needs to be converted.</param>
         /// <param name="targetType">The parameter is not used.</param>
-        /// <param name="parameter">The parameter is used to pass the information about the caller
-        /// i.e. if the caller identify itself as being the hub preview panel then if the mapping direction allows it this method should return true</param>
-        /// <param name="culture">The parameter is not used.</param>
-        /// <returns>A <see cref="bool"/></returns>
+        /// <param name="parameter">The parameter is not used.</param>
+        /// <param name="culture"></param>
+        /// <returns>A <see cref="int"/></returns>
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            var result = false;
-
-            if (value is MappingDirection mappingDirection && parameter is string caller)
+            if (value is MappingDirection mappingDirection)
             {
-                result = (caller.Contains("Hub") && mappingDirection == MappingDirection.FromDstToHub)
-                             || (caller.Contains("Dst") && mappingDirection == MappingDirection.FromHubToDst);
+                return (int) mappingDirection;
             }
 
-            return result;
+            return 0;
         }
 
         /// <summary>

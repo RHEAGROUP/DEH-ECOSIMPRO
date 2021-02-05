@@ -24,7 +24,8 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
-    using System.Security.Cryptography;
+    using System;
+    using System.Windows;
     using System.Windows.Input;
 
     using DEHPCommon.HubController.Interfaces;
@@ -44,12 +45,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// The <see cref="IHubController"/>
         /// </summary>
-        protected readonly IHubController hubController;
+        protected readonly IHubController HubController;
 
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
-        protected readonly IDstController dstController;
+        protected readonly IDstController DstController;
 
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
@@ -76,14 +77,55 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveCommand<object> ContinueCommand { get; set; }
 
         /// <summary>
+        /// Gets the <see cref="IStatusBarControlViewModel"/>
+        /// </summary>
+        protected IStatusBarControlViewModel StatusBar { get; }
+
+        /// <summary>
         /// Initializes a new <see cref="MappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController)
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, IStatusBarControlViewModel statusBar)
         {
-            this.hubController = hubController;
-            this.dstController = dstController;
+            this.HubController = hubController;
+            this.DstController = dstController;
+            this.StatusBar = statusBar;
+        }
+        
+        /// <summary>
+        /// Executes the <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/>
+        /// </summary>
+        /// <param name="mapCommand">The actual map action to perform</param>
+        protected virtual void ExecuteContinueCommand(Action mapCommand)
+        {
+            this.IsBusy = true;
+
+            try
+            {
+                mapCommand?.Invoke();
+                this.CloseWindowBehavior?.Close();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"{e.Message}");
+            }
+            finally
+            {
+                this.IsBusy = false;
+            }
+        }
+        
+        /// <summary>
+        /// Executes the specified action to update the view Hub fields surrounded by a <see cref="IsBusy"/> state change
+        /// </summary>
+        /// <param name="updateAction">The <see cref="Action"/> to execute</param>
+        protected void UpdateHubFields(Action updateAction)
+        {
+            this.IsBusy = true;
+            updateAction.Invoke();
+            this.IsBusy = false;
         }
     }
 }

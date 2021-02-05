@@ -35,6 +35,7 @@ namespace DEHPEcosimPro.DstController
 
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Services.OpcConnector;
+    using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Opc.Ua;
     
@@ -86,7 +87,12 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        List<ElementDefinition> MapResult { get; }
+        List<ElementDefinition> DstMapResult { get; }
+
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ReferenceDescription"/>
+        /// </summary>
+        List<MappedElementDefinitionRowViewModel> HubMapResult { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -149,23 +155,56 @@ namespace DEHPEcosimPro.DstController
         void CloseSession();
 
         /// <summary>
-        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
         /// <returns>A <see cref="Task"/></returns>
         Task Map(List<VariableRowViewModel> dstVariables);
 
         /// <summary>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        /// <returns>A <see cref="Task"/></returns>
+        Task Map(List<MappedElementDefinitionRowViewModel> mappedElement);
+
+        /// <summary>
+        /// Transfers the mapped variables to the Dst data source
+        /// </summary>
+        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
+        IEnumerable<bool> TransferMappedThingsToDst();
+
+        /// <summary>
+        /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns>An assert</returns>
+        bool IsVariableWritable(ReferenceDescription reference);
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        DataValue ReadNode(ReferenceDescription reference);
+
+        /// <summary>
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        Task Transfer();
+        Task TransferMappedThingsToHub();
+
+        /// <summary>
+        /// Updates the configured mapping
+        /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
+        Task UpdateExternalIdentifierMap();
 
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
-        /// <returns>A awaitable <see cref="ExternalIdentifierMap"/></returns>
+        /// <returns>A newly created <see cref="DstController.ExternalIdentifierMap"/></returns>
         Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
     }
 }

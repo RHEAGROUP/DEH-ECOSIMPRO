@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="EcosimProNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="HubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -47,7 +47,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
     using ReactiveUI;
 
-    public class EcosimProNetChangePreviewViewModel : NetChangePreviewViewModel, IEcosimProNetChangePreviewViewModel
+    public class HubNetChangePreviewViewModel : NetChangePreviewViewModel, IHubNetChangePreviewViewModel
     {
         /// <summary>
         /// The <see cref="IDstController"/>
@@ -60,7 +60,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <param name="hubController">The <see cref="T:DEHPCommon.HubController.Interfaces.IHubController" /></param>
         /// <param name="objectBrowserTreeSelectorService">The <see cref="T:DEHPCommon.Services.ObjectBrowserTreeSelectorService.IObjectBrowserTreeSelectorService" /></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public EcosimProNetChangePreviewViewModel(IHubController hubController, IObjectBrowserTreeSelectorService objectBrowserTreeSelectorService, IDstController dstController) : base(hubController, objectBrowserTreeSelectorService)
+        public HubNetChangePreviewViewModel(IHubController hubController, IObjectBrowserTreeSelectorService objectBrowserTreeSelectorService, IDstController dstController) : base(hubController, objectBrowserTreeSelectorService)
         {
             this.dstController = dstController;
 
@@ -94,7 +94,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             foreach (var iterationRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>())
             {
-                foreach (var thing in this.dstController.MapResult)
+                foreach (var thing in this.dstController.DstMapResult)
                 {
                     var elementToUpdate = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
                         .FirstOrDefault(x => x.Thing.Iid == thing.Iid);
@@ -106,7 +106,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             thing.Parameter.AddRange(elementToUpdate.Thing.Parameter.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
                         }
 
-                        CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
+                        elementToUpdate.UpdateThing(thing);
 
                         foreach (var parameterOrOverrideBaseRowViewModel in elementToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
                         {
@@ -114,6 +114,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         }
 
                         elementToUpdate.UpdateChildren();
+                        CDPMessageBus.Current.SendMessage(new HighlightEvent(thing), thing);
                     }
                     else
                     {
@@ -132,19 +133,21 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             continue;
                         }
 
+                        elementUsageToUpdate.UpdateThing(elementUsage);
+
                         if (!elementUsage.ParameterOverride.All(p => elementUsageToUpdate.Thing.ParameterOverride.Any(x => x.Iid == p.Iid)))
                         {
                             elementUsage.ParameterOverride.AddRange(elementUsageToUpdate.Thing.ParameterOverride.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
                         }
 
-                        CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsageToUpdate.Thing.ElementDefinition), elementUsageToUpdate.Thing);
-                        
                         foreach (var parameterOrOverrideBaseRowViewModel in elementUsageToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
                         {
                             parameterOrOverrideBaseRowViewModel.SetProperties();
                         }
                         
                         elementUsageToUpdate.UpdateChildren();
+
+                        CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsage.ElementDefinition), elementUsage);
                     }
                 }
             }

@@ -43,8 +43,10 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using Opc.Ua;
@@ -142,7 +144,12 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        public List<ElementDefinition> MapResult { get; private set; } = new List<ElementDefinition>();
+        public List<ElementDefinition> DstMapResult { get; private set; } = new List<ElementDefinition>();
+
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ReferenceDescription"/>
+        /// </summary>
+        public List<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new List<MappedElementDefinitionRowViewModel>();
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -294,7 +301,7 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
-        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
         /// <returns>A <see cref="Task"/></returns>
@@ -302,7 +309,7 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.mappingEngine.Map(dstVariables) is List<ElementDefinition> mapResult && mapResult.Any())
             {
-                this.MapResult.AddRange(mapResult);
+                this.DstMapResult.AddRange(mapResult);
             }
 
             await this.UpdateExternalIdentifierMap();
@@ -310,28 +317,75 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        /// <returns>A <see cref="Task"/></returns>
+        public async Task Map(List<MappedElementDefinitionRowViewModel> mappedElement)
+        {
+            if (mappedElement.Any())
+            {
+                this.HubMapResult.AddRange(mappedElement);
+            }
+
+            await this.UpdateExternalIdentifierMap();
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent());
+        }
+
+        /// <summary>
+        /// Transfers the mapped variables to the Dst data source
+        /// </summary>
+        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
+        public IEnumerable<bool> TransferMappedThingsToDst()
+        {
+            foreach (var mappedElement in this.HubMapResult)
+            {
+                yield return this.opcClientService.WriteNode((NodeId)mappedElement.SelectedVariable.Reference.NodeId, mappedElement.SelectedValue);
+            }
+
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
+        }
+
+        /// <summary>
+        /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns>An assert</returns>
+        public bool IsVariableWritable(ReferenceDescription reference)
+        {
+            var referenceNodeId = (NodeId)reference.NodeId;
+            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value);
+        }
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        public DataValue ReadNode(ReferenceDescription reference)
+        {
+            var referenceNodeId = (NodeId)reference.NodeId;
+            return this.opcClientService.ReadNode(referenceNodeId);
+        }
+
+        /// <summary>
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Transfer()
+        public async Task TransferMappedThingsToHub()
         {
             try
             {
                 var iterationClone = this.hubController.OpenIteration.Clone(false);
                 var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(iterationClone), iterationClone);
 
-                foreach (var elementDefinition in this.MapResult)
+                foreach (var elementDefinition in this.DstMapResult)
                 {
                     var elementDefinitionCloned = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
 
                     foreach (var parameter in elementDefinition.Parameter)
                     {
-                        var parameterCloned = this.TransactionCreateOrUpdate(transaction, parameter, elementDefinitionCloned.Parameter);
-
-                        foreach (var parameterValueSet in parameter.ValueSet)
-                        {
-                            _ = this.TransactionCreateOrUpdate(transaction, parameterValueSet, parameterCloned.ValueSet);
-                        }
+                        _ = this.TransactionCreateOrUpdate(transaction, parameter, elementDefinitionCloned.Parameter);
                     }
 
                     foreach (var parameterOverride in elementDefinition.ContainedElement.SelectMany(x => x.ParameterOverride))
@@ -339,19 +393,17 @@ namespace DEHPEcosimPro.DstController
                         var elementUsageClone = (ElementUsage)parameterOverride.Container.Clone(false);
                         transaction.CreateOrUpdate(elementUsageClone);
 
-                        var parameterOverrideCloned = this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
-
-                        foreach (var parameterOverrideValueSet in parameterOverride.ValueSet)
-                        {
-                            this.TransactionCreateOrUpdate(transaction, parameterOverrideValueSet, parameterOverrideCloned.ValueSet);
-                        }
+                        _ = this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
                     }
                 }
-                
+
                 transaction.CreateOrUpdate(iterationClone);
+
                 await this.hubController.Write(transaction);
 
-                await this.hubController.Reload();
+                await this.UpdateParametersValueSets(iterationClone);
+
+                await this.hubController.Refresh();
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }
             catch (Exception e)
@@ -359,6 +411,76 @@ namespace DEHPEcosimPro.DstController
                 Console.WriteLine(e);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="IValueSet"/> of all <see cref="Parameter"/> and all <see cref="ParameterOverride"/>
+        /// </summary>
+        /// <param name="clonedContainer">The <see cref="Thing"/> container</param>
+        /// <returns>A <see cref="Task"/></returns>
+        private async Task UpdateParametersValueSets(Thing clonedContainer)
+        {
+            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clonedContainer), clonedContainer);
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.Parameter));
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.ContainedElement.SelectMany(p => p.ParameterOverride)));
+            transaction.CreateOrUpdate(clonedContainer);
+            await this.hubController.Write(transaction);
+        }
+
+        /// <summary>
+        /// Updates the <see cref="IValueSet"/> of the provided
+        /// </summary>
+        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
+        /// <param name="parameters">The collection of parameter to update</param>
+        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<Parameter> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out Parameter newParameter);
+
+                var container = newParameter.Clone(false);
+
+                for (var index = 0; index < parameter.ValueSet.Count; index++)
+                {
+                    var clone = newParameter.ValueSet[index].Clone(false);
+                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    transaction.CreateOrUpdate(clone);
+                }
+
+                transaction.CreateOrUpdate(container);
+                transaction.CreateOrUpdate(container.Container.Clone(false));
+            }
+        }
+
+        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<ParameterOverride> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out ParameterOverride newParameter);
+
+                var container = newParameter.Clone(false);
+
+                for (var index = 0; index < parameter.ValueSet.Count; index++)
+                {
+                    var clone = newParameter.ValueSet[index].Clone(false);
+                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    transaction.CreateOrUpdate(clone);
+                }
+
+                transaction.CreateOrUpdate(container);
+                transaction.CreateOrUpdate(container.Container.Clone(false));
+            }
+        }
+
+        private static void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
+        {
+            clone.Reference = valueSet.Reference;
+            clone.Computed = valueSet.Computed;
+            clone.Manual = valueSet.Manual;
+            clone.ActualState = valueSet.ActualState;
+            clone.ActualOption = valueSet.ActualOption;
+            clone.Formula = valueSet.Formula;
+            clone.ValueSwitch = valueSet.ValueSwitch;
         }
 
         /// <summary>
@@ -372,10 +494,11 @@ namespace DEHPEcosimPro.DstController
         private TThing TransactionCreateOrUpdate<TThing>(IThingTransaction transaction, TThing thing, ContainerList<TThing> containerClone) where TThing : Thing
         {
             var clone = thing.Clone(false);
-            
+
             if (clone.Iid == Guid.Empty)
             {
                 clone.Iid = Guid.NewGuid();
+                thing.Iid = clone.Iid;
                 transaction.Create(clone);
                 containerClone.Add((TThing)clone);
             }

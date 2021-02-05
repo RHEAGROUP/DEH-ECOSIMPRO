@@ -25,10 +25,13 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
 
     using Autofac;
+
+    using CDP4Common.EngineeringModelData;
 
     using DEHPCommon;
     using DEHPCommon.Enumerators;
@@ -37,6 +40,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
@@ -133,8 +137,18 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
-            this.NavigationService.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+            var viewModel = AppContainer.Container.Resolve<IHubMappingConfigurationDialogViewModel>();
+            
+            viewModel.Elements.AddRange(this.ObjectBrowser
+                .SelectedThings
+                .OfType<ElementDefinitionRowViewModel>()
+                .Select(x =>
+                {
+                    x.Thing.Clone(true);
+                    return x;
+                }));
+            
+            this.NavigationService.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(viewModel);
         }
 
         /// <summary>

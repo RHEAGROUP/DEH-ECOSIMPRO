@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IHubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="HubMappingConfigurationDialog.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,16 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Views.Dialogs
 {
-    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
-
-    using DEHPEcosimPro.ViewModel.NetChangePreview;
+    using System.Windows;
 
     /// <summary>
-    /// Interface definition for the <see cref="HubNetChangePreviewViewModel"/>
+    /// Interaction logic for HubMappingConfigurationDialog.xaml
     /// </summary>
-    public interface IHubNetChangePreviewViewModel : INetChangePreviewViewModel
+    public partial class HubMappingConfigurationDialog : Window
     {
+        /// <summary>
+        /// Initializes a new <see cref="HubMappingConfigurationDialog"/>
+        /// </summary>
+        public HubMappingConfigurationDialog()
+        {
+            this.InitializeComponent();
+        }
     }
 }

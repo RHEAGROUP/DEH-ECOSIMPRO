@@ -95,7 +95,7 @@ namespace DEHPEcosimPro.ViewModel
         private async Task TransferCommandExecute()
         {
             this.AreThereAnyTransferInProgress = true;
-            await this.dstController.Transfer();
+            await this.dstController.TransferMappedThingsToHub();
             this.AreThereAnyTransferInProgress = false;
         }
     }

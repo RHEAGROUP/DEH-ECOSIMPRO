@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System;
     using System.Linq;
     using System.Reactive.Linq;
+    using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Input;
 
@@ -68,6 +69,20 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
+        /// Backing field for <see cref="CanContinue"/>
+        /// </summary>
+        private bool canContinue;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
+        /// </summary>
+        public bool CanContinue
+        {
+            get => this.canContinue;
+            set => this.RaiseAndSetIfChanged(ref this.canContinue, value);
+        }
+
+        /// <summary>
         /// Gets the collection of the available <see cref="Option"/> from the connected Hub Model
         /// </summary>
         public ReactiveList<Option> AvailableOptions { get; } = new ReactiveList<Option>();
@@ -103,32 +118,43 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
         
         /// <summary>
+        /// Gets or sets all the selected values from <see cref="VariableRowViewModel.SelectedValues"/>
+        /// </summary>
+        public ReactiveList<object> SelectedValuesVariable { get; set; }
+
+        /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController) : 
-            base(hubController, dstController)
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, 
+            IStatusBarControlViewModel statusBar) :
+                base(hubController, dstController, statusBar)
         {
             this.UpdateProperties();
-            this.InitializesCommandsAndObservableSubscriptions();
         }
 
         /// <summary>
         /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
         /// </summary>
-        private void InitializesCommandsAndObservableSubscriptions()
+        public void InitializesCommandsAndObservableSubscriptions()
         {
-            var canContinue = this.WhenAny(x => x.SelectedThing.SelectedValues,
-                    x => x.Value.Any())
-                .ObserveOn(RxApp.MainThreadScheduler);
+            foreach (var variableRowViewModel in this.Variables)
+            {
+                variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ => this.CheckCanExecute());
+            }
 
-            this.Variables.ForEach(x => canContinue = canContinue.Merge(
-                x.WhenAny(v => v.SelectedValues, v => v.Value.Any())
-                    .ObserveOn(RxApp.MainThreadScheduler)));
+            this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue));
 
-            this.ContinueCommand = ReactiveCommand.Create(canContinue);
-            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand());
+            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
+                () =>
+                {
+                    var variableRowViewModels = this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList();
+                    this.DstController.Map(variableRowViewModels);
+
+                    this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
+                }));
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedOption)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -148,38 +174,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Executes the specified action to update the view Hub fields surrounded by a <see cref="IsBusy"/> state change
+        /// Checks that any of the <see cref="Variables"/> has at least one value selected
         /// </summary>
-        /// <param name="updateAction">The <see cref="Action"/> to execute</param>
-        private void UpdateHubFields(Action updateAction)
+        private void CheckCanExecute()
         {
-            this.IsBusy = true;
-            updateAction.Invoke();
-            this.IsBusy = false;
+            this.CanContinue = this.Variables.Any(x => x.SelectedValues.Any());
         }
-
-        /// <summary>
-        /// Executes the <see cref="ContinueCommand"/>
-        /// </summary>
-        private void ExecuteContinueCommand()
-        {
-            this.IsBusy = true;
-
-            try
-            {
-                this.dstController.Map(this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList());
-                this.CloseWindowBehavior?.Close();
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show($"{e.Message}");
-            }
-            finally
-            {
-                this.IsBusy = false;
-            }
-        }
-
+        
         /// <summary>
         /// Update this view model properties
         /// </summary>
@@ -189,9 +190,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.UpdateAvailableOptions();
             this.AvailableElementDefinitions.Clear();
             this.AvailableParameterTypes.Clear();
-            this.AvailableElementDefinitions.AddRange(this.hubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>()));
+            this.AvailableElementDefinitions.AddRange(this.HubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>()));
 
-            this.AvailableParameterTypes.AddRange(this.hubController.GetSiteDirectory().SiteReferenceDataLibrary
+            this.AvailableParameterTypes.AddRange(this.HubController.GetSiteDirectory().SiteReferenceDataLibrary
                 .SelectMany(x => x.ParameterType).Where(
                     x => x is CompoundParameterType parameterType 
                          && parameterType.Component.Count == 2 
@@ -225,7 +226,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateAvailableOptions()
         {
-            this.AvailableOptions.AddRange(this.hubController.OpenIteration.Option.Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
+            this.AvailableOptions.AddRange(this.HubController.OpenIteration.Option.Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
             
             this.Variables.ForEach(x =>
             {
@@ -260,7 +261,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.AvailableElementUsages.AddRange(
                     this.selectedThing.SelectedElementDefinition.ContainedElement.Where(
-                        this.AreTheseOwnedByTheDomain<ElementUsage>()).Distinct());
+                        this.AreTheseOwnedByTheDomain<ElementUsage>()).Distinct().Select(x => x.Clone(true)));
             }
         }
 
@@ -275,13 +276,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 foreach (var idCorrespondence in variable.MappingConfigurations)
                 {
-                    if (this.hubController.GetThingById(idCorrespondence.InternalThing, this.hubController.OpenIteration, out Thing thing))
+                    if (this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, out Thing thing))
                     {
                         Action action = thing switch
                         {
-                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = elementDefinition),
-                            ElementUsage elementUsage => (() => variable.SelectedElementUsages.Add(elementUsage)),
-                            Parameter parameter => (() => variable.SelectedParameter = parameter),
+                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = elementDefinition.Clone(true)),
+                            ElementUsage elementUsage => (() => variable.SelectedElementUsages.Add(elementUsage.Clone(true))),
+                            Parameter parameter => (() => variable.SelectedParameter = parameter.Clone(false)),
                             Option option => (() => variable.SelectedOption = option),
                             ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
                             _ => null
@@ -289,7 +290,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                         
                         action?.Invoke();
                         
-                        if (action is null && this.hubController.GetThingById(idCorrespondence.InternalThing, out CompoundParameterType parameterType))
+                        if (action is null && this.HubController.GetThingById(idCorrespondence.InternalThing, out SampledFunctionParameterType parameterType))
                         {
                             variable.SelectedParameterType = parameterType;
                         }
@@ -306,6 +307,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <typeparam name="T">The <see cref="IOwnedThing"/> type</typeparam>
         /// <returns>A <see cref="Func{T,T}"/> input parameter is <see cref="IOwnedThing"/> and outputs an assert whether the verification return true </returns>
         private Func<T, bool> AreTheseOwnedByTheDomain<T>() where T : IOwnedThing 
-            => x => x.Owner.Iid == this.hubController.CurrentDomainOfExpertise.Iid;
+            => x => x.Owner.Iid == this.HubController.CurrentDomainOfExpertise.Iid;
     }
 }

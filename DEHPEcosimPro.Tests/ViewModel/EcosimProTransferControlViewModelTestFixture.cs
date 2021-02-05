@@ -49,7 +49,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void Setup()
         {
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.Transfer()).Returns(Task.CompletedTask);
+            this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
             this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object);
         }
 
@@ -73,7 +73,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsTrue(this.viewModel.TransferCommand.CanExecute(null));
             
             Assert.DoesNotThrowAsync(() => this.viewModel.TransferCommand.ExecuteAsyncTask(null));
-            this.dstController.Verify(x => x.Transfer(), Times.Once);
+            this.dstController.Verify(x => x.TransferMappedThingsToHub(), Times.Once);
         }
 
         [Test]

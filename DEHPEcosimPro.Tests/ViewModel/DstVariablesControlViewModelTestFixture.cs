@@ -112,7 +112,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.mappingConfigurationDialog.Setup(x => x.UpdatePropertiesBasedOnMappingConfiguration());
 
             this.navigationService = new Mock<INavigationService>();
-            this.navigationService.Setup(x => x.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<DstMappingConfigurationDialogViewModel>()));
+            this.navigationService.Setup(x => x.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<DstMappingConfigurationDialogViewModel>()));
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
 
@@ -165,7 +165,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Verify(x => x.ExternalIdentifierMap, Times.Exactly(3));
             this.mappingConfigurationDialog.Verify(x => x.Variables, Times.Once);
             this.mappingConfigurationDialog.Verify(x => x.UpdatePropertiesBasedOnMappingConfiguration(), Times.Once);
-            this.navigationService.Verify(x => x.ShowDialog<MappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<IDstMappingConfigurationDialogViewModel>()), Times.Once());
+            this.navigationService.Verify(x => x.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(It.IsAny<IDstMappingConfigurationDialogViewModel>()), Times.Once());
         }
     }
 }

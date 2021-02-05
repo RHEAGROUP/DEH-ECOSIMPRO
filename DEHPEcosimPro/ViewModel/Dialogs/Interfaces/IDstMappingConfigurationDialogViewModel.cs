@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
+    using System.Reactive.Linq;
     using System.Windows.Input;
 
     using CDP4Common.EngineeringModelData;
@@ -40,16 +41,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
     /// </summary>
     public interface IDstMappingConfigurationDialogViewModel
     {
-        /// <summary>
-        /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
-        /// </summary>
-        ICloseWindowBehavior CloseWindowBehavior { get; set; }
-
-        /// <summary>
-        /// Gets or sets the assert indicating whether the view is busy
-        /// </summary>
-        bool IsBusy { get; set; }
-
         /// <summary>
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
         /// </summary>
@@ -91,9 +82,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         ReactiveList<VariableRowViewModel> Variables { get; }
 
         /// <summary>
-        /// Gets the <see cref="ICommand"/> to continue
+        /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
         /// </summary>
-        ReactiveCommand<object> ContinueCommand { get; set; }
+        void InitializesCommandsAndObservableSubscriptions();
 
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements

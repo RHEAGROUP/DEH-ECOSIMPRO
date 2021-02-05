@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IHubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="DstHighlightEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,16 +22,34 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Events
 {
-    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
-
-    using DEHPEcosimPro.ViewModel.NetChangePreview;
+    using CDP4Dal;
 
     /// <summary>
-    /// Interface definition for the <see cref="HubNetChangePreviewViewModel"/>
+    /// An event for <see cref="CDPMessageBus"/>
     /// </summary>
-    public interface IHubNetChangePreviewViewModel : INetChangePreviewViewModel
+    public class DstHighlightEvent
     {
+        /// <summary>
+        /// A Value indicating whether the higlighting of the target should be canceled
+        /// </summary>
+        public bool ShouldHighlight { get; }
+
+        /// <summary>
+        /// The target thing id
+        /// </summary>
+        public object TargetThingId { get; }
+
+        /// <summary>
+        /// Initializes a new <see cref="DstHighlightEvent"/>
+        /// </summary>
+        /// <param name="targetId">The target thing id</param>
+        /// <param name="shouldHighlight">A Value indicating whether the higlighting of the target should be canceled</param>
+        public DstHighlightEvent(object targetId, bool shouldHighlight = true)
+        {
+            this.TargetThingId = targetId;
+            this.ShouldHighlight = shouldHighlight;
+        }
     }
 }

@@ -11,8 +11,6 @@
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
         xmlns:publicationBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.PublicationBrowser;assembly=DEHPCommon"
-        xmlns:dxlc="http://schemas.devexpress.com/winfx/2008/xaml/layoutcontrol"
-        xmlns:enumerators="clr-namespace:DEHPCommon.Enumerators;assembly=DEHPCommon"
         xmlns:converters="clr-namespace:DEHPEcosimPro.Converters"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
@@ -21,7 +19,7 @@
             <DataTemplate x:Key="MappedThingRowDataTemplate">
                 <dataTemplate:MappingRow />
             </DataTemplate>
-            <converters:MappingDirectionToVisibilityConverter x:Key="MappingDirectionToVisibilityConverter" />
+            <converters:MappingDirectionToIndexConverter x:Key="MappingDirectionToIndexConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <dxmvvm:Interaction.Behaviors>
@@ -73,14 +71,13 @@
                                     <Path Grid.Column="2" Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
                                 </Grid>
 
-                                <TabControl Name="HubEngineeringModelPreview" Grid.Row="1">
-                                    <TabItem Header="Hub Engineering Model"
-                                             IsSelected="{Binding MappingDirection, Converter={StaticResource MappingDirectionToVisibilityConverter}, ConverterParameter=Hub, Mode=OneWay }">
-                                        <objectBrowser:ObjectBrowser DataContext="{Binding NetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
+                                <TabControl Name="HubEngineeringModelPreview" Grid.Row="1" 
+                                            SelectedIndex="{Binding MappingDirection, Converter={StaticResource MappingDirectionToIndexConverter}, Mode=OneWay}">
+                                    <TabItem Header="Hub Engineering Model">
+                                        <objectBrowser:ObjectBrowser DataContext="{Binding HubNetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
                                     </TabItem>
-                                    <TabItem Name="EcosimProPreview" Header="EcosimPro Variables"
-                                             IsSelected="{Binding MappingDirection, Converter={StaticResource MappingDirectionToVisibilityConverter}, ConverterParameter=Dst, Mode=OneWay}">
-                                        <objectBrowser:ObjectBrowser DataContext="{Binding NetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
+                                    <TabItem Header="EcosimPro Variables">
+                                        <views:DstNetChangePreview DataContext="{Binding DstNetChangePreviewViewModel}" ></views:DstNetChangePreview>
                                     </TabItem>
                                 </TabControl>
                             </Grid>

@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Reactive.Linq;
     using System.Windows.Input;
 
     using DEHPCommon.Enumerators;
@@ -67,7 +68,12 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Gets the view model that represents the net change preview panel
         /// </summary>
-        public IEcosimProNetChangePreviewViewModel NetChangePreviewViewModel { get; }
+        public IHubNetChangePreviewViewModel HubNetChangePreviewViewModel { get; }
+
+        /// <summary>
+        /// Gets the view model that represents the net change preview panel
+        /// </summary>
+        public IDstNetChangePreviewViewModel DstNetChangePreviewViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
@@ -104,16 +110,18 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="hubDataSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="dstSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="netChangePreviewViewModel">The <see cref="IEcosimProNetChangePreviewViewModel"/></param>
+        /// <param name="hubNetChangePreviewViewModel">The <see cref="IHubNetChangePreviewViewModel"/></param>
+        /// <param name="hubNetChangePreviewViewModel">The <see cref="IDstNetChangePreviewViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
-            IStatusBarControlViewModel statusBarControlViewModel, IEcosimProNetChangePreviewViewModel netChangePreviewViewModel,
-            IDstController dstController, ITransferControlViewModel transferControlViewModel)
+            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
+            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, ITransferControlViewModel transferControlViewModel)
         {
             this.dstController = dstController;
             this.TransferControlViewModel = transferControlViewModel;
-            this.NetChangePreviewViewModel = netChangePreviewViewModel;
+            this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;
+            this.DstNetChangePreviewViewModel = dstNetChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;
             this.StatusBarControlViewModel = statusBarControlViewModel; 
@@ -127,7 +135,9 @@ namespace DEHPEcosimPro.ViewModel
         private void InitializeCommands()
         {
             this.ChangeMappingDirection = ReactiveCommand.Create();
-            this.ChangeMappingDirection.Subscribe(_ => this.ChangeMappingDirectionExecute());
+            
+            this.ChangeMappingDirection.ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.ChangeMappingDirectionExecute());
         }
 
         /// <summary>

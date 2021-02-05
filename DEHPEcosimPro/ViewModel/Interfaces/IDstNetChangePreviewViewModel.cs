@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IHubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="IDstNetChangePreviewViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -29,9 +29,9 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     using DEHPEcosimPro.ViewModel.NetChangePreview;
 
     /// <summary>
-    /// Interface definition for the <see cref="HubNetChangePreviewViewModel"/>
+    /// Interface definition for the <see cref="DstNetChangePreviewViewModel"/>
     /// </summary>
-    public interface IHubNetChangePreviewViewModel : INetChangePreviewViewModel
+    public interface IDstNetChangePreviewViewModel : INetChangePreviewViewModel
     {
     }
 }

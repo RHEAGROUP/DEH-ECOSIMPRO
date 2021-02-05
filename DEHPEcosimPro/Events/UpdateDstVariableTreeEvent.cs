@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IHubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="UpdateDstVariableTreeEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,16 +22,16 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Events
 {
-    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
+    using CDP4Dal;
 
-    using DEHPEcosimPro.ViewModel.NetChangePreview;
+    using DEHPCommon.Events;
 
     /// <summary>
-    /// Interface definition for the <see cref="HubNetChangePreviewViewModel"/>
+    /// The <see cref="OpcVariableChangedEvent"/> represents an event for the <see cref="CDPMessageBus"/>
     /// </summary>
-    public interface IHubNetChangePreviewViewModel : INetChangePreviewViewModel
+    public class UpdateDstVariableTreeEvent : UpdateObjectBrowserTreeEvent
     {
     }
 }
