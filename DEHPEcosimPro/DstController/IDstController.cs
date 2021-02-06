@@ -38,7 +38,9 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Opc.Ua;
-    
+
+    using ReactiveUI;
+
     /// <summary>
     /// Interface definition for <see cref="DstController"/>
     /// </summary>
@@ -87,12 +89,12 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        List<ElementDefinition> DstMapResult { get; }
+        ReactiveList<ElementDefinition> DstMapResult { get; }
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
-        List<MappedElementDefinitionRowViewModel> HubMapResult { get; }
+        ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -172,7 +174,7 @@ namespace DEHPEcosimPro.DstController
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
         /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
-        IEnumerable<bool> TransferMappedThingsToDst();
+        void TransferMappedThingsToDst();
 
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 

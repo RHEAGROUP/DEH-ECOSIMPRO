@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.142" />
+    <PackageReference Include="DEHPCommon" Version="1.0.149" />
     <PackageReference Include="DevExpress.WindowsDesktop.Wpf.Layout" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Core" Version="20.1.8" />
     <PackageReference Include="DevExpress.Wpf.Grid" Version="20.1.8" />

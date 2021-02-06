@@ -106,15 +106,15 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             thing.Parameter.AddRange(elementToUpdate.Thing.Parameter.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
                         }
 
-                        elementToUpdate.UpdateThing(thing);
-
                         foreach (var parameterOrOverrideBaseRowViewModel in elementToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
                         {
                             parameterOrOverrideBaseRowViewModel.SetProperties();
                         }
 
+                        CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
+                        elementToUpdate.ExpandAllRows();
+                        elementToUpdate.UpdateThing(thing);
                         elementToUpdate.UpdateChildren();
-                        CDPMessageBus.Current.SendMessage(new HighlightEvent(thing), thing);
                     }
                     else
                     {
@@ -133,8 +133,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             continue;
                         }
 
-                        elementUsageToUpdate.UpdateThing(elementUsage);
-
                         if (!elementUsage.ParameterOverride.All(p => elementUsageToUpdate.Thing.ParameterOverride.Any(x => x.Iid == p.Iid)))
                         {
                             elementUsage.ParameterOverride.AddRange(elementUsageToUpdate.Thing.ParameterOverride.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
@@ -144,10 +142,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         {
                             parameterOrOverrideBaseRowViewModel.SetProperties();
                         }
-                        
-                        elementUsageToUpdate.UpdateChildren();
 
-                        CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsage.ElementDefinition), elementUsage);
+                        CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsageToUpdate.Thing.ElementDefinition), elementUsageToUpdate.Thing);
+
+                        elementUsageToUpdate.ExpandAllRows();
+                        elementUsageToUpdate.UpdateThing(elementUsage);
+                        elementUsageToUpdate.UpdateChildren();
                     }
                 }
             }

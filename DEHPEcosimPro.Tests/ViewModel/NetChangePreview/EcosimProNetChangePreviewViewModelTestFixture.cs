@@ -192,7 +192,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.dstController = new Mock<IDstController>();
 
             this.dstController.Setup(x => x.DstMapResult)
-                .Returns(new List<ElementDefinition>() 
+                .Returns(new ReactiveList<ElementDefinition>() 
                 {
                     new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                     {

@@ -189,6 +189,7 @@ namespace DEHPEcosimPro.ViewModel
             timer.Stop();
             this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
             this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+            this.statusBar.Append($"Mapping in progress");
         }
 
         /// <summary>

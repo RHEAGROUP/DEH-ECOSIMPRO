@@ -153,7 +153,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     var variableRowViewModels = this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList();
                     this.DstController.Map(variableRowViewModels);
 
-                    this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
+                    Application.Current.Dispatcher.Invoke(() => this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)..."));
                 }));
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedOption)

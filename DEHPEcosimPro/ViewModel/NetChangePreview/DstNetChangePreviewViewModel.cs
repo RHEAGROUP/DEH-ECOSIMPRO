@@ -100,13 +100,13 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             {
                 var variableChanged = this.Variables.FirstOrDefault(
                     x => x.Reference.NodeId.Identifier == mappedElement.SelectedVariable.Reference.NodeId.Identifier);
-
+                
                 if (variableChanged is null)
                 {
                     continue;
                 }
 
-                CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier, false));
+                CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier));
                 variableChanged.ActualValue = mappedElement.SelectedValue.Value;
             }
         }

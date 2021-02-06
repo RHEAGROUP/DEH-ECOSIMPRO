@@ -144,12 +144,12 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        public List<ElementDefinition> DstMapResult { get; private set; } = new List<ElementDefinition>();
+        public ReactiveList<ElementDefinition> DstMapResult { get; private set; } = new ReactiveList<ElementDefinition>();
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
-        public List<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new List<MappedElementDefinitionRowViewModel>();
+        public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -335,12 +335,11 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
-        public IEnumerable<bool> TransferMappedThingsToDst()
+        public void TransferMappedThingsToDst()
         {
             foreach (var mappedElement in this.HubMapResult)
             {
-                yield return this.opcClientService.WriteNode((NodeId)mappedElement.SelectedVariable.Reference.NodeId, mappedElement.SelectedValue);
+                this.opcClientService.WriteNode((NodeId)mappedElement.SelectedVariable.Reference.NodeId, mappedElement.SelectedValue.Value);
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });

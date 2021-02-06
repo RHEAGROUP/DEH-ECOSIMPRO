@@ -159,17 +159,13 @@
                         <Label Grid.Row="0" Grid.Column="0" Content="Element Definition:" />
                         <dxe:ComboBoxEdit Grid.Row="0" Grid.Column="1" Margin="2" AllowNullInput="False" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ShortName"
                                           ItemsSource="{Binding ElementDefinitions}"
-                                          NullText="Create New Element Definition" NullValueButtonPlacement="EditBox"
                                           SelectedItem="{Binding SelectedMappedElement.SelectedElementDefinition}"
                                           ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
                         <Label Grid.Row="1" Grid.Column="0" Content="Update Element Usages:" />
                         <dxe:ComboBoxEdit Grid.Row="1" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ElementDefinition.ShortName"
                                           SelectedItem="{Binding SelectedMappedElement.SelectedElementUsage, Converter={StaticResource ListToElementUsageConverter}}"
                                           ItemsSource="{Binding ElementUsages}"
-                                          NullText="Create New Element Usage" NullValueButtonPlacement="EditBox" ShowNullTextForEmptyValue="True" ValidateOnTextInput="False">
-                            <dxe:ComboBoxEdit.StyleSettings>
-                                <dxe:CheckedTokenComboBoxStyleSettings AllowEditTokens="False" NewTokenPosition="Far" />
-                            </dxe:ComboBoxEdit.StyleSettings>
+                                          NullText="Select Element Usage" NullValueButtonPlacement="EditBox" ShowNullTextForEmptyValue="True" ValidateOnTextInput="False">
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="2" Grid.Column="0" Content="Parameters:" />
                         <dxe:ComboBoxEdit Grid.Row="2" Grid.Column="1" Margin="2" AllowNullInput="False" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
