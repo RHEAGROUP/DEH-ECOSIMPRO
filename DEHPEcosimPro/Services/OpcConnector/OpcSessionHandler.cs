@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Linq;
     using System.Threading.Tasks;
 
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
@@ -106,11 +107,10 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <param name="nodeClassMask">The node class mask.</param>
         /// <param name="continuationPoint">The continuation point.</param>
         /// <param name="references">The list of node references.</param>
-        /// <returns>A<see cref="ResponseHeader"/></returns>
         public void Browse(NodeId nodeToBrowse, NodeId referenceTypeId, bool includeSubtypes, 
             uint nodeClassMask, out byte[] continuationPoint, out ReferenceDescriptionCollection references)
         {
-            this.OpcSession.Browse(null, null, nodeToBrowse, 0u, BrowseDirection.Forward, referenceTypeId,
+            this.OpcSession.Browse(null, null, nodeToBrowse, 0u, BrowseDirection.Both, referenceTypeId,
                 includeSubtypes, nodeClassMask, out continuationPoint, out references);
         }
 
@@ -213,6 +213,29 @@ namespace DEHPEcosimPro.Services.OpcConnector
         public DataValue ReadNode(NodeId nodeId)
         {
             return this.OpcSession.ReadValue(nodeId);
+        }
+
+        /// <summary>
+        /// Writes a value to a node
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> to update</param>
+        /// <param name="value">The value to write</param>
+        /// <returns>A <see cref="StatusCode"/></returns>
+        public StatusCode WriteNode(NodeId nodeId, object value)
+        {
+            this.OpcSession.Write(new RequestHeader(), 
+                new WriteValueCollection(new []
+                    {
+                        new WriteValue()
+                        {
+                            NodeId = nodeId, AttributeId = Attributes.Value, Processed = true,
+                            Value = new DataValue(new Variant(value))
+                        }
+                    }),
+                out var results,
+                out _);
+
+            return results.FirstOrDefault();
         }
 
         /// <summary>

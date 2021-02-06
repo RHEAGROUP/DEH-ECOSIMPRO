@@ -43,7 +43,7 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// <summary>
         /// Gets the view model that represents the net change preview panel
         /// </summary>
-        IEcosimProNetChangePreviewViewModel NetChangePreviewViewModel { get; }
+        IHubNetChangePreviewViewModel HubNetChangePreviewViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the 10-25 data source

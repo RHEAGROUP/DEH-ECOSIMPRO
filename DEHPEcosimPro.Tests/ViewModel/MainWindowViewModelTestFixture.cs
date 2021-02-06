@@ -48,7 +48,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
         private Mock<IHubDataSourceViewModel> hubDataSourceViewModel;
         private Mock<IDstDataSourceViewModel> dstDataSourceViewModel;
-        private Mock<IEcosimProNetChangePreviewViewModel> netChangePreviewViewModel;
+        private Mock<IHubNetChangePreviewViewModel> netChangePreviewViewModel;
         private Mock<IDstController> dstController;
         private MainWindowViewModel viewModel;
         private Mock<ITransferControlViewModel> transferControlViewModel;
@@ -59,7 +59,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.hubDataSourceViewModel = new Mock<IHubDataSourceViewModel>();
             this.dstDataSourceViewModel = new Mock<IDstDataSourceViewModel>();
-            this.netChangePreviewViewModel = new Mock<IEcosimProNetChangePreviewViewModel>();
+            this.netChangePreviewViewModel = new Mock<IHubNetChangePreviewViewModel>();
             this.transferControlViewModel = new Mock<ITransferControlViewModel>();
             this.dstController = new Mock<IDstController>();
 
@@ -73,7 +73,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsNotNull(this.viewModel.HubDataSourceViewModel);
             Assert.IsNotNull(this.viewModel.DstSourceViewModel);
             Assert.IsNotNull(this.viewModel.StatusBarControlViewModel);
-            Assert.IsNotNull(this.viewModel.NetChangePreviewViewModel);
+            Assert.IsNotNull(this.viewModel.HubNetChangePreviewViewModel);
             Assert.IsNull(this.viewModel.SwitchPanelBehavior);
             Assert.IsNotNull(this.viewModel.ChangeMappingDirection);
             Assert.IsNotNull(this.viewModel.TransferControlViewModel);

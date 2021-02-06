@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Reactive.Linq;
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
@@ -92,6 +93,10 @@ namespace DEHPEcosimPro.ViewModel
 
             this.ConnectCommand = ReactiveCommand.Create(canExecute);
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
+
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateConnectButtonText);
         }
 
         /// <summary>
@@ -110,7 +115,6 @@ namespace DEHPEcosimPro.ViewModel
                 this.NavigationService.ShowDialog<DstLogin>();
             }
 
-            this.UpdateConnectButtonText(this.dstController.IsSessionOpen);
             this.DstVariablesViewModel.IsBusy = false;
         }
     }

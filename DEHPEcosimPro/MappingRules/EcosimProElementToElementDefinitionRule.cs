@@ -248,7 +248,7 @@ namespace DEHPEcosimPro.MappingRules
                     x.ParameterType = variable.SelectedParameterType;
                     x.Owner = this.owner;
                     x.Container = variable.SelectedElementDefinition;
-                    
+
                     x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                     {
                         set.Computed = new ValueArray<string>();
@@ -258,7 +258,7 @@ namespace DEHPEcosimPro.MappingRules
                         set.Published = new ValueArray<string>(new[] { "-" });
                     }));
                 });
-                
+
                 variable.SelectedElementDefinition.Parameter.Add(variable.SelectedParameter);
             }
             
@@ -275,23 +275,34 @@ namespace DEHPEcosimPro.MappingRules
             {
                 x.Name = this.dstParameterName;
                 x.ShortName = this.dstParameterName;
+                x.Iid = Guid.NewGuid();
+                x.Container = this.ReferenceDataLibrary;
             });
             
             parameterType.IndependentParameterType.Add(
                 this.Bake<IndependentParameterTypeAssignment>(x =>
                 {
                     x.ParameterType = this.CreateParameterType<DateTimeParameterType>(SampledFunctionParameterTypeTimestampMemberName);
-                    x.Container = parameterType;
+                    x.Iid = Guid.NewGuid();
                 }));
 
             parameterType.DependentParameterType.Add(
                 this.Bake<DependentParameterTypeAssignment>(x =>
                 {
                     x.MeasurementScale = this.GetMeasurementScales().FirstOrDefault();
-                    x.Container = parameterType;
+                    x.Iid = Guid.NewGuid();
                     x.ParameterType = this.CreateParameterType<SimpleQuantityKind>(SampledFunctionParameterTypeValueMemberName, this.GetMeasurementScales());
                 })
             );
+
+            var clone = this.ReferenceDataLibrary.Clone(false);
+            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
+            clone.ParameterType.Add(parameterType);
+            transaction.CreateOrUpdate(clone);
+            transaction.Create(parameterType);
+
+            this.hubController.Write(transaction);
+            this.ReferenceDataLibrary.ParameterType.Add(parameterType);
 
             return parameterType;
         }
@@ -315,6 +326,7 @@ namespace DEHPEcosimPro.MappingRules
             {
                 parameterType = this.Bake<TParameter>(x =>
                 {
+                    x.Iid = Guid.NewGuid();
                     x.Name = name;
                     x.ShortName = name;
                     x.Symbol = string.Concat(name.Take(3));
@@ -393,12 +405,9 @@ namespace DEHPEcosimPro.MappingRules
                 && parameterType.DependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeValueMemberName)
                 && parameterType.IndependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeTimestampMemberName))
             {
-                var values = new List<string>();
-
-                foreach (var row in variable.SelectedValues)
-                {
-                    values.Add($"{row.TimeStamp:s},{FormattableString.Invariant($"{row.Value}")}");
-                }
+                var values = 
+                    variable.SelectedValues.Select(row => 
+                        $"{row.TimeStamp:s},{FormattableString.Invariant($"{row.Value}")}");
 
                 valueSet.Computed = new ValueArray<string>(values);
             }

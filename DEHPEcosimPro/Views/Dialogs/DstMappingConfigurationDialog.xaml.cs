@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IEcosimProNetChangePreviewViewModel.cs" company="RHEA System S.A.">
+// <copyright file="DstMappingConfigurationDialog.xaml.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,18 +22,21 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Views.Dialogs
 {
-    using DEHPEcosimPro.ViewModel.NetChangePreview;
+    using System.Windows;
 
     /// <summary>
-    /// Interface definition for the <see cref="EcosimProNetChangePreviewViewModel"/>
+    /// Interaction logic for DstMappingConfigurationDialog.xaml
     /// </summary>
-    public interface IEcosimProNetChangePreviewViewModel
+    public partial class DstMappingConfigurationDialog : Window
     {
         /// <summary>
-        /// Computes the old values for each <see cref="P:DEHPCommon.UserInterfaces.ViewModels.ObjectBrowserViewModel.Things" />
+        /// Initializes a new <see cref="DstMappingConfigurationDialog"/>
         /// </summary>
-        void ComputeValues();
+        public DstMappingConfigurationDialog()
+        {
+            this.InitializeComponent();
+        }
     }
 }

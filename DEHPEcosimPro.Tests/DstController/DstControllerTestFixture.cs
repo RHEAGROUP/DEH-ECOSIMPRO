@@ -131,7 +131,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsNotNull(this.controller.References);
             Assert.IsNotEmpty(this.controller.Methods);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
-            Assert.IsEmpty(this.controller.MapResult);
+            Assert.IsEmpty(this.controller.DstMapResult);
             Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
             Assert.IsNotEmpty(this.controller.ThisToolName);
@@ -186,7 +186,7 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyTransfert()
         {
-            Assert.DoesNotThrowAsync(async() => await this.controller.Transfer());
+            Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
             this.hubController.Verify(
                 x => x.CreateOrUpdate(
