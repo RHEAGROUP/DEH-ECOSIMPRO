@@ -138,18 +138,16 @@ namespace DEHPEcosimPro.MappingRules
                             }
                             else
                             {
-                                variable.SelectedElementDefinition = this.Bake<ElementDefinition>(x =>
-                                {
-                                    x.Name = this.dstElementName;
-                                    x.ShortName = this.dstElementName;
-                                    x.Owner = this.owner;
-                                    x.Container = this.hubController.OpenIteration;
-                                });
+                                variable.SelectedElementDefinition = this.CreateElementDefinition();
                             }
                         }
 
                         this.AddsValueSetToTheSelectectedParameter(variable);
-                        this.AddToExternalIdentifierMap(variable.SelectedElementDefinition.Iid, this.dstElementName);
+
+                        if (variable.SelectedElementDefinition.Iid != Guid.Empty)
+                        {
+                            this.AddToExternalIdentifierMap(variable.SelectedElementDefinition.Iid, this.dstElementName);
+                        }
                     }
                 }
 
@@ -161,6 +159,26 @@ namespace DEHPEcosimPro.MappingRules
                 ExceptionDispatchInfo.Capture(exception).Throw();
                 return default;
             }
+        }
+
+        /// <summary>
+        /// Creates an <see cref="ElementDefinition"/> if it does not exist yet
+        /// </summary>
+        /// <returns>An <see cref="ElementDefinition"/></returns>
+        private ElementDefinition CreateElementDefinition()
+        {
+            if (this.hubController.OpenIteration.Element.FirstOrDefault(x => x.Name == this.dstElementName) is { } element)
+            {
+                return element;
+            }
+
+            return this.Bake<ElementDefinition>(x =>
+            {
+                x.Name = this.dstElementName;
+                x.ShortName = this.dstElementName;
+                x.Owner = this.owner;
+                x.Container = this.hubController.OpenIteration;
+            });
         }
 
         /// <summary>
@@ -274,9 +292,11 @@ namespace DEHPEcosimPro.MappingRules
             var parameterType = this.Bake<SampledFunctionParameterType>(x =>
             {
                 x.Name = this.dstParameterName;
-                x.ShortName = this.dstParameterName;
+                x.ShortName = this.dstParameterName.Replace('.', '_');
                 x.Iid = Guid.NewGuid();
                 x.Container = this.ReferenceDataLibrary;
+                x.InterpolationPeriod = new ValueArray<string>(new[] {"-"});
+                x.Symbol = this.dstParameterName;
             });
             
             parameterType.IndependentParameterType.Add(
@@ -299,6 +319,16 @@ namespace DEHPEcosimPro.MappingRules
             var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
             clone.ParameterType.Add(parameterType);
             transaction.CreateOrUpdate(clone);
+
+            foreach (var dependentParameterTypeAssignment in parameterType.DependentParameterType)
+            {
+                transaction.Create((Thing)dependentParameterTypeAssignment);
+            }
+
+            foreach (var independentParameterTypeAssignment in parameterType.IndependentParameterType)
+            {
+                transaction.Create((Thing)independentParameterTypeAssignment);
+            }
             transaction.Create(parameterType);
 
             this.hubController.Write(transaction);
@@ -439,12 +469,15 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
         private void AddToExternalIdentifierMap(Guid internalId, string externalId)
         {
-            this.idCorrespondences.Add(this.Bake<IdCorrespondence>(x =>
+            if (internalId != Guid.Empty)
             {
-                x.ExternalId = externalId;
-                x.InternalThing = internalId;
-                x.Iid = Guid.NewGuid();
-            }));
+                this.idCorrespondences.Add(this.Bake<IdCorrespondence>(x =>
+                {
+                    x.ExternalId = externalId;
+                    x.InternalThing = internalId;
+                    x.Iid = Guid.NewGuid();
+                }));
+            }
         }
     }
 }

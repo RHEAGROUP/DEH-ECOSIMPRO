@@ -150,7 +150,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void InitializesCommandsAndObservableSubscriptions()
         {
-            this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue));
+            this.ContinueCommand = ReactiveCommand.Create(
+                this.WhenAnyValue(x => x.CanContinue),
+                RxApp.MainThreadScheduler);
 
             this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
                 () =>
@@ -189,15 +191,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.DstController.IsVariableWritable(variable.Reference))
-            {
-                variable.HasWriteAccess = true;
-            }
-            else
-            {
-                variable.HasWriteAccess = false;
-                this.SelectedMappedElement.SelectedVariable = null;
-            }
+            variable.HasWriteAccess = this.DstController.IsVariableWritable(variable.Reference);
         }
 
         /// <summary>

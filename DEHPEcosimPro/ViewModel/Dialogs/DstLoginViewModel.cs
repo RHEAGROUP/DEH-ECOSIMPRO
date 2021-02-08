@@ -163,7 +163,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Gets the server login command
         /// </summary>
-        public ReactiveCommand<Unit> LoginCommand { get; private set; }
+        public ReactiveCommand<object> LoginCommand { get; private set; }
         
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
@@ -271,7 +271,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     (!string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(username) || !requiresAuthentication)
                     && !string.IsNullOrWhiteSpace(uri) && (map != null || !string.IsNullOrWhiteSpace(mapNew)));
 
-            this.LoginCommand = ReactiveCommand.CreateAsyncTask(canLogin, async _ => await this.ExecuteLogin());
+            this.LoginCommand = ReactiveCommand.Create(canLogin);
+            this.LoginCommand.Subscribe(_ => this.ExecuteLogin());
 
             this.WhenAnyValue(x => x.CreateNewMappingConfigurationChecked).Subscribe(_ => this.UpdateExternalIdentifierSelectors());
         }
@@ -314,25 +315,24 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Executes login command
         /// </summary>
-        /// <returns>The <see cref="Task"/></returns>
-        private async Task ExecuteLogin()
+        private void ExecuteLogin()
         {
             this.IsBusy = true;
 
-            await this.ProcessExternalIdentifierMap();
+            this.ProcessExternalIdentifierMap().GetAwaiter().GetResult();
 
             this.statusBarControlView.Append("Loggin in...");
 
             try
             {
                 var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
-                await this.dstController.Connect(this.Uri, true, credentials);
+                this.dstController.Connect(this.Uri, true, credentials).GetAwaiter().GetResult(); ;
                 this.LoginSuccessful = this.dstController.IsSessionOpen;
 
                 if (this.LoginSuccessful)
                 {
                     this.statusBarControlView.Append("Loggin successful");
-                    await Task.Delay(1000);
+                    Task.Delay(1000);
                     this.CloseWindowBehavior?.Close();
                 }
                 else
