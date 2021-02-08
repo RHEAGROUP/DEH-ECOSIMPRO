@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System.Reactive.Linq;
     using System.Windows;
     using System.Windows.Input;
+    using System.Windows.Media.TextFormatting;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -150,7 +151,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void InitializesCommandsAndObservableSubscriptions()
         {
-            this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue));
+            this.ContinueCommand = ReactiveCommand.Create(
+                this.WhenAnyValue(x => x.CanContinue),
+                RxApp.MainThreadScheduler);
 
             this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
                 () =>
@@ -189,15 +192,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.DstController.IsVariableWritable(variable.Reference))
-            {
-                variable.HasWriteAccess = true;
-            }
-            else
-            {
-                variable.HasWriteAccess = false;
-                this.SelectedMappedElement.SelectedVariable = null;
-            }
+            variable.HasWriteAccess = this.DstController.IsVariableWritable(variable.Reference);
         }
 
         /// <summary>
@@ -235,25 +230,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             switch (this.SelectedThing)
             {
-                default:
-                    return;
-                case IRowViewModelBase<ElementDefinition> elementDefinitionRow:
-                    this.SetSelectedMappedElement(elementDefinitionRow.Thing);
-                    break;
-                case IRowViewModelBase<ElementUsage> elementUsageRow:
-                    {
-                        this.SetSelectedMappedElement(elementUsageRow.Thing.GetContainerOfType<ElementDefinition>());
-                        this.SelectedMappedElement.SelectedElementUsage = elementUsageRow.Thing;
-                        break;
-                    }
                 case IRowViewModelBase<ParameterOrOverrideBase> parameterOrOverrideRow:
                     {
-                        this.SetSelectedMappedElement(parameterOrOverrideRow.Thing.GetContainerOfType<ElementDefinition>());
+                        this.SetSelectedMappedElement(parameterOrOverrideRow.Thing);
                         this.SelectedMappedElement.SelectedParameter = parameterOrOverrideRow.Thing;
                         this.SelectedMappedElement.SelectedElementUsage = parameterOrOverrideRow.Thing.GetContainerOfType<ElementUsage>();
                         this.ComputesAvailableValues();
                         break;
                     }
+                default:
+                    return;
             }
         }
 
@@ -297,12 +283,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Sets the <see cref="SelectedMappedElement"/>
         /// </summary>
-        /// <param name="element">The corresponding <see cref="ElementDefinition"/></param>
-        private void SetSelectedMappedElement(ElementDefinition element)
+        /// <param name="parameter">The corresponding <see cref="ParameterOrOverrideBase"/></param>
+        private void SetSelectedMappedElement(ParameterOrOverrideBase parameter)
         {
             this.SelectedMappedElement = this.MappedElements.FirstOrDefault(
-                                             x => x.SelectedElementDefinition.Iid == element.Iid)
-                                         ?? this.CreateNewMappedElement(element);
+                                             x => x.SelectedParameter.Iid == parameter.Iid)
+                                         ?? this.CreateNewMappedElement(parameter);
         }
 
         /// <summary>
@@ -310,12 +296,18 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         /// <param name="thing">The base <see cref="Thing"/></param>
         /// <returns>A new <see cref="MappedElementDefinitionRowViewModel"/></returns>
-        private MappedElementDefinitionRowViewModel CreateNewMappedElement(ElementDefinition thing)
+        private MappedElementDefinitionRowViewModel CreateNewMappedElement(ParameterOrOverrideBase thing)
         {
             var selectedElement = new MappedElementDefinitionRowViewModel()
             {
-                SelectedElementDefinition = thing
+                SelectedElementDefinition = thing.GetContainerOfType<ElementDefinition>(),
+                SelectedParameter = thing
             };
+
+            if (thing is ParameterOverride parameterOverride)
+            {
+                selectedElement.SelectedElementUsage = parameterOverride.GetContainerOfType<ElementUsage>();
+            }
 
             selectedElement.WhenAnyValue(x => x.IsValid).Subscribe(_ => this.CheckCanExecute());
             this.MappedElements.Add(selectedElement);
@@ -323,7 +315,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Checks that any of the <see cref="MappedElement"/> is <see cref="MappedElementDefinitionRowViewModel.IsValid"/>
+        /// Checks that any of the <see cref="MappedElements"/> is <see cref="MappedElementDefinitionRowViewModel.IsValid"/>
         /// </summary>
         private void CheckCanExecute()
         {

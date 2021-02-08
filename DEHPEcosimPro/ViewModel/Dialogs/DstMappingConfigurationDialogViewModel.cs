@@ -145,7 +145,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ => this.CheckCanExecute());
             }
 
-            this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue));
+            this.ContinueCommand = ReactiveCommand.Create(
+                this.WhenAnyValue(x => x.CanContinue),
+                RxApp.MainThreadScheduler);
 
             this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
                 () =>

@@ -339,7 +339,11 @@ namespace DEHPEcosimPro.DstController
         {
             foreach (var mappedElement in this.HubMapResult)
             {
-                this.opcClientService.WriteNode((NodeId)mappedElement.SelectedVariable.Reference.NodeId, mappedElement.SelectedValue.Value);
+                if (mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 11 ||
+                    mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 26)
+                {
+                    this.opcClientService.WriteNode<double>((NodeId)mappedElement.SelectedVariable.Reference.NodeId, double.Parse(mappedElement.SelectedValue.Value));
+                }
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
@@ -400,7 +404,9 @@ namespace DEHPEcosimPro.DstController
 
                 await this.hubController.Write(transaction);
 
-                await this.UpdateParametersValueSets(iterationClone);
+                await this.UpdateParametersValueSets();
+
+                await this.UpdateExternalIdentifierMap();
 
                 await this.hubController.Refresh();
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
@@ -415,29 +421,25 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Updates the <see cref="IValueSet"/> of all <see cref="Parameter"/> and all <see cref="ParameterOverride"/>
         /// </summary>
-        /// <param name="clonedContainer">The <see cref="Thing"/> container</param>
         /// <returns>A <see cref="Task"/></returns>
-        private async Task UpdateParametersValueSets(Thing clonedContainer)
+        private async Task UpdateParametersValueSets()
         {
-            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clonedContainer), clonedContainer);
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.Parameter));
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.ContainedElement.SelectMany(p => p.ParameterOverride)));
-            transaction.CreateOrUpdate(clonedContainer);
-            await this.hubController.Write(transaction);
+            await this.UpdateParametersValueSets(this.DstMapResult.SelectMany(x => x.Parameter));
+            await this.UpdateParametersValueSets(this.DstMapResult.SelectMany(x => x.ContainedElement.SelectMany(p => p.ParameterOverride)));
         }
 
         /// <summary>
-        /// Updates the <see cref="IValueSet"/> of the provided
+        /// Updates the specified <see cref="Parameter"/> <see cref="IValueSet"/>
         /// </summary>
-        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
-        /// <param name="parameters">The collection of parameter to update</param>
-        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<Parameter> parameters)
+        /// <param name="parameters">The collection of <see cref="Parameter"/></param>
+        private async Task UpdateParametersValueSets(IEnumerable<Parameter> parameters)
         {
             foreach (var parameter in parameters)
             {
                 this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out Parameter newParameter);
-
                 var container = newParameter.Clone(false);
+
+                var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(container), container);
 
                 for (var index = 0; index < parameter.ValueSet.Count; index++)
                 {
@@ -447,17 +449,23 @@ namespace DEHPEcosimPro.DstController
                 }
 
                 transaction.CreateOrUpdate(container);
-                transaction.CreateOrUpdate(container.Container.Clone(false));
+
+                await this.hubController.Write(transaction);
             }
         }
 
-        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<ParameterOverride> parameters)
+        /// <summary>
+        /// Updates the specified <see cref="ParameterOverride"/> <see cref="IValueSet"/>
+        /// </summary>
+        /// <param name="parameters">The collection of <see cref="ParameterOverride"/></param>
+        private async Task UpdateParametersValueSets(IEnumerable<ParameterOverride> parameters)
         {
             foreach (var parameter in parameters)
             {
                 this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out ParameterOverride newParameter);
-
                 var container = newParameter.Clone(false);
+
+                var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(container), container);
 
                 for (var index = 0; index < parameter.ValueSet.Count; index++)
                 {
@@ -467,10 +475,16 @@ namespace DEHPEcosimPro.DstController
                 }
 
                 transaction.CreateOrUpdate(container);
-                transaction.CreateOrUpdate(container.Container.Clone(false));
+
+                await this.hubController.Write(transaction);
             }
         }
-
+        
+        /// <summary>
+        /// Sets the value of the <paramref name="valueSet"></paramref> to the <paramref name="clone"/>
+        /// </summary>
+        /// <param name="clone">The clone to update</param>
+        /// <param name="valueSet">The <see cref="IValueSet"/> of reference</param>
         private static void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
         {
             clone.Reference = valueSet.Reference;
@@ -500,6 +514,7 @@ namespace DEHPEcosimPro.DstController
                 thing.Iid = clone.Iid;
                 transaction.Create(clone);
                 containerClone.Add((TThing)clone);
+                this.AddIdCorrespondence(clone);
             }
             else
             {
@@ -510,23 +525,67 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// If the <see cref="Thing"/> is new save the mapping
+        /// </summary>
+        /// <param name="clone">The <see cref="Thing"/></param>
+        private void AddIdCorrespondence(Thing clone)
+        {
+            string externalId;
+
+            switch (clone)
+            {
+                case INamedThing namedThing:
+                    externalId = namedThing.Name;
+                    break;
+                case ParameterOrOverrideBase parameterOrOverride:
+                    externalId = parameterOrOverride.ParameterType.Name;
+                    break;
+                default:
+                    return;
+            }
+
+            this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
+            {
+                ExternalId = externalId,
+                InternalThing = clone.Iid
+            });
+        }
+
+        /// <summary>
         /// Updates the configured mapping
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         public async Task UpdateExternalIdentifierMap()
         {
-            await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.ExternalIdentifierMap.Correspondence.ToList(),
-                (map, correspondence) => map.Correspondence.Remove(correspondence));
+            var idCorrespondencesToAdd = this.ExternalIdentifierMap.Correspondence.Where(x => this.IdCorrespondences.All(c => c.Iid != x.Iid)).ToList();
+            this.IdCorrespondences.AddRange(idCorrespondencesToAdd);
 
-            this.ExternalIdentifierMap.Correspondence.Clear();
+            var container = this.ExternalIdentifierMap.Clone(false);
+            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(container), container);
+            container.Correspondence.Clear();
+            container.Correspondence.AddRange(this.IdCorrespondences);
 
             foreach (var correspondence in this.IdCorrespondences)
             {
                 correspondence.Container = this.ExternalIdentifierMap;
+                transaction.CreateOrUpdate(correspondence);
             }
 
-            await this.hubController.CreateOrUpdate<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
-                (map, correspondence) => map.Correspondence.Add(correspondence));
+            transaction.CreateOrUpdate(container);
+            await this.hubController.Write(transaction);
+
+            //await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.ExternalIdentifierMap.Correspondence.ToList(),
+            //    (map, correspondence) => map.Correspondence.Remove(correspondence));
+
+            //this.ExternalIdentifierMap.Correspondence.Clear();
+
+            //foreach (var correspondence in this.IdCorrespondences)
+            //{
+            //    correspondence.Container = this.ExternalIdentifierMap;
+            //}
+
+            //await this.hubController.CreateOrUpdate<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
+            //    (map, correspondence) => map.Correspondence.Add(correspondence));
 
             this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
             this.IdCorrespondences.Clear();
