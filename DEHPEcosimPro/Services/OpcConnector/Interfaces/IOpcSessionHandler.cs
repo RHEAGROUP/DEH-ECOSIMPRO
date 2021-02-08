@@ -154,10 +154,11 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <summary>
         /// Writes a value to a node
         /// </summary>
+        /// <typeparam name="T">The data type</typeparam>
         /// <param name="nodeId">The <see cref="NodeId"/> to update</param>
         /// <param name="value">The value to write</param>
         /// <returns>A <see cref="StatusCode"/></returns>
-        StatusCode WriteNode(NodeId nodeId, object value);
+        StatusCode WriteNode<T>(NodeId nodeId, T value);
 
         /// <summary>
         /// Finds the endpoint that best matches the current settings.

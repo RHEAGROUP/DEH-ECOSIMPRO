@@ -339,7 +339,11 @@ namespace DEHPEcosimPro.DstController
         {
             foreach (var mappedElement in this.HubMapResult)
             {
-                this.opcClientService.WriteNode((NodeId)mappedElement.SelectedVariable.Reference.NodeId, mappedElement.SelectedValue.Value);
+                if (mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 11 ||
+                    mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 26)
+                {
+                    this.opcClientService.WriteNode<double>((NodeId)mappedElement.SelectedVariable.Reference.NodeId, double.Parse(mappedElement.SelectedValue.Value));
+                }
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
