@@ -124,9 +124,11 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>();
             containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
             containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>();
-            containerBuilder.RegisterType<MappingConfigurationDialogViewModel>().As<IMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<DstMappingConfigurationDialogViewModel>().As<IDstMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<HubMappingConfigurationDialogViewModel>().As<IHubMappingConfigurationDialogViewModel>();
             containerBuilder.RegisterType<EcosimProTransferControlViewModel>().As<ITransferControlViewModel>();
-            containerBuilder.RegisterType<EcosimProNetChangePreviewViewModel>().As<IEcosimProNetChangePreviewViewModel>();
+            containerBuilder.RegisterType<HubNetChangePreviewViewModel>().As<IHubNetChangePreviewViewModel>();
+            containerBuilder.RegisterType<DstNetChangePreviewViewModel>().As<IDstNetChangePreviewViewModel>();
         }
     }
 }

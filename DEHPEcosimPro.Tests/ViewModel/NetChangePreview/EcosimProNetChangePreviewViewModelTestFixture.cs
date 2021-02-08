@@ -60,7 +60,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
         private Mock<IDstController> dstController;
         private Mock<IHubController> hubController;
-        private EcosimProNetChangePreviewViewModel viewModel;
+        private HubNetChangePreviewViewModel viewModel;
         private Iteration iteration;
         private Mock<ISession> session;
         private Mock<IPermissionService> permissionService;
@@ -191,8 +191,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             
             this.dstController = new Mock<IDstController>();
 
-            this.dstController.Setup(x => x.MapResult)
-                .Returns(new List<ElementDefinition>() 
+            this.dstController.Setup(x => x.DstMapResult)
+                .Returns(new ReactiveList<ElementDefinition>() 
                 {
                     new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                     {
@@ -263,7 +263,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
 
             this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
             this.treeSelectorService.Setup(x => x.ThingKinds).Returns(new List<Type>() { typeof(ElementDefinition) });
-            this.viewModel = new EcosimProNetChangePreviewViewModel(this.hubController.Object, this.treeSelectorService.Object, this.dstController.Object);
+            this.viewModel = new HubNetChangePreviewViewModel(this.hubController.Object, this.treeSelectorService.Object, this.dstController.Object);
         }
 
         /// <summary>

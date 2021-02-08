@@ -1,4 +1,4 @@
-﻿<Window x:Class="DEHPEcosimPro.Views.Dialogs.MappingConfigurationDialog"
+﻿<Window x:Class="DEHPEcosimPro.Views.Dialogs.DstMappingConfigurationDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -11,7 +11,7 @@
         xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
         xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
         mc:Ignorable="d"
-        Title="Mapping Configuration Dialog" Height="450" Width="800">
+        Title="Mapping Configuration Dialog" MinHeight="450" MinWidth="800">
     <Window.Resources>
         <ResourceDictionary>
             <dx:NullableToVisibilityConverter x:Key="NullToVisibilityConverter"></dx:NullableToVisibilityConverter>
@@ -24,8 +24,8 @@
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid Margin="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="8*" />
-                <RowDefinition Height="3*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="220" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox Grid.Row="0" x:Name="MainContainer" Header="Select Value Set To Map" Margin="10" Padding="10">
@@ -110,17 +110,17 @@
                                          SelectedItems="{Binding SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <dxg:GridControl.View>
                                 <dxg:TableView HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
-                                                                   AllowColumnMoving="True"
-                                                                   AllowEditing="False"
-                                                                   AllowGrouping="True"
-                                                                   ShowFilterPanelMode="Never"
-                                                                   AutoWidth="true"
-                                                                   IsDetailButtonVisibleBinding="{x:Null}"
-                                                                   VerticalScrollbarVisibility="Auto"
-                                                                   ShowGroupPanel="False"
-                                                                   ShowCheckBoxSelectorColumn="true"
-                                                                   RetainSelectionOnClickOutsideCheckBoxSelector="True">
+                                               VerticalAlignment="Stretch"
+                                               AllowColumnMoving="True"
+                                               AllowEditing="False"
+                                               AllowGrouping="True"
+                                               ShowFilterPanelMode="Never"
+                                               AutoWidth="true"
+                                               IsDetailButtonVisibleBinding="{x:Null}"
+                                               VerticalScrollbarVisibility="Auto"
+                                               ShowGroupPanel="False"
+                                               ShowCheckBoxSelectorColumn="true"
+                                               RetainSelectionOnClickOutsideCheckBoxSelector="True">
                                 </dxg:TableView>
                             </dxg:GridControl.View>
                             <dxg:GridControl.Columns>
@@ -145,7 +145,6 @@
                             <RowDefinition></RowDefinition>
                             <RowDefinition></RowDefinition>
                             <RowDefinition></RowDefinition>
-                            <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
                         <Label Grid.Row="0" Grid.Column="0" Content="Option:"></Label>
                         <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="0" DisplayMember="ShortName" ValueMember="Name"
@@ -163,18 +162,18 @@
                                 <dxe:CheckedTokenComboBoxStyleSettings NewTokenPosition="Far" AllowEditTokens="False"/>
                             </dxe:ComboBoxEdit.StyleSettings>
                         </dxe:ComboBoxEdit>
-                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
+                        <!--<Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
                         <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" DisplayMember="ShortName" ValueMember="Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameterType}" NullText="Create New Parameter Type" AllowNullInput="True"
-                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}"/>
-                        <Label Grid.Row="4" Grid.Column="0" Content="Parameter:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}"/>-->
+                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameter}" NullText="Create New Parameter" AllowNullInput="True"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameters}"
                                                                   ApplyItemTemplateToSelectedItem="True">
                         </dxe:ComboBoxEdit>
-                        <Label Grid.Row="5" Grid.Column="0" Content="Actual Finite State:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="5" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
+                        <Label Grid.Row="4" Grid.Column="0" Content="Actual Finite State:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedActualFiniteState}"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableActualFiniteStates}"
                                                                   ApplyItemTemplateToSelectedItem="True">

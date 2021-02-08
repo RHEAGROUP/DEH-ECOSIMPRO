@@ -120,7 +120,7 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <summary>
         /// Removes all active subscriptions from the session.
         /// </summary>
-        /// <returns>An assert whether the removal whent ok</returns>
+        /// <returns>An assert whether the removal went ok</returns>
         bool ClearSubscriptions();
 
         /// <summary>
@@ -150,6 +150,15 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
         /// <returns>The <see cref="DataValue"/></returns>
         DataValue ReadNode(NodeId nodeId);
+
+        /// <summary>
+        /// Writes a value to a node
+        /// </summary>
+        /// <typeparam name="T">The data type</typeparam>
+        /// <param name="nodeId">The <see cref="NodeId"/> to update</param>
+        /// <param name="value">The value to write</param>
+        /// <returns>A <see cref="StatusCode"/></returns>
+        StatusCode WriteNode<T>(NodeId nodeId, T value);
 
         /// <summary>
         /// Finds the endpoint that best matches the current settings.

@@ -41,6 +41,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\DstNetChangePreview.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Resources\OpcClient.Config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -48,6 +54,10 @@
 
   <ItemGroup>
     <Page Update="Views\DstBrowserHeader.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\DstNetChangePreview.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

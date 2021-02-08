@@ -49,7 +49,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     [TestFixture]
     public class MappingConfigurationDialogViewModelTestFixture
     {
-        private MappingConfigurationDialogViewModel viewModel;
+        private DstMappingConfigurationDialogViewModel viewModel;
         private Mock<IDstController> dstController;
         private Mock<IHubController> hubController;
         private List<VariableRowViewModel> variableRowViewModels;
@@ -108,7 +108,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
-            this.viewModel = new MappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object);
+            this.viewModel = new DstMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object);
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
 
             this.closeBehavior = new Mock<ICloseWindowBehavior>();

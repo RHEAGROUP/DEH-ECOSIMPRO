@@ -42,6 +42,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
@@ -69,7 +70,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
-        private readonly IDstController dstController;
+        protected readonly IDstController DstController;
 
         /// <summary>
         /// The <see cref="INavigationService"/>
@@ -134,12 +135,12 @@ namespace DEHPEcosimPro.ViewModel
         public DstVariablesControlViewModel(IDstController dstController, INavigationService navigationService, 
             IHubController hubController, IStatusBarControlViewModel statusBar)
         {
-            this.dstController = dstController;
+            this.DstController = dstController;
             this.navigationService = navigationService;
             this.hubController = hubController;
             this.statusBar = statusBar;
 
-            this.WhenAnyValue(x => x.dstController.IsSessionOpen)
+            this.WhenAnyValue(x => x.DstController.IsSessionOpen)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateProperties());
 
@@ -158,7 +159,7 @@ namespace DEHPEcosimPro.ViewModel
                 vm => vm.SelectedThing,
                 vm => vm.SelectedThings.CountChanged,
                 vm => vm.hubController.OpenIteration,
-                vm => vm.dstController.MappingDirection,
+                vm => vm.DstController.MappingDirection,
                 (selected, selection, iteration, mappingDirection) =>
                     iteration.Value != null && (selected.Value != null || this.SelectedThings.Any()) && mappingDirection.Value is MappingDirection.FromDstToHub).ObserveOn(RxApp.MainThreadScheduler);
 
@@ -171,7 +172,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
+            var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
             this.AssignMapping();
             var timer = new Stopwatch();
             timer.Start();
@@ -181,11 +182,14 @@ namespace DEHPEcosimPro.ViewModel
                 x.SetChartValues();
                 return x;
             }));
+            
+            viewModel.InitializesCommandsAndObservableSubscriptions();
 
             viewModel.UpdatePropertiesBasedOnMappingConfiguration();
             timer.Stop();
             this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
-            this.navigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
+            this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+            this.statusBar.Append($"Mapping in progress");
         }
 
         /// <summary>
@@ -196,7 +200,7 @@ namespace DEHPEcosimPro.ViewModel
             foreach (var variable in this.SelectedThings)
             {
                 variable.MappingConfigurations.AddRange(
-                    this.dstController.ExternalIdentifierMap.Correspondence.Where(
+                    this.DstController.ExternalIdentifierMap.Correspondence.Where(
                         x => x.ExternalId == variable.ElementName || 
                              x.ExternalId == variable.ParameterName));
             }
@@ -207,16 +211,16 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         public void UpdateProperties()
         {
-            if (this.dstController.IsSessionOpen)
+            if (this.DstController.IsSessionOpen)
             {
-                this.Variables.AddRange(this.dstController.Variables.Select(r => new VariableRowViewModel(r)));
-
+                this.Variables.AddRange(this.DstController.Variables.Select(r => new VariableRowViewModel(r)));
+                
                 this.AddSubscriptions();
             }
             else
             {
                 this.Variables.Clear();
-                this.dstController.ClearSubscriptions();
+                this.DstController.ClearSubscriptions();
             }
         }
 
@@ -227,7 +231,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             foreach (var variable in this.Variables)
             {
-                this.dstController.AddSubscription(variable.Reference);
+                this.DstController.AddSubscription(variable.Reference);
             }
         }
 

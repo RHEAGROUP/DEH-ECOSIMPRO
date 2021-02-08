@@ -25,16 +25,21 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Diagnostics;
+    using System.Linq;
     using System.Reactive;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
+    using System.Windows;
 
     using CDP4Dal;
 
     using DEHPCommon.Events;
     using DEHPCommon.UserInterfaces.ViewModels;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
 
     using ReactiveUI;
 
@@ -47,6 +52,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+
+        /// <summary>
+        /// The <see cref="IStatusBarControlViewModel"/>
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBar;
 
         /// <summary>
         /// Backing field for <see cref="AreThereAnyTransferInProgress"/>
@@ -63,20 +73,57 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
+        /// Backing field for <see cref="CanTransfert"/>
+        /// </summary>
+        private bool canTransfert;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether there is any awaiting transfer
+        /// </summary>
+        public bool CanTransfer
+        {
+            get => this.canTransfert;
+            set => this.RaiseAndSetIfChanged(ref this.canTransfert, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="EcosimProTransferControlViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public EcosimProTransferControlViewModel(IDstController dstController)
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        public EcosimProTransferControlViewModel(IDstController dstController, IStatusBarControlViewModel statusBar)
         {
             this.dstController = dstController;
+            this.statusBar = statusBar;
 
-            var canTransfert = CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
-                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler);
-            
-            this.TransferCommand = ReactiveCommand.CreateAsyncTask(canTransfert, async _ => await this.TransferCommandExecute());
+            CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
+                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateCanTransfer);
+
+            CDPMessageBus.Current.Listen<UpdateDstVariableTreeEvent>()
+                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateCanTransfer);
+
+            this.TransferCommand = ReactiveCommand.CreateAsyncTask(
+                this.WhenAnyValue(x => x.CanTransfer), 
+                _ => this.TransferCommandExecute(),
+                RxApp.MainThreadScheduler);
+
+            //this.TransferCommand.Subscribe(_ => this.TransferCommandExecute());
 
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
-            this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel, async _ => await this.CancelTransfer());
+            this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel, 
+                _ => this.CancelTransfer(),
+                RxApp.MainThreadScheduler);
+            //this.CancelCommand.Subscribe(_ => this.CancelTransfer());
+        }
+
+        /// <summary>
+        /// Updates the <see cref="CanTransfer"/>
+        /// </summary>
+        private void UpdateCanTransfer(bool value)
+        {
+            this.CanTransfer = value;
         }
 
         /// <summary>
@@ -91,11 +138,18 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Executes the transfert command
         /// </summary>
-        /// <returns>A <see cref="Task"/></returns>
         private async Task TransferCommandExecute()
         {
+            var timer = new Stopwatch();
+            timer.Start();
             this.AreThereAnyTransferInProgress = true;
-            await this.dstController.Transfer();
+            this.IsIndeterminate = true;
+            Application.Current.Dispatcher.Invoke(() => this.statusBar.Append($"Transfers in progress"));
+            await this.dstController.TransferMappedThingsToHub();
+            this.dstController.TransferMappedThingsToDst();
+            timer.Stop();
+            this.statusBar.Append($"Transfers completed in {timer.ElapsedMilliseconds} ms");
+            this.IsIndeterminate = false;
             this.AreThereAnyTransferInProgress = false;
         }
     }
