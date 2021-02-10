@@ -101,7 +101,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsTrue(this.viewModel.ConnectCommand.CanExecute(null));
             this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
             this.viewModel.ConnectCommand.Execute(null);
-            Assert.AreEqual("Disconnect", this.viewModel.ConnectButtonText);
+            Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.ConnectCommand.Execute(null);
             Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);

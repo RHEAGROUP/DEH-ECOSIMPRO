@@ -50,34 +50,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="SelectedElementUsage"/>
-        /// </summary>
-        private ElementUsage selectedElementUsage;
-
-        /// <summary>
-        /// Gets or sets the source <see cref="ElementDefinition"/>
-        /// </summary>
-        public ElementUsage SelectedElementUsage
-        {
-            get => this.selectedElementUsage;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementUsage, value);
-        }
-
-        /// <summary>
-        /// Backing field for <see cref="SelectedElementDefinition"/>
-        /// </summary>
-        private ElementDefinition selectedElementDefinition;
-
-        /// <summary>
-        /// Gets or sets the source <see cref="ElementDefinition"/>
-        /// </summary>
-        public ElementDefinition SelectedElementDefinition
-        {
-            get => this.selectedElementDefinition;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementDefinition, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="SelectedValue"/>
         /// </summary>
         private ValueSetValueRowViewModel selectedValue;
@@ -118,6 +90,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
             get => this.isValid;
             set => this.RaiseAndSetIfChanged(ref this.isValid, value);
         }
+        
+        /// <summary>
+        /// Gets or sets the mapping configuration
+        /// </summary>
+        public IdCorrespondence MappingConfiguration { get; set; }
 
         /// <summary>
         /// Initializes a new <see cref="MappedElementDefinitionRowViewModel"/>
@@ -125,12 +102,19 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public MappedElementDefinitionRowViewModel()
         {
             this.WhenAnyValue(x => x.SelectedVariable,
-                    x => x.SelectedValue,
-                    (r, v) => 
-                        this.SelectedValue != null && this.SelectedValue.Value != "-" 
-                                                   && this.SelectedVariable != null 
-                                                   && this.SelectedVariable.HasWriteAccess == true)
-                .Subscribe(x => this.IsValid = x);
+                    x => x.SelectedValue)
+                .Subscribe(_ => this.VerifyValidity());
+        }
+
+        /// <summary>
+        /// Verify validity of the this <see cref="MappedElementDefinitionRowViewModel"/>
+        /// </summary>
+        public void VerifyValidity()
+        {
+            this.IsValid = this.SelectedValue != null && 
+                           this.SelectedValue.Value != "-" && 
+                           this.SelectedVariable != null && 
+                           this.SelectedVariable.HasWriteAccess == true;
         }
     }
 }

@@ -84,7 +84,6 @@
                     <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
-
             </dxg:TreeListControl>
         </Grid>
 </UserControl>

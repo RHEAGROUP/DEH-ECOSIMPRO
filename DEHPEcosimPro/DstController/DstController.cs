@@ -197,6 +197,11 @@ namespace DEHPEcosimPro.DstController
                         }
                     }
                 }
+                else
+                {
+                    this.Variables.Clear();
+                    this.Methods.Clear();
+                }
 
                 this.IsSessionOpen = isOpcSessionOpen;
             });
@@ -337,15 +342,19 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         public void TransferMappedThingsToDst()
         {
-            foreach (var mappedElement in this.HubMapResult)
+            foreach (var mappedElement in this.HubMapResult.ToList()
+                .Where(
+                    mappedElement => this.opcClientService.WriteNode(
+                        (NodeId) mappedElement.SelectedVariable.Reference.NodeId, 
+                        double.Parse(mappedElement.SelectedValue.Value))))
             {
-                if (mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 11 ||
-                    mappedElement.SelectedVariable.Reference.TypeDefinition.Identifier is 26)
+                this.HubMapResult.Remove(mappedElement);
+                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
                 {
-                    this.opcClientService.WriteNode<double>((NodeId)mappedElement.SelectedVariable.Reference.NodeId, double.Parse(mappedElement.SelectedValue.Value));
-                }
+                    ExternalId = mappedElement.SelectedVariable.Name, InternalThing = ((Thing)mappedElement.SelectedValue.Container).Iid
+                });
             }
-
+            
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
         }
 
@@ -487,12 +496,7 @@ namespace DEHPEcosimPro.DstController
         /// <param name="valueSet">The <see cref="IValueSet"/> of reference</param>
         private static void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
         {
-            clone.Reference = valueSet.Reference;
             clone.Computed = valueSet.Computed;
-            clone.Manual = valueSet.Manual;
-            clone.ActualState = valueSet.ActualState;
-            clone.ActualOption = valueSet.ActualOption;
-            clone.Formula = valueSet.Formula;
             clone.ValueSwitch = valueSet.ValueSwitch;
         }
 
@@ -557,9 +561,18 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task UpdateExternalIdentifierMap()
         {
-            var idCorrespondencesToAdd = this.ExternalIdentifierMap.Correspondence.Where(x => this.IdCorrespondences.All(c => c.Iid != x.Iid)).ToList();
+            var idCorrespondencesToAdd = this.ExternalIdentifierMap.Correspondence
+                .Where(x => this.IdCorrespondences.All(c => c.Iid != x.Iid || (c.ExternalId != x.ExternalId))).ToList();
+
             this.IdCorrespondences.AddRange(idCorrespondencesToAdd);
 
+            if (this.ExternalIdentifierMap.Correspondence.Any())
+            {
+                await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(
+                    this.ExternalIdentifierMap.Correspondence.ToList(),
+                    (e, c) => e.Correspondence.Remove(c));
+            }
+            
             var container = this.ExternalIdentifierMap.Clone(false);
             var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(container), container);
             container.Correspondence.Clear();
@@ -568,25 +581,15 @@ namespace DEHPEcosimPro.DstController
             foreach (var correspondence in this.IdCorrespondences)
             {
                 correspondence.Container = this.ExternalIdentifierMap;
-                transaction.CreateOrUpdate(correspondence);
+                var clonedCorrespondence = correspondence.Clone(false);
+                clonedCorrespondence.Container = container;
+                transaction.CreateOrUpdate(clonedCorrespondence);
             }
 
             transaction.CreateOrUpdate(container);
             await this.hubController.Write(transaction);
 
-            //await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.ExternalIdentifierMap.Correspondence.ToList(),
-            //    (map, correspondence) => map.Correspondence.Remove(correspondence));
-
-            //this.ExternalIdentifierMap.Correspondence.Clear();
-
-            //foreach (var correspondence in this.IdCorrespondences)
-            //{
-            //    correspondence.Container = this.ExternalIdentifierMap;
-            //}
-
-            //await this.hubController.CreateOrUpdate<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
-            //    (map, correspondence) => map.Correspondence.Add(correspondence));
-
+            this.ExternalIdentifierMap.Correspondence.Clear();
             this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
             this.IdCorrespondences.Clear();
             this.statusBar.Append("Mapping configuration saved");
@@ -612,6 +615,24 @@ namespace DEHPEcosimPro.DstController
                 (i, m) => i.ExternalIdentifierMap.Add(m), true);
             
             return externalIdentifierMap;
+        }
+
+        /// <summary>
+        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
+        /// </summary>
+        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
+        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
+        public void AddToExternalIdentifierMap(Guid internalId, string externalId)
+        {
+            if (internalId != Guid.Empty && !this.ExternalIdentifierMap.Correspondence.Any(
+                x => x.ExternalId == externalId && x.InternalThing == internalId))
+            {
+                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
+                {
+                    ExternalId = externalId,
+                    InternalThing = internalId
+                });
+            }
         }
     }
 }

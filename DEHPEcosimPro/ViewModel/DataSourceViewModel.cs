@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.ViewModel
 
     using DEHPCommon.Services.NavigationService;
 
+    using DevExpress.CodeParser.Diagnostics;
+
     using ReactiveUI;
 
     /// <summary>
@@ -83,7 +85,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         protected virtual void InitializeCommands()
         {
-            this.ConnectCommand = ReactiveCommand.Create();
+            this.ConnectCommand = ReactiveCommand.Create(null, RxApp.MainThreadScheduler);
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
         }
         

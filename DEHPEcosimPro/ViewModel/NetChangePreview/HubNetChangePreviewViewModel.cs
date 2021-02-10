@@ -101,10 +101,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                     if (elementToUpdate is {})
                     {
-                        if (!thing.Parameter.All(p => elementToUpdate.Thing.Parameter.Any(x => x.Iid == p.Iid)))
-                        {
-                            thing.Parameter.AddRange(elementToUpdate.Thing.Parameter.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
-                        }
+                        thing.Parameter.AddRange(elementToUpdate.Thing.Parameter.Where(x => thing.Parameter.All(p => p.Iid != x.Iid)));
 
                         foreach (var parameterOrOverrideBaseRowViewModel in elementToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
                         {
@@ -113,7 +110,17 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                         CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
                         elementToUpdate.ExpandAllRows();
-                        elementToUpdate.UpdateThing(thing);
+
+                        if (elementToUpdate.Thing.Original is null)
+                        {
+                            elementToUpdate.UpdateThing(thing);
+                        }
+                        else
+                        {
+                            elementToUpdate.Thing.Parameter.Clear();
+                            elementToUpdate.Thing.Parameter.AddRange(thing.Parameter);
+                        }
+
                         elementToUpdate.UpdateChildren();
                     }
                     else
@@ -146,7 +153,17 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         CDPMessageBus.Current.SendMessage(new ElementUsageHighlightEvent(elementUsageToUpdate.Thing.ElementDefinition), elementUsageToUpdate.Thing);
 
                         elementUsageToUpdate.ExpandAllRows();
-                        elementUsageToUpdate.UpdateThing(elementUsage);
+
+                        if (elementUsageToUpdate.Thing.Original is null)
+                        {
+                            elementUsageToUpdate.UpdateThing(elementUsage);
+                        }
+                        else
+                        {
+                            elementUsageToUpdate.Thing.ParameterOverride.Clear();
+                            elementUsageToUpdate.Thing.ParameterOverride.AddRange(elementUsage.ParameterOverride);
+                        }
+
                         elementUsageToUpdate.UpdateChildren();
                     }
                 }

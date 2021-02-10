@@ -194,7 +194,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public ElementDefinition SelectedElementDefinition
         {
             get => this.selectedElementDefinition;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementDefinition, value?.Clone(true));
+            set => this.RaiseAndSetIfChanged(ref this.selectedElementDefinition, value);
         }
 
         /// <summary>

@@ -27,8 +27,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System;
     using System.Linq;
     using System.Reactive.Linq;
-    using System.Threading.Tasks;
-    using System.Windows;
     using System.Windows.Input;
 
     using CDP4Common.CommonData;
@@ -36,7 +34,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using CDP4Common.SiteDirectoryData;
 
     using DEHPCommon.HubController.Interfaces;
-    using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
@@ -133,6 +130,34 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 base(hubController, dstController, statusBar)
         {
             this.UpdateProperties();
+
+            this.WhenAny(x => x.Variables.CountChanged,
+                    x => x.Value.Where(c => c > 0))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ =>
+                {
+                    this.UpdateHubFields(() =>
+                    {
+                        this.InitializesCommandsAndObservableSubscriptions();
+                        this.AssignMapping();
+                        this.UpdatePropertiesBasedOnMappingConfiguration();
+                        this.CheckCanExecute();
+                    });
+                });
+        }
+
+        /// <summary>
+        /// Assings a mapping configuration if any to each of the selected variables
+        /// </summary>
+        private void AssignMapping()
+        {
+            foreach (var variable in this.Variables)
+            {
+                variable.MappingConfigurations.AddRange(
+                    this.DstController.ExternalIdentifierMap.Correspondence.Where(
+                        x => x.ExternalId == variable.ElementName ||
+                             x.ExternalId == variable.ParameterName));
+            }
         }
 
         /// <summary>
@@ -154,13 +179,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 {
                     var variableRowViewModels = this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList();
                     this.DstController.Map(variableRowViewModels);
-
-                    Application.Current.Dispatcher.Invoke(() => this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)..."));
+                    this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
                 }));
-
-            this.WhenAnyValue(x => x.SelectedThing.SelectedOption)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateProperties());
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -192,7 +212,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.UpdateAvailableOptions();
             this.AvailableElementDefinitions.Clear();
             this.AvailableParameterTypes.Clear();
-            this.AvailableElementDefinitions.AddRange(this.HubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>()));
+
+            this.AvailableElementDefinitions.AddRange(
+                this.HubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>())
+                    .Select(e => e.Clone(true)));
 
             this.AvailableParameterTypes.AddRange(this.HubController.GetSiteDirectory().SiteReferenceDataLibrary
                 .SelectMany(x => x.ParameterType).Where(
@@ -244,11 +267,17 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateAvailableParameters()
         {
-            this.AvailableParameters.Clear();
+            if (this.SelectedThing?.SelectedParameter is null || this.SelectedThing.SelectedElementDefinition is null)
+            {
+                this.AvailableParameters.Clear();
+            }
 
             if (this.selectedThing?.SelectedElementDefinition != null)
             {
-                this.AvailableParameters.AddRange(this.SelectedThing.SelectedElementDefinition.Parameter.Where(this.AreTheseOwnedByTheDomain<Parameter>()));
+                this.AvailableParameters.AddRange(
+                    this.SelectedThing.SelectedElementDefinition.Parameter
+                        .Where(this.AreTheseOwnedByTheDomain<Parameter>())
+                        .Where(x => this.AvailableParameters.FirstOrDefault(p => p.Iid == x.Iid) is null));
             }
         }
 
@@ -282,20 +311,30 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     {
                         Action action = thing switch
                         {
-                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = elementDefinition.Clone(true)),
-                            ElementUsage elementUsage => (() => variable.SelectedElementUsages.Add(elementUsage.Clone(true))),
-                            Parameter parameter => (() => variable.SelectedParameter = parameter.Clone(false)),
+                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
+                                this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
+
+                            ElementUsage elementUsage => (() =>
+                            {
+                                if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
+                                    .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
+                                {
+                                    variable.SelectedElementUsages.Add(usage);
+                                }
+                            }),
+
+                            Parameter parameter => (() => variable.SelectedParameter = 
+                                this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
+                                    .FirstOrDefault(p => p.Iid == thing.Iid)),
+
                             Option option => (() => variable.SelectedOption = option),
+
                             ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+
                             _ => null
                         };
                         
                         action?.Invoke();
-                        
-                        if (action is null && this.HubController.GetThingById(idCorrespondence.InternalThing, out SampledFunctionParameterType parameterType))
-                        {
-                            variable.SelectedParameterType = parameterType;
-                        }
                     }
                 }
             }

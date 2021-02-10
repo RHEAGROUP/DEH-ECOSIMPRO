@@ -32,6 +32,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Types;
 
     using CDP4Dal;
 
@@ -71,7 +72,22 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.session = new Mock<ISession>();
             this.session.Setup(x => x.Assembler).Returns(this.assembler);
             this.session.Setup(x => x.DataSourceUri).Returns(this.uri.AbsoluteUri);
-            this.iteration = new Iteration(Guid.NewGuid(), this.assembler.Cache, this.uri);
+
+            this.iteration =
+                new Iteration(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                {
+                    Container = new EngineeringModel(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                    {
+                        EngineeringModelSetup = new EngineeringModelSetup(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                        {
+                            RequiredRdl = { new ModelReferenceDataLibrary(Guid.NewGuid(), this.assembler.Cache, this.uri) },
+                            Container = new SiteReferenceDataLibrary(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                            {
+                                Container = new SiteDirectory(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                            }
+                        }
+                    }
+                };
 
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
@@ -123,31 +139,72 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameter = elements.Last().Parameter.First();
             Assert.AreEqual("a", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
-            Assert.AreEqual("0.2", parameterValueSet.Computed.First());
+            Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
         }
         
         [Test]
         public void VerifyMapToElementUsageParameter()
         {
             var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
-
+            
             var parameter = new Parameter()
             {
-                ParameterType = new CompoundParameterType()
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), this.assembler.Cache, this.uri)
                 {
-                    ShortName = "TimeTaggedValue",
-                    Name = "TimeTaggedValue",
-                    Symbol = "ttv",
-                    Component =
+                    Name = "a",
+                    IndependentParameterType =
                     {
-                        new ParameterTypeComponent() { ParameterType = new DateTimeParameterType()},
-                        new ParameterTypeComponent() { ParameterType = new SimpleQuantityKind()},
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), this.assembler.Cache,  this.uri)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), this.assembler.Cache,  this.uri)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache,  this.uri)
+                            {
+                                Name = "Value"
+                            }
+                        }
                     }
                 }
             };
 
-            var elementDefinition = new ElementDefinition() { ContainedElement = { new ElementUsage() { ParameterOverride = { new ParameterOverride() { Parameter = parameter }}}}};
+            var elementDefinition = new ElementDefinition()
+            {
+                Parameter = { parameter }, Name = "nonameElement"
+            };
 
+            var elementUsage = new ElementUsage()
+            {
+                Name = "a",
+                ParameterOverride =
+                {
+                    new ParameterOverride()
+                    {
+                        Parameter = parameter, 
+                        ValueSet =
+                        {
+                            new ParameterOverrideValueSet(Guid.NewGuid(), this.assembler.Cache, this.uri)
+                            {
+                                Computed = new ValueArray<string>(new List<string>(){ "-","-"}),
+                                ValueSwitch = ParameterSwitchKind.COMPUTED
+                            }
+                        }
+                    }
+                },
+                ElementDefinition = elementDefinition
+            };
+
+            elementDefinition.ContainedElement.Add(elementUsage);
+
+            this.variables.Clear();
+            
             this.variables.Add(new VariableRowViewModel((
                 new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.a") },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
@@ -155,11 +212,16 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 Values = { timeTaggedValueRowViewModel },
                 SelectedValues = { timeTaggedValueRowViewModel },
                 SelectedElementDefinition = elementDefinition,
-                SelectedElementUsages = { elementDefinition.ContainedElement.First() }
+                SelectedElementUsages = { elementUsage }
             });
 
             var elements = this.rule.Transform(this.variables);
-            Assert.AreEqual("0.2", elements.Last().ContainedElement.First().ParameterOverride.First().ValueSet.First().ActualValue.First());
+            var definition = elements.Last();
+            var first = definition.ContainedElement.First();
+            var parameterOverride = first.ParameterOverride.Last();
+            Assert.AreEqual(1, first.ParameterOverride.Count);
+            var set = parameterOverride.ValueSet.First();
+            Assert.AreEqual($"{timeTaggedValueRowViewModel.TimeStamp:s}", set.Computed.First());
         }
     }
 }

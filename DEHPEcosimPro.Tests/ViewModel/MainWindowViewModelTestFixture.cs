@@ -48,10 +48,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
         private Mock<IHubDataSourceViewModel> hubDataSourceViewModel;
         private Mock<IDstDataSourceViewModel> dstDataSourceViewModel;
-        private Mock<IHubNetChangePreviewViewModel> netChangePreviewViewModel;
+        private Mock<IHubNetChangePreviewViewModel> hubNetChangePreviewViewModel;
         private Mock<IDstController> dstController;
         private MainWindowViewModel viewModel;
         private Mock<ITransferControlViewModel> transferControlViewModel;
+        private Mock<IDstNetChangePreviewViewModel> dstNetChangePreviewViewModel;
 
         [SetUp]
         public void Setup()
@@ -59,12 +60,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.hubDataSourceViewModel = new Mock<IHubDataSourceViewModel>();
             this.dstDataSourceViewModel = new Mock<IDstDataSourceViewModel>();
-            this.netChangePreviewViewModel = new Mock<IHubNetChangePreviewViewModel>();
+            this.hubNetChangePreviewViewModel = new Mock<IHubNetChangePreviewViewModel>();
+            this.dstNetChangePreviewViewModel = new Mock<IDstNetChangePreviewViewModel>();
             this.transferControlViewModel = new Mock<ITransferControlViewModel>();
             this.dstController = new Mock<IDstController>();
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
-                this.statusBarViewModel.Object, this.netChangePreviewViewModel.Object, this.dstController.Object, this.transferControlViewModel.Object);
+                this.statusBarViewModel.Object, this.hubNetChangePreviewViewModel.Object, this.dstNetChangePreviewViewModel.Object,
+                this.dstController.Object, this.transferControlViewModel.Object);
         }
 
         [Test]

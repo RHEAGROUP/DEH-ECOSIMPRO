@@ -24,6 +24,16 @@
             <converters:ElementUsageOptionsConverter x:Key="ElementUsageOptionsConverter" />
             <converters:DataTypeConverter x:Key="DataTypeConverter" />
             <converters:ElementUsageTypeToVisibilityConverter x:Key="ElementUsageTypeToVisibilityConverter" />
+            <Style TargetType="{x:Type Path}" x:Key="PathArrowStyle">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsValid}" Value="True">
+                        <Setter Property="Fill" Value="DarkGreen"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsValid}" Value="False">
+                        <Setter Property="Fill" Value="DarkGray"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <dxmvvm:Interaction.Behaviors>
@@ -34,6 +44,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="220" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox x:Name="MainContainer" Grid.Row="0" Margin="10" Padding="10" Header="Select Value Set To Map">
@@ -159,11 +170,11 @@
                         <Label Grid.Row="0" Grid.Column="0" Content="Element Definition:" />
                         <dxe:ComboBoxEdit Grid.Row="0" Grid.Column="1" Margin="2" AllowNullInput="False" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ShortName"
                                           ItemsSource="{Binding ElementDefinitions}"
-                                          SelectedItem="{Binding SelectedMappedElement.SelectedElementDefinition}"
+                                          SelectedItem="{Binding SelectedElementDefinition}" NullText="Select Element Definition"
                                           ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="Update Element Usages:" />
+                        <Label Grid.Row="1" Grid.Column="0" Content="Element Usages:" />
                         <dxe:ComboBoxEdit Grid.Row="1" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ElementDefinition.ShortName"
-                                          SelectedItem="{Binding SelectedMappedElement.SelectedElementUsage, Converter={StaticResource ListToElementUsageConverter}}"
+                                          SelectedItem="{Binding SelectedElementUsage}"
                                           ItemsSource="{Binding ElementUsages}"
                                           NullText="Select Element Usage" NullValueButtonPlacement="EditBox" ShowNullTextForEmptyValue="True" ValidateOnTextInput="False">
                         </dxe:ComboBoxEdit>
@@ -216,7 +227,67 @@
 
                 </Grid>
             </GroupBox>
-            <Grid Grid.Row="2">
+            <GroupBox Grid.Row="2"  Margin="10" Padding="10" Header="MappedElement">
+                <ListView x:Name="Mapping" HorizontalContentAlignment="Stretch" SelectedItem="{Binding SelectedMappedElement}"
+                          ItemsSource="{Binding MappedElements}" SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid HorizontalAlignment="Stretch">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition></ColumnDefinition>
+                                    <ColumnDefinition></ColumnDefinition>
+                                    <ColumnDefinition></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <Border BorderBrush="DarkGray" BorderThickness="1">
+                                    <Grid Background="AliceBlue">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Normal" Text="Element: " />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" >
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}.{1}">
+                                                    <Binding Path="SelectedParameter.Container.Name"></Binding>
+                                                    <Binding Path="SelectedParameter.ParameterType.Name"></Binding>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Value: " />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" Text="{Binding SelectedValue.Representation}" TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </Border>
+                                <Path Grid.Column="1" Stretch="Fill"
+                                      Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z"
+                                      HorizontalAlignment="Stretch" MaxHeight="15"
+                                      RenderTransformOrigin=".5,.5" Style="{StaticResource PathArrowStyle}">
+                                </Path>
+                                <Grid Grid.Column="2" Background="AliceBlue">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Height="Auto" Margin="3" FontSize="10" FontWeight="Normal" Text="Name: " />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" Text="{Binding SelectedVariable.Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="0" Grid.Row="1"  Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Value to replace: " />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" Text="{Binding SelectedVariable.ActualValue}" TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </GroupBox>
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />

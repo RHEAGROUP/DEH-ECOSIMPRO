@@ -105,17 +105,33 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="Container"/>
+        /// </summary>
+        private IValueSet container;
+
+        /// <summary>
+        /// Gets or sets the container <see cref="IValueSet"/>
+        /// </summary>
+        public IValueSet Container
+        {
+            get => this.container;
+            set => this.RaiseAndSetIfChanged(ref this.container, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="ValueSetValueRowViewModel"/>
         /// </summary>
+        /// <param name="container">The <see cref="ParameterValueSetBase"/></param>
         /// <param name="value">The value</param>
-        /// <param name="option">The <see cref="Option"/> that this represented value depends on</param>
-        /// <param name="state">The <see cref="ActualFiniteState"/> that this represented value depends on</param>
-        public ValueSetValueRowViewModel(string value, Option option, ActualFiniteState state, MeasurementScale scale)
+        /// <param name="scale">The <see cref="MeasurementScale"/></param>
+        public ValueSetValueRowViewModel(IValueSet container, string value, MeasurementScale scale)
         {
+            this.Container = container;
             this.Value = value;
-            this.Option = option;
-            this.ActualState = state;
+            this.Option = container.ActualOption;
+            this.ActualState = container.ActualState;
             this.Scale = scale;
+
             this.Representation = $"{(this.Option is null ? string.Empty : $" Option: {this.Option.Name}")}" +
                                   $"{(this.ActualState is null ? string.Empty : $" State: {this.ActualState.Name} ")}" +
                                   $"{this.Value} [{(this.Scale is null ? "-" : this.Scale.ShortName)}]";

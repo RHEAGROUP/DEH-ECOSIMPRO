@@ -208,5 +208,12 @@ namespace DEHPEcosimPro.DstController
         /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
         /// <returns>A newly created <see cref="DstController.ExternalIdentifierMap"/></returns>
         Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
+
+        /// <summary>
+        /// Adds one correspondance to the <see cref="IdCorrespondences"/>
+        /// </summary>
+        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
+        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
+        void AddToExternalIdentifierMap(Guid internalId, string externalId);
     }
 }

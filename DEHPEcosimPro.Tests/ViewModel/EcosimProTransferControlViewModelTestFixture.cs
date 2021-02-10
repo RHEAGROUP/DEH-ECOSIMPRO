@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using CDP4Dal;
 
     using DEHPCommon.Events;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
@@ -44,13 +45,15 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private EcosimProTransferControlViewModel viewModel;
 
         private Mock<IDstController> dstController;
+        private Mock<IStatusBarControlViewModel> statusBar;
 
         [SetUp]
         public void Setup()
         {
+            this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
-            this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object);
+            this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object);
         }
 
         [Test]
