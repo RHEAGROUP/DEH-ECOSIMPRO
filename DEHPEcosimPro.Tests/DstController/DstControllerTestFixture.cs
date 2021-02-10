@@ -28,6 +28,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using CDP4Common.CommonData;
@@ -56,7 +57,7 @@ namespace DEHPEcosimPro.Tests.DstController
 
     using Node = DevExpress.XtraCharts.Native.Node;
 
-    [TestFixture]
+    [TestFixture, Apartment(ApartmentState.STA)]
     public class DstControllerTestFixture
     {
         private DstController controller;
@@ -218,7 +219,7 @@ namespace DEHPEcosimPro.Tests.DstController
         }
         
         [Test]
-        public void VerifyTransfert()
+        public void VerifyTransfer()
         {
             this.controller.ExternalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
             {

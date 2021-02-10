@@ -40,13 +40,14 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
-    using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using Opc.Ua;
@@ -97,7 +98,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets this running tool name
         /// </summary>
         public string ThisToolName => this.GetType().Assembly.GetName().Name;
-        
+
         /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
@@ -140,7 +141,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets the all references available from the connected OPC server
         /// </summary>
         public IList<ReferenceDescription> References => this.opcClientService.References;
-        
+
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
@@ -169,7 +170,7 @@ namespace DEHPEcosimPro.DstController
         /// <param name="sessionHandler">The <see cref="IOpcSessionHandler"/></param>
         /// <param name="mappingEngine">The <see cref="IMappingEngine"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        public DstController(IOpcClientService opcClientService, IHubController hubController, 
+        public DstController(IOpcClientService opcClientService, IHubController hubController,
             IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine, IStatusBarControlViewModel statusBar)
         {
             this.opcClientService = opcClientService;
@@ -345,16 +346,17 @@ namespace DEHPEcosimPro.DstController
             foreach (var mappedElement in this.HubMapResult.ToList()
                 .Where(
                     mappedElement => this.opcClientService.WriteNode(
-                        (NodeId) mappedElement.SelectedVariable.Reference.NodeId, 
+                        (NodeId)mappedElement.SelectedVariable.Reference.NodeId,
                         double.Parse(mappedElement.SelectedValue.Value))))
             {
                 this.HubMapResult.Remove(mappedElement);
                 this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
                 {
-                    ExternalId = mappedElement.SelectedVariable.Name, InternalThing = ((Thing)mappedElement.SelectedValue.Container).Iid
+                    ExternalId = mappedElement.SelectedVariable.Name,
+                    InternalThing = ((Thing)mappedElement.SelectedValue.Container).Iid
                 });
             }
-            
+
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
         }
 
@@ -390,6 +392,11 @@ namespace DEHPEcosimPro.DstController
             {
                 var iterationClone = this.hubController.OpenIteration.Clone(false);
                 var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(iterationClone), iterationClone);
+
+                if (!this.TrySupplyingAndCreatingLogEntry(transaction))
+                {
+                    return;
+                }
 
                 foreach (var elementDefinition in this.DstMapResult)
                 {
@@ -488,7 +495,7 @@ namespace DEHPEcosimPro.DstController
                 await this.hubController.Write(transaction);
             }
         }
-        
+
         /// <summary>
         /// Sets the value of the <paramref name="valueSet"></paramref> to the <paramref name="clone"/>
         /// </summary>
@@ -539,13 +546,13 @@ namespace DEHPEcosimPro.DstController
             switch (clone)
             {
                 case INamedThing namedThing:
-                    externalId = namedThing.Name;
-                    break;
+                externalId = namedThing.Name;
+                break;
                 case ParameterOrOverrideBase parameterOrOverride:
-                    externalId = parameterOrOverride.ParameterType.Name;
-                    break;
+                externalId = parameterOrOverride.ParameterType.Name;
+                break;
                 default:
-                    return;
+                return;
             }
 
             this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
@@ -572,7 +579,7 @@ namespace DEHPEcosimPro.DstController
                     this.ExternalIdentifierMap.Correspondence.ToList(),
                     (e, c) => e.Correspondence.Remove(c));
             }
-            
+
             var container = this.ExternalIdentifierMap.Clone(false);
             var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(container), container);
             container.Correspondence.Clear();
@@ -605,15 +612,15 @@ namespace DEHPEcosimPro.DstController
             var externalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
             {
                 Name = newName,
-                ExternalToolName = this.ThisToolName, 
+                ExternalToolName = this.ThisToolName,
                 ExternalModelName = newName,
                 Owner = this.hubController.CurrentDomainOfExpertise,
                 Container = this.hubController.OpenIteration
             };
-            
-            await this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap, 
+
+            await this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap,
                 (i, m) => i.ExternalIdentifierMap.Add(m), true);
-            
+
             return externalIdentifierMap;
         }
 
@@ -633,6 +640,28 @@ namespace DEHPEcosimPro.DstController
                     InternalThing = internalId
                 });
             }
+        }
+
+        /// <summary>
+        /// Pops the <see cref="CreateLogEntryDialog"/> and based on its result, either registers a new ModelLogEntry to the <see cref="transaction"/> or not
+        /// </summary>
+        /// <param name="transaction">The <see cref="ThingTransaction"/> that will get the changes registered to</param>
+        /// <returns>A boolean result, true if the user pressed OK, otherwise false</returns>
+        private bool TrySupplyingAndCreatingLogEntry(ThingTransaction transaction)
+        {
+            var vm = new CreateLogEntryDialogViewModel();
+            var dialog = new CreateLogEntryDialog
+            {
+                DataContext = vm
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return false;
+            }
+
+            this.hubController.RegisterNewLogEntryToTransaction(vm.LogEntryContent, transaction);
+            return true;
         }
     }
 }
