@@ -25,14 +25,20 @@
 namespace DEHPEcosimPro.Tests.ViewModel
 {
     using System;
+    using System.Collections.Generic;
     using System.Reactive;
     using System.Reactive.Concurrency;
     using System.Threading;
 
     using Autofac;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.SiteDirectoryData;
     using CDP4Common.Types;
+
+    using CDP4Dal;
+    using CDP4Dal.Permission;
 
     using DEHPCommon;
     using DEHPCommon.HubController.Interfaces;
@@ -70,6 +76,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private HubDataSourceViewModel viewModel;
         private Mock<IHubBrowserHeaderViewModel> hubBrowserHeader;
         private Mock<IDstController> dstController;
+        private Iteration iteration;
+        private Person person;
+        private Participant participant;
+        private DomainOfExpertise domain;
+        private Mock<ISession> session;
 
         [SetUp]
         public void Setup()
@@ -81,6 +92,59 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.hubController.Setup(x => x.Close());
+
+            this.session = new Mock<ISession>();
+
+            var permissionService = new Mock<IPermissionService>();
+            permissionService.Setup(x => x.Session).Returns(this.session.Object);
+            permissionService.Setup(x => x.CanRead(It.IsAny<Thing>())).Returns(true);
+            permissionService.Setup(x => x.CanWrite(It.IsAny<Thing>())).Returns(true);
+            this.session.Setup(x => x.PermissionService).Returns(permissionService.Object);
+            
+            this.domain = new DomainOfExpertise(Guid.NewGuid(), null, null)
+            {
+                Name = "t",
+                ShortName = "e"
+            };
+
+            this.person = new Person(Guid.NewGuid(), null, null) { GivenName = "test", DefaultDomain = this.domain};
+            
+            this.session.Setup(x => x.ActivePerson).Returns(this.person);
+
+            this.participant = new Participant(Guid.NewGuid(), null, null)
+            {
+                Person = this.person
+            };
+
+            var engineeringModelSetup = new EngineeringModelSetup(Guid.NewGuid(), null, null)
+            {
+                Participant = { this.participant },
+                Name = "est"
+            };
+
+            this.iteration = new Iteration(Guid.NewGuid(), null, null)
+            {
+                IterationSetup = new IterationSetup(Guid.NewGuid(), null, null)
+                {
+                    IterationNumber = 23,
+                    Container = engineeringModelSetup
+                },
+                Container = new EngineeringModel(Guid.NewGuid(), null, null)
+                {
+                    EngineeringModelSetup = engineeringModelSetup
+                }
+            };
+
+            this.session.Setup(x => x.OpenIterations).Returns(
+                new Dictionary<Iteration, Tuple<DomainOfExpertise, Participant>>()
+                {
+                    {
+                        this.iteration,
+                        new Tuple<DomainOfExpertise, Participant>(this.domain, this.participant)
+                    }
+                });
+
+            this.hubController.Setup(x => x.Session).Returns(this.session.Object);
 
             this.objectBrowser = new Mock<IObjectBrowserViewModel>();
             this.objectBrowser.Setup(x => x.CanMap).Returns(new Mock<IObservable<bool>>().Object);
@@ -135,18 +199,26 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.objectBrowser.Setup(x => x.SelectedThings)
                 .Returns(new ReactiveList<object>());
-
-            this.viewModel.ObjectBrowser.SelectedThings.Add(
-                new ElementDefinition()
+            
+            var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, new Uri("t://s.t"))
+            {
+                Parameter =
                 {
-                    Parameter =
+                    new Parameter(Guid.NewGuid(), null, new Uri("t://s.t"))
                     {
-                        new Parameter()
-                        {
-                            ValueSet = { new ParameterValueSet()}
-                        }
+                        ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, new Uri("t://s.t")),
+                        ValueSet = { new ParameterValueSet(Guid.NewGuid(), null, new Uri("t://s.t")) }
                     }
-                });
+                }
+            };
+            
+            this.iteration.Element.Add(elementDefinition);
+
+            var elementRow = new ElementDefinitionRowViewModel(elementDefinition, 
+                new DomainOfExpertise(), this.session.Object, null);
+            
+            this.viewModel.ObjectBrowser.SelectedThings.Add(
+                elementRow);
 
             Assert.IsTrue(this.viewModel.ObjectBrowser.MapCommand.CanExecute(null));
             Assert.DoesNotThrow(() => this.viewModel.ObjectBrowser.MapCommand.Execute(null));
