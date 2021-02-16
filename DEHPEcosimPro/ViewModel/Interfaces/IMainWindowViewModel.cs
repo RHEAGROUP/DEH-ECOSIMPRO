@@ -24,7 +24,11 @@
 
 namespace DEHPEcosimPro.ViewModel.Interfaces
 {
+    using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
+
+    using ReactiveUI;
 
     /// <summary>
     /// Interface definitions of methods and properties of <see cref="Views.MainWindow"/>
@@ -32,9 +36,14 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     public interface IMainWindowViewModel : ISwitchLayoutPanelOrderViewModel
     {
         /// <summary>
+        /// Gets the <see cref="ITransferControlViewModel"/>
+        /// </summary>
+        ITransferControlViewModel TransferControlViewModel { get; }
+
+        /// <summary>
         /// Gets the view model that represents the net change preview panel
         /// </summary>
-        INetChangePreviewViewModel NetChangePreviewViewModel { get; }
+        IHubNetChangePreviewViewModel HubNetChangePreviewViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
@@ -50,5 +59,10 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// Gets the view model that represents the status bar
         /// </summary>
         IStatusBarControlViewModel StatusBarControlViewModel { get; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="ICommand"/> that will change the mapping direction
+        /// </summary>
+        ReactiveCommand<object> ChangeMappingDirection { get; }
     }
 }

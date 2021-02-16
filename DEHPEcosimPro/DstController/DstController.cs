@@ -29,29 +29,45 @@ namespace DEHPEcosimPro.DstController
     using System.Linq;
     using System.Threading.Tasks;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
-    using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Types;
 
+    using CDP4Dal;
     using CDP4Dal.Operations;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.UserInterfaces.ViewModels;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using NLog;
+
     using Opc.Ua;
 
     using ReactiveUI;
+
+    using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
 
     /// <summary>
     /// The <see cref="DstController"/> takes care of retrieving data from and to EcosimPro
     /// </summary>
     public class DstController : ReactiveObject, IDstController
     {
+        /// <summary>
+        /// Gets the current class logger
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger(); 
+
         /// <summary>
         /// The <see cref="IOpcClientService"/> that handles the OPC connection with EcosimPro
         /// </summary>
@@ -78,15 +94,25 @@ namespace DEHPEcosimPro.DstController
         private readonly IMappingEngine mappingEngine;
 
         /// <summary>
+        /// The <see cref="IStatusBarControlViewModel"/>
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBar;
+
+        /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigation;
+
+        /// <summary>
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
-        
+
         /// <summary>
         /// Gets this running tool name
         /// </summary>
         public string ThisToolName => this.GetType().Assembly.GetName().Name;
-        
+
         /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
         /// </summary>
@@ -129,17 +155,16 @@ namespace DEHPEcosimPro.DstController
         /// Gets the all references available from the connected OPC server
         /// </summary>
         public IList<ReferenceDescription> References => this.opcClientService.References;
-        
-        /// <summary>
-        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
-        /// </summary>
-        public IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap => 
-            this.hubController.AvailableExternalIdentifierMap(typeof(DstController).Assembly.GetName().Name);
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        public IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; private set; } = new List<ElementDefinition>();
+        public ReactiveList<ElementDefinition> DstMapResult { get; private set; } = new ReactiveList<ElementDefinition>();
+
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ReferenceDescription"/>
+        /// </summary>
+        public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -156,14 +181,20 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
-        /// <param name="sessionHandler">The <<see cref="IOpcSessionHandler"/></param>
-        /// <param name="mappingEngine">The <<see cref="IMappingEngine"/></param>
-        public DstController(IOpcClientService opcClientService, IHubController hubController, IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine)
+        /// <param name="sessionHandler">The <see cref="IOpcSessionHandler"/></param>
+        /// <param name="mappingEngine">The <see cref="IMappingEngine"/></param>
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        public DstController(IOpcClientService opcClientService, IHubController hubController,
+            IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine,
+            IStatusBarControlViewModel statusBar, INavigationService navigationService)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
             this.sessionHandler = sessionHandler;
             this.mappingEngine = mappingEngine;
+            this.statusBar = statusBar;
+            this.navigation = navigationService;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -183,6 +214,11 @@ namespace DEHPEcosimPro.DstController
                             this.Methods.Add(reference);
                         }
                     }
+                }
+                else
+                {
+                    this.Variables.Clear();
+                    this.Methods.Clear();
                 }
 
                 this.IsSessionOpen = isOpcSessionOpen;
@@ -284,43 +320,325 @@ namespace DEHPEcosimPro.DstController
             this.Methods.Clear();
             this.Variables.Clear();
             this.opcClientService.CloseSession();
+            this.IsSessionOpen = false;
         }
 
         /// <summary>
-        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A assert whether the mapping was successful</returns>
-        public bool Map(List<VariableRowViewModel> dstVariables)
+        /// <returns>A <see cref="Task"/></returns>
+        public void Map(List<VariableRowViewModel> dstVariables)
         {
-            this.ElementDefinitionParametersDstVariablesMaps = (IEnumerable<ElementDefinition>)this.mappingEngine.Map(dstVariables);
-            return true;
+            if (this.mappingEngine.Map(dstVariables) is List<ElementDefinition> mapResult && mapResult.Any())
+            {
+                this.DstMapResult.AddRange(mapResult);
+            }
+
+            this.UpdateExternalIdentifierMap();
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
+        }
+
+        /// <summary>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        /// <returns>A <see cref="Task"/></returns>
+        public void Map(List<MappedElementDefinitionRowViewModel> mappedElement)
+        {
+            if (mappedElement.Any())
+            {
+                this.HubMapResult.AddRange(mappedElement);
+            }
+
+            this.UpdateExternalIdentifierMap();
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent());
+        }
+
+        /// <summary>
+        /// Transfers the mapped variables to the Dst data source
+        /// </summary>
+        public void TransferMappedThingsToDst()
+        {
+            foreach (var mappedElement in this.HubMapResult
+                .Where(
+                    mappedElement => this.opcClientService.WriteNode(
+                        (NodeId) mappedElement.SelectedVariable.Reference.NodeId,
+                        double.Parse(mappedElement.SelectedValue.Value)))
+                .ToList())
+            {
+                this.HubMapResult.Remove(mappedElement);
+
+                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
+                {
+                    ExternalId = mappedElement.SelectedVariable.Name,
+                    InternalThing = ((Thing) mappedElement.SelectedValue.Container).Iid
+                });
+            }
+
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
+        }
+
+        /// <summary>
+        /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns>An assert</returns>
+        public bool IsVariableWritable(ReferenceDescription reference)
+        {
+            var referenceNodeId = (NodeId) reference.NodeId;
+            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value);
+        }
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        public DataValue ReadNode(ReferenceDescription reference)
+        {
+            var referenceNodeId = (NodeId) reference.NodeId;
+            return this.opcClientService.ReadNode(referenceNodeId);
         }
 
         /// <summary>
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Transfer()
+        public async Task TransferMappedThingsToHub()
         {
-            await this.hubController.CreateOrUpdate<Iteration, ElementDefinition>(this.ElementDefinitionParametersDstVariablesMaps,
-                    (i, e) => i.Element.Add(e), true);
-            
-            await this.hubController.Delete<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
-                (map, correspondence) => map.Correspondence.Remove(correspondence));
-
-            this.ExternalIdentifierMap.Correspondence.Clear();
-
-            foreach (var correspondence in this.IdCorrespondences)
+            try
             {
-                correspondence.Container = this.ExternalIdentifierMap;
+                var (iterationClone, transaction) = this.GetIterationTransaction();
+
+                if (!(this.DstMapResult.Any() && this.TrySupplyingAndCreatingLogEntry(transaction)))
+                {
+                    return;
+                }
+
+                foreach (var elementDefinition in this.DstMapResult)
+                {
+                    var elementDefinitionCloned = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
+
+                    foreach (var parameter in elementDefinition.Parameter)
+                    {
+                        this.TransactionCreateOrUpdate(transaction, parameter, elementDefinitionCloned.Parameter);
+                    }
+
+                    foreach (var parameterOverride in elementDefinition.ContainedElement.SelectMany(x => x.ParameterOverride))
+                    {
+                        var elementUsageClone = (ElementUsage)parameterOverride.Container.Clone(false);
+                        transaction.CreateOrUpdate(elementUsageClone);
+
+                        this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
+                    }
+                }
+
+                this.UpdateExternalIdentifierMap();
+
+                this.PersistExternalIdentifierMap(transaction);
+
+                transaction.CreateOrUpdate(iterationClone);
+
+                await this.hubController.Write(transaction);
+
+                await this.UpdateParametersValueSets();
+
+                await this.hubController.Refresh();
+                CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
+            }
+            catch (Exception e)
+            {
+                this.logger.Error(e);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="IThingTransaction"/> based on the current open <see cref="Iteration"/>
+        /// </summary>
+        /// <returns>A <see cref="ValueTuple"/> Containing the <see cref="Iteration"/> clone and the <see cref="IThingTransaction"/></returns>
+        private (Iteration clone, ThingTransaction transaction) GetIterationTransaction()
+        {
+            var iterationClone = this.hubController.OpenIteration.Clone(false);
+            return (iterationClone, new ThingTransaction(TransactionContextResolver.ResolveContext(iterationClone), iterationClone));
+        }
+
+        /// <summary>
+        /// Updates the <see cref="IValueSet"/> of all <see cref="Parameter"/> and all <see cref="ParameterOverride"/>
+        /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
+        public async Task UpdateParametersValueSets()
+        {
+            var (iterationClone, transaction) = this.GetIterationTransaction();
+
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.Parameter));
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.ContainedElement.SelectMany(p => p.ParameterOverride)));
+
+            transaction.CreateOrUpdate(iterationClone);
+            await this.hubController.Write(transaction);
+        }
+
+        /// <summary>
+        /// Updates the specified <see cref="Parameter"/> <see cref="IValueSet"/>
+        /// </summary>
+        /// <param name="transaction">the <see cref="IThingTransaction"/></param>
+        /// <param name="parameters">The collection of <see cref="Parameter"/></param>
+        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<Parameter> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out Parameter newParameter);
+                
+                var newParameterCloned = newParameter.Clone(false);
+
+                for (var index = 0; index < parameter.ValueSet.Count; index++)
+                {
+                    var clone = newParameterCloned.ValueSet[index].Clone(false);
+                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    transaction.CreateOrUpdate(clone);
+                }
+
+                transaction.CreateOrUpdate(newParameterCloned);
+            }
+        }
+
+        /// <summary>
+        /// Updates the specified <see cref="ParameterOverride"/> <see cref="IValueSet"/>
+        /// </summary>
+        /// <param name="transaction">the <see cref="IThingTransaction"/></param>
+        /// <param name="parameters">The collection of <see cref="ParameterOverride"/></param>
+        private void UpdateParametersValueSets(IThingTransaction transaction, IEnumerable<ParameterOverride> parameters)
+        {
+            foreach (var parameter in parameters)
+            {
+                this.hubController.GetThingById(parameter.Iid, this.hubController.OpenIteration, out ParameterOverride newParameter);
+                var newParameterClone = newParameter.Clone(true);
+
+                for (var index = 0; index < parameter.ValueSet.Count; index++)
+                {
+                    var clone = newParameterClone.ValueSet[index];
+                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    transaction.CreateOrUpdate(clone);
+                }
+
+                transaction.CreateOrUpdate(newParameterClone);
+            }
+        }
+
+        /// <summary>
+        /// Sets the value of the <paramref name="valueSet"></paramref> to the <paramref name="clone"/>
+        /// </summary>
+        /// <param name="clone">The clone to update</param>
+        /// <param name="valueSet">The <see cref="IValueSet"/> of reference</param>
+        private static void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
+        {
+            clone.Computed = valueSet.Computed;
+            clone.ValueSwitch = valueSet.ValueSwitch;
+        }
+
+        /// <summary>
+        /// Registers the provided <paramref cref="Thing"/> to be created or updated by the <paramref name="transaction"/>
+        /// </summary>
+        /// <typeparam name="TThing">The type of the <paramref name="containerClone"/></typeparam>
+        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
+        /// <param name="thing">The <see cref="Thing"/></param>
+        /// <param name="containerClone">The <see cref="ContainerList{T}"/> of the cloned container</param>
+        /// <returns>A cloned <typeparamref name="TThing"/></returns>
+        private TThing TransactionCreateOrUpdate<TThing>(IThingTransaction transaction, TThing thing, ContainerList<TThing> containerClone) where TThing : Thing
+        {
+            var clone = thing.Clone(false);
+
+            if (clone.Iid == Guid.Empty)
+            {
+                clone.Iid = Guid.NewGuid();
+                thing.Iid = clone.Iid;
+                transaction.Create(clone);
+                containerClone.Add((TThing) clone);
+                this.AddIdCorrespondence(clone);
+            }
+            else
+            {
+                transaction.CreateOrUpdate(clone);
             }
 
-            await this.hubController.CreateOrUpdate<ExternalIdentifierMap, IdCorrespondence>(this.IdCorrespondences,
-                (map, correspondence) => map.Correspondence.Add(correspondence));
+            return (TThing) clone;
+        }
 
+        /// <summary>
+        /// If the <see cref="Thing"/> is new save the mapping
+        /// </summary>
+        /// <param name="clone">The <see cref="Thing"/></param>
+        private void AddIdCorrespondence(Thing clone)
+        {
+            string externalId;
+
+            switch (clone)
+            {
+                case INamedThing namedThing:
+                    externalId = namedThing.Name;
+                    break;
+                case ParameterOrOverrideBase parameterOrOverride:
+                    externalId = parameterOrOverride.ParameterType.Name;
+                    break;
+                default:
+                    return;
+            }
+
+            this.AddToExternalIdentifierMap(clone.Iid, externalId);
+        }
+
+        /// <summary>
+        /// Updates the configured mapping 
+        /// </summary>
+        public void UpdateExternalIdentifierMap()
+        {
+            var unsusedIdCorrespondences = this.ExternalIdentifierMap.Correspondence
+                .Where(x => this.IdCorrespondences
+                    .All(c => c.Iid != x.Iid || c.ExternalId != x.ExternalId))
+                .ToList();
+
+            this.ExternalIdentifierMap.Correspondence.Clear();
             this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
+            this.ExternalIdentifierMap.Correspondence.AddRange(unsusedIdCorrespondences);
             this.IdCorrespondences.Clear();
+        }
+
+        /// <summary>
+        /// Updates the configured mapping, registering the <see cref="ExternalIdentifierMap"/> and its <see cref="IdCorrespondence"/>
+        /// to a <see name="IThingTransaction"/>
+        /// </summary>
+        /// <param name="transaction">the <see cref="IThingTransaction"/></param>
+        private void PersistExternalIdentifierMap(IThingTransaction transaction)
+        {
+            this.UpdateExternalIdentifierMap();
+            
+            var externalIdentifierMapClone = this.ExternalIdentifierMap.Clone(true);
+
+            if (externalIdentifierMapClone.Iid == Guid.Empty)
+            {
+                externalIdentifierMapClone.Iid = Guid.NewGuid();
+                this.ExternalIdentifierMap.Iid = externalIdentifierMapClone.Iid;
+                ((Iteration)transaction.AssociatedClone).ExternalIdentifierMap.Add(externalIdentifierMapClone);
+                transaction.CreateOrUpdate(externalIdentifierMapClone);
+            }
+
+            var idCorrespondencesToPersist = externalIdentifierMapClone.Correspondence.ToList();
+
+            externalIdentifierMapClone.Correspondence.Clear();
+
+            foreach (var clonedCorrespondence in idCorrespondencesToPersist)
+            {
+                externalIdentifierMapClone.Correspondence.Add(clonedCorrespondence);
+                clonedCorrespondence.Container = externalIdentifierMapClone;
+                transaction.CreateOrUpdate(clonedCorrespondence);
+            }
+
+            transaction.CreateOrUpdate(externalIdentifierMapClone);
+
+            this.ExternalIdentifierMap.Correspondence.Clear();
+            this.ExternalIdentifierMap.Correspondence.AddRange(idCorrespondencesToPersist);
+            this.statusBar.Append("Mapping configuration processed");
         }
 
         /// <summary>
@@ -328,21 +646,57 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap"/></param>
         /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
-        public async Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName)
+        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
         {
-            var externalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
+            return new ExternalIdentifierMap()
             {
                 Name = newName,
-                ExternalToolName = this.ThisToolName, 
+                ExternalToolName = this.ThisToolName,
                 ExternalModelName = newName,
                 Owner = this.hubController.CurrentDomainOfExpertise,
-                Container = this.hubController.OpenIteration
             };
-            
-            await this.hubController.CreateOrUpdate<Iteration, ExternalIdentifierMap>(externalIdentifierMap, 
-                (i, m) => i.ExternalIdentifierMap.Add(m), true);
-            
-            return externalIdentifierMap;
+        }
+
+        /// <summary>
+        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
+        /// </summary>
+        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
+        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
+        public void AddToExternalIdentifierMap(Guid internalId, string externalId)
+        {
+            if (internalId != Guid.Empty && !this.ExternalIdentifierMap.Correspondence
+                                             .Any(
+                x => x.ExternalId == externalId && x.InternalThing == internalId)
+                && !this.IdCorrespondences
+                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
+            {
+                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
+                {
+                    ExternalId = externalId,
+                    InternalThing = internalId
+                });
+            }
+        }
+
+        /// <summary>
+        /// Pops the <see cref="CreateLogEntryDialog"/> and based on its result, either registers a new ModelLogEntry to the <see cref="transaction"/> or not
+        /// </summary>
+        /// <param name="transaction">The <see cref="IThingTransaction"/> that will get the changes registered to</param>
+        /// <returns>A boolean result, true if the user pressed OK, otherwise false</returns>
+        private bool TrySupplyingAndCreatingLogEntry(ThingTransaction transaction)
+        {
+            var vm = new CreateLogEntryDialogViewModel();
+
+            var dialogResult = this.navigation
+                .ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(vm);
+
+            if (dialogResult != true)
+            {
+                return false;
+            }
+
+            this.hubController.RegisterNewLogEntryToTransaction(vm.LogEntryContent, transaction);
+            return true;
         }
     }
 }

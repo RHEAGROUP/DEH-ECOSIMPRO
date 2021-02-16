@@ -76,7 +76,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void VerifyConnectCommand()
         {
             Assert.IsTrue(this.viewModel.ConnectCommand.CanExecute(null));
-            Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
+            Assert.AreEqual("Disconnect", this.viewModel.ConnectButtonText);
             Assert.DoesNotThrow(() => this.viewModel.ConnectCommand.Execute(null));
             this.dstAdapter.Verify(x => x.CloseSession(), Times.Once);
             Assert.AreEqual("Disconnect", this.viewModel.ConnectButtonText);

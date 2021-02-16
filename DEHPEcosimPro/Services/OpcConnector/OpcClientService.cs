@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
-    using System.Linq;
     using System.Threading.Tasks;
 
     using CDP4Dal;
@@ -38,8 +37,6 @@ namespace DEHPEcosimPro.Services.OpcConnector
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
-
-    using DevExpress.Data.Helpers;
 
     using Opc.Ua;
     using Opc.Ua.Client;
@@ -302,6 +299,24 @@ namespace DEHPEcosimPro.Services.OpcConnector
         }
 
         /// <summary>
+        /// Writes a value to a node
+        /// </summary>
+        /// <typeparam name="T">The data type</typeparam>
+        /// <param name="nodeId">The <see cref="NodeId"/> of the node to update</param>
+        /// <param name="value">The value to write</param>
+        /// <returns>A value indicating whether the write operation succeed</returns>
+        public bool WriteNode<T>(NodeId nodeId, T value)
+        {
+            var statusCode = this.sessionHandler.WriteNode<T>(nodeId, value);
+
+            this.statusBarControl.Append(statusCode.Code == 0 
+                ? $"The value ({value}) has been successfuly written." 
+                : $"Failed to write value ({value}) to the target node. {statusCode}");
+
+            return statusCode.Code == 0;
+        }
+
+        /// <summary>
         /// The <see cref="KeepAliveEventHandler"/> that is used to keep the <see cref="Opc.Ua.Client.Session"/> alive
         /// </summary>
         /// <param name="sender">The <see cref="Opc.Ua.Client.Session"/> object</param>
@@ -312,6 +327,7 @@ namespace DEHPEcosimPro.Services.OpcConnector
             if (this.sessionHandler.KeepAliveStopped)
             {
                 this.OpcClientStatusCode = OpcClientStatusCode.KeepAliveStopped;
+                this.CloseSession();
                 return;
             }
 

@@ -24,14 +24,17 @@
 
 namespace DEHPEcosimPro
 {
+    using System;
     using System.Reflection;
     using System.Windows;
+    using System.Windows.Threading;
 
     using Autofac;
 
     using DEHPCommon;
     using DEHPCommon.MappingEngine;
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
@@ -42,6 +45,7 @@ namespace DEHPEcosimPro
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.NetChangePreview;
     using DEHPEcosimPro.Views;
 
     using DevExpress.Xpf.Core;
@@ -61,12 +65,19 @@ namespace DEHPEcosimPro
         public App(ContainerBuilder containerBuilder = null)
         {
             this.Exit += this.OnExit;
+            AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainUnhandledException;
             var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
             RegisterTypes(containerBuilder);
             RegisterViewModels(containerBuilder);
             AppContainer.BuildContainer(containerBuilder);
+        }
+
+        private void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var errorMessage = $"Current domain An unhandled exception occurred: {e.ExceptionObject}";
+            MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         /// <summary>
@@ -77,7 +88,6 @@ namespace DEHPEcosimPro
         private void OnExit(object sender, ExitEventArgs e)
         {
             var opcClientHandler = AppContainer.Container.Resolve<IOpcSessionHandler>();
-            opcClientHandler?.ClearSubscriptions();
             opcClientHandler?.CloseSession();
         }
 
@@ -117,12 +127,16 @@ namespace DEHPEcosimPro
         private static void RegisterViewModels(ContainerBuilder containerBuilder)
         {
             containerBuilder.RegisterType<MainWindowViewModel>().As<IMainWindowViewModel>().SingleInstance();
-            containerBuilder.RegisterType<HubDataSourceViewModel>().As<IHubDataSourceViewModel>();
-            containerBuilder.RegisterType<DstBrowserHeaderViewModel>().As<IDstBrowserHeaderViewModel>();
-            containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>();
+            containerBuilder.RegisterType<HubDataSourceViewModel>().As<IHubDataSourceViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DstBrowserHeaderViewModel>().As<IDstBrowserHeaderViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DstDataSourceViewModel>().As<IDstDataSourceViewModel>().SingleInstance();
             containerBuilder.RegisterType<DstLoginViewModel>().As<IDstLoginViewModel>();
-            containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>();
-            containerBuilder.RegisterType<MappingConfigurationDialogViewModel>().As<IMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<DstVariablesControlViewModel>().As<IDstVariablesControlViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DstMappingConfigurationDialogViewModel>().As<IDstMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<HubMappingConfigurationDialogViewModel>().As<IHubMappingConfigurationDialogViewModel>();
+            containerBuilder.RegisterType<EcosimProTransferControlViewModel>().As<ITransferControlViewModel>().SingleInstance();
+            containerBuilder.RegisterType<HubNetChangePreviewViewModel>().As<IHubNetChangePreviewViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DstNetChangePreviewViewModel>().As<IDstNetChangePreviewViewModel>().SingleInstance();
         }
     }
 }

@@ -35,9 +35,12 @@ namespace DEHPEcosimPro.DstController
 
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Services.OpcConnector;
+    using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Opc.Ua;
-    
+
+    using ReactiveUI;
+
     /// <summary>
     /// Interface definition for <see cref="DstController"/>
     /// </summary>
@@ -84,14 +87,14 @@ namespace DEHPEcosimPro.DstController
         IList<ReferenceDescription> References { get; }
 
         /// <summary>
-        /// Gets the collection of <see cref="ExternalIdentifierMap"/>s
-        /// </summary>
-        IEnumerable<ExternalIdentifierMap> AvailablExternalIdentifierMap { get; }
-
-        /// <summary>
         /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
         /// </summary>
-        IEnumerable<ElementDefinition> ElementDefinitionParametersDstVariablesMaps { get; }
+        ReactiveList<ElementDefinition> DstMapResult { get; }
+
+        /// <summary>
+        /// Gets the colection of mapped <see cref="ReferenceDescription"/>
+        /// </summary>
+        ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
@@ -154,23 +157,61 @@ namespace DEHPEcosimPro.DstController
         void CloseSession();
 
         /// <summary>
-        /// Map the provided object using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A assert whether the mapping was successful</returns>
-        bool Map(List<VariableRowViewModel> dstVariables);
+        void Map(List<VariableRowViewModel> dstVariables);
+
+        /// <summary>
+        /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
+
+        /// <summary>
+        /// Transfers the mapped variables to the Dst data source
+        /// </summary>
+        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
+        void TransferMappedThingsToDst();
+
+        /// <summary>
+        /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <returns>An assert</returns>
+        bool IsVariableWritable(ReferenceDescription reference);
+
+        /// <summary>
+        /// Reads a node and gets its states information
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
+        /// <returns>The <see cref="DataValue"/></returns>
+        DataValue ReadNode(ReferenceDescription reference);
 
         /// <summary>
         /// Transfers the mapped variables to the Hub data source
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        Task Transfer();
+        Task TransferMappedThingsToHub();
+
+        /// <summary>
+        /// Updates the configured mapping
+        /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
+        void UpdateExternalIdentifierMap();
 
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
-        /// <returns>A awaitable <see cref="ExternalIdentifierMap"/></returns>
-        Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
+        /// <returns>A newly created <see cref="DstController.ExternalIdentifierMap"/></returns>
+        ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
+
+        /// <summary>
+        /// Adds one correspondance to the <see cref="IdCorrespondences"/>
+        /// </summary>
+        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
+        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
+        void AddToExternalIdentifierMap(Guid internalId, string externalId);
     }
 }
