@@ -82,11 +82,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         ReactiveList<VariableRowViewModel> Variables { get; }
 
         /// <summary>
-        /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
-        /// </summary>
-        void InitializesCommandsAndObservableSubscriptions();
-
-        /// <summary>
         /// Updates the mapping based on the available 10-25 elements
         /// </summary>
         void UpdatePropertiesBasedOnMappingConfiguration();

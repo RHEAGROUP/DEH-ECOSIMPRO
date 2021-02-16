@@ -296,10 +296,17 @@ namespace DEHPEcosimPro.MappingRules
             var parameterType = this.Bake<SampledFunctionParameterType>(x =>
             {
                 x.Name = this.dstParameterName;
-                x.ShortName = this.dstParameterName.Replace('.', '_');
+                
+                x.ShortName = this.dstParameterName
+                    .Replace('.', '_')
+                    .Replace("'", "");
+
                 x.Iid = Guid.NewGuid();
                 x.Container = this.ReferenceDataLibrary;
-                x.InterpolationPeriod = new ValueArray<string>(new List<string>() { "0", string.Empty });
+
+                x.InterpolationPeriod = new ValueArray<string>(
+                    new List<string>() { "0", string.Empty });
+
                 x.Symbol = this.dstParameterName;
             });
 
@@ -381,34 +388,6 @@ namespace DEHPEcosimPro.MappingRules
         }
 
         /// <summary>
-        /// Creates the <see cref="CompoundParameterType"/> for time tagged values
-        /// </summary>
-        /// <returns>A <see cref="CompoundParameterType"/></returns>
-        private CompoundParameterType CreateCompoundParameterTypeForEcosimTimetaggedValues()
-        {
-            return this.Bake<CompoundParameterType>(x =>
-            {
-                x.ShortName = this.dstParameterName;
-                x.Name = this.dstParameterName;
-                x.Symbol = "ttv";
-
-                x.Component.Add(this.Bake<ParameterTypeComponent>(
-                    p =>
-                    {
-                        p.ShortName = "TimeStamp";
-                        p.ParameterType = this.Bake<DateTimeParameterType>();
-                    }));
-
-                x.Component.Add(this.Bake<ParameterTypeComponent>(
-                    p =>
-                    {
-                        p.ShortName = SampledFunctionParameterTypeValueMemberName;
-                        p.ParameterType = this.Bake<SimpleQuantityKind>();
-                    }));
-            });
-        }
-
-        /// <summary>
         /// Initializes a new <see cref="Thing"/> of type <typeparamref name="TThing"/>
         /// </summary>
         /// <typeparam name="TThing">The <see cref="Type"/> from which the constructor is invoked</typeparam>
@@ -429,9 +408,7 @@ namespace DEHPEcosimPro.MappingRules
         {
             var valueSet = (ParameterValueSetBase)parameter.QueryParameterBaseValueSet(variable.SelectedOption, variable.SelectedActualFiniteState);
 
-            if (parameter.ParameterType is SampledFunctionParameterType parameterType 
-                && parameterType.DependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeValueMemberName)
-                && parameterType.IndependentParameterType.Any(x => x.ParameterType.Name == SampledFunctionParameterTypeTimestampMemberName))
+            if (parameter.ParameterType is SampledFunctionParameterType)
             {
                 var values = new List<string>();
 

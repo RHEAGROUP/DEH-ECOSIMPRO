@@ -55,7 +55,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
     using ReactiveUI;
 
     [TestFixture]
-    public class EcosimProNetChangePreviewViewModelTestFixture
+    public class HubNetChangePreviewViewModelTestFixture
     {
         private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
         private Mock<IDstController> dstController;

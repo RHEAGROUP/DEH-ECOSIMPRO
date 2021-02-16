@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Windows;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -42,12 +43,17 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
+
+    using DevExpress.Mvvm;
+    using DevExpress.Mvvm.Native;
 
     using Moq;
 
@@ -55,7 +61,9 @@ namespace DEHPEcosimPro.Tests.DstController
 
     using Opc.Ua;
 
-    using Node = DevExpress.XtraCharts.Native.Node;
+    using ReactiveUI;
+
+    using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
 
     [TestFixture, Apartment(ApartmentState.STA)]
     public class DstControllerTestFixture
@@ -76,6 +84,7 @@ namespace DEHPEcosimPro.Tests.DstController
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
         private Iteration iteration;
         private Assembler assembler;
+        private Mock<INavigationService> navigationService;
 
         [SetUp]
         public void Setup()
@@ -133,6 +142,8 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.mappingEngine = new Mock<IMappingEngine>();
 
+            this.navigationService = new Mock<INavigationService>();
+
             this.opcClient = new Mock<IOpcClientService>();
             this.opcClient.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
             this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
@@ -140,6 +151,9 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(Variables.Server_ServerStatus_StartTime)).Returns(new DataValue(new DateTime(2021, 1, 1)));
             this.opcClient.Setup(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime)).Returns(new DataValue(new DateTime(2021, 1, 3)));
             
+            this.opcClient.Setup(
+                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(true);
+
             this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(new List<ReferenceDescription>()
             {
                 new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable},
@@ -149,7 +163,9 @@ namespace DEHPEcosimPro.Tests.DstController
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.statusBarViewModel.Setup(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()));
 
-            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object);
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object, 
+                this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
+                this.navigationService.Object);
         }
 
         [Test]
@@ -163,6 +179,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.IsNotEmpty(this.controller.Methods);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
             Assert.IsEmpty(this.controller.DstMapResult);
+            Assert.IsEmpty(this.controller.HubMapResult);
             Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
             Assert.IsNotEmpty(this.controller.ThisToolName);
@@ -210,17 +227,89 @@ namespace DEHPEcosimPro.Tests.DstController
                 Container = this.iteration
             };
 
-            Assert.DoesNotThrowAsync(() => this.controller.Map(new List<VariableRowViewModel>()));
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();
-            Assert.ThrowsAsync<InvalidOperationException>(() => this.controller.Map(default(List<VariableRowViewModel>)));
+            Assert.Throws<InvalidOperationException>(() => this.controller.Map(default(List<VariableRowViewModel>)));
 
             this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(2));
         }
-        
+
         [Test]
-        public void VerifyTransfer()
+        public void VerifyMapElementDefinitionToDst()
         {
+            this.controller.ExternalIdentifierMap = new ExternalIdentifierMap();
+
+            var mappedElement = new List<MappedElementDefinitionRowViewModel>()
+            {
+                new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = new Parameter(),
+                    SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                    SelectedVariable = new VariableRowViewModel((
+                        new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                        new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                },
+                new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = new Parameter(),
+                    SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                    SelectedVariable = new VariableRowViewModel((
+                        new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                        new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                }
+            };
+
+            Assert.DoesNotThrow(() => this.controller.Map(mappedElement));
+            Assert.AreEqual(2, this.controller.HubMapResult.Count);
+        }
+
+        [Test]
+        public void VerifyTransferToDst()
+        {
+            this.controller.ExternalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
+            {
+                Container = new ModelReferenceDataLibrary(Guid.NewGuid(), this.assembler.Cache, null)
+                {
+                    Container = new SiteDirectory(Guid.NewGuid(), this.assembler.Cache, null)
+                }
+            };
+
+            this.controller.HubMapResult.AddRange(
+                new List<MappedElementDefinitionRowViewModel>()
+                {
+                    new MappedElementDefinitionRowViewModel()
+                    {
+                        SelectedParameter = new Parameter(),
+                        SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                        SelectedVariable = new VariableRowViewModel((
+                            new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                            new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
+                    },
+                    new MappedElementDefinitionRowViewModel()
+                    {
+                        SelectedParameter = new Parameter(),
+                        SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                        SelectedVariable = new VariableRowViewModel((
+                            new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                            new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
+                    }
+                });
+
+            Assert.DoesNotThrow(() => this.controller.TransferMappedThingsToDst());
+
+            this.opcClient.Verify(
+                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>()), 
+                Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyTransferToHub()
+        {
+            this.navigationService.Setup(
+                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                It.IsAny<CreateLogEntryDialogViewModel>())).Returns(true);
+
             this.controller.ExternalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
             {
                 Container = new ModelReferenceDataLibrary(Guid.NewGuid(), this.assembler.Cache, null)
@@ -228,9 +317,36 @@ namespace DEHPEcosimPro.Tests.DstController
                     Container = new SiteDirectory(Guid.NewGuid(), this.assembler.Cache, null)
                 }
             };
+            
+            Assert.DoesNotThrowAsync(async () => await this.controller.TransferMappedThingsToHub());
+
+            this.controller.DstMapResult.Add(new ElementDefinition());
+
 
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
+            this.navigationService.Setup(
+                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                    It.IsAny<CreateLogEntryDialogViewModel>())).Returns(false);
+            
+            Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
+            
+            this.navigationService.Setup(
+                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                    It.IsAny<CreateLogEntryDialogViewModel>())).Returns(default(bool?));
+            
+            Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
+            
+            this.controller.DstMapResult.Clear();
+
+            Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
+            
+            this.navigationService.Verify(
+                x => 
+                    x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                        It.IsAny<CreateLogEntryDialogViewModel>())
+                , Times.Exactly(3));
+            
             this.hubController.Verify(
                 x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(2));
 
@@ -259,16 +375,8 @@ namespace DEHPEcosimPro.Tests.DstController
                 new IdCorrespondence() { ExternalId = "-1" }
             });
 
-            Assert.DoesNotThrowAsync(() => this.controller.UpdateExternalIdentifierMap());
-
-            this.hubController.Verify(
-                x=> x.Write(It.IsAny<ThingTransaction>()),
-                Times.Once);
-
-            this.hubController.Verify(
-                x => x.Delete(
-                    It.IsAny<IEnumerable<IdCorrespondence>>(), It.IsAny<Action<ExternalIdentifierMap, IdCorrespondence>>(), It.IsAny<bool>()),
-                Times.Once);
+            Assert.DoesNotThrow(() => this.controller.UpdateExternalIdentifierMap());
+            Assert.IsEmpty(this.controller.IdCorrespondences);
 
             Assert.AreEqual(4, this.controller.ExternalIdentifierMap.Correspondence.Count());
             Assert.IsNotNull(this.controller.ExternalIdentifierMap.Correspondence.SingleOrDefault(x => x.ExternalId == oldCorrespondenceExternalId));
@@ -319,11 +427,95 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyCreateExternalIdentifierMap()
         {
-            Assert.DoesNotThrowAsync(async () => await this.controller.CreateExternalIdentifierMap("Name"));
+            var newExternalIdentifierMap = this.controller.CreateExternalIdentifierMap("Name");
+            this.controller.ExternalIdentifierMap = newExternalIdentifierMap;
+            Assert.AreEqual("Name", this.controller.ExternalIdentifierMap.Name);
+            Assert.AreEqual("Name", this.controller.ExternalIdentifierMap.ExternalModelName);
+        }
 
-            this.hubController.Verify(x => x.CreateOrUpdate(
-                It.IsAny<ExternalIdentifierMap>(), It.IsAny<Action<Iteration, ExternalIdentifierMap>>(), 
-                It.IsAny<bool>()), Times.Once);
+        [Test]
+        public void VerifyAddToExternalIdentifierMap()
+        {
+            this.controller.ExternalIdentifierMap = this.controller.CreateExternalIdentifierMap("test");
+            var internalId = Guid.NewGuid();
+            this.controller.AddToExternalIdentifierMap(internalId, string.Empty);
+            Assert.IsNotEmpty(this.controller.IdCorrespondences);
+            this.controller.AddToExternalIdentifierMap(internalId, string.Empty);
+            this.controller.AddToExternalIdentifierMap(Guid.NewGuid(), string.Empty);
+            Assert.AreEqual(2, this.controller.IdCorrespondences.Count);
+        }
+
+        [Test]
+        public void VerifyReadNode()
+        {
+            Assert.DoesNotThrow(() => this.controller.ReadNode(new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") }));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyIsVariableWritable()
+        {
+            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(true);
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(42)));
+            var referenceDescription = new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Mos.a") };
+            Assert.IsTrue(this.controller.IsVariableWritable(referenceDescription));
+            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(false);
+            Assert.IsFalse(this.controller.IsVariableWritable(referenceDescription));
+            this.opcClient.Verify(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public void VerifyUpdateValueSets()
+        {
+            var element = new ElementDefinition();
+            
+            var parameter = new Parameter()
+            {
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Manual = new ValueArray<string>(new [] {"nok"}),
+                        ValueSwitch = ParameterSwitchKind.MANUAL
+                    }
+                }
+            };
+
+            var elementUsage = new ElementUsage()
+            {
+                ElementDefinition = element
+            };
+
+            var parameterOverride = new ParameterOverride()
+            {
+                Parameter = parameter,
+                ValueSet =
+                {
+                    new ParameterOverrideValueSet()
+                    {
+                        Reference = new ValueArray<string>(new[] { "nokeither" }),
+                        ValueSwitch = ParameterSwitchKind.REFERENCE
+                    }
+                }
+            };
+
+            element.Parameter.Add(parameter);
+            elementUsage.ParameterOverride.Add(parameterOverride);
+            element.ContainedElement.Add(elementUsage);
+
+            this.hubController.Setup(x => x.GetThingById(
+                It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter)).Returns(true);
+
+            this.hubController.Setup(x => x.GetThingById(
+                It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameterOverride)).Returns(true);
+
+            this.controller.DstMapResult.Add(element);
+
+            Assert.DoesNotThrowAsync(async () => await this.controller.UpdateParametersValueSets());
+            
+            this.hubController.Verify(x => 
+                x.Write(It.IsAny<ThingTransaction>()), Times.Once);
         }
     }
 }

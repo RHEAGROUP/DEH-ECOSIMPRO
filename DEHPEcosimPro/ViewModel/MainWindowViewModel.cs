@@ -26,7 +26,9 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Reactive.Linq;
+    using System.Windows;
     using System.Windows.Input;
+    using System.Windows.Threading;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
@@ -111,7 +113,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="dstSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="hubNetChangePreviewViewModel">The <see cref="IHubNetChangePreviewViewModel"/></param>
-        /// <param name="hubNetChangePreviewViewModel">The <see cref="IDstNetChangePreviewViewModel"/></param>
+        /// <param name="dstNetChangePreviewViewModel">The <see cref="IDstNetChangePreviewViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
@@ -136,8 +138,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.ChangeMappingDirection = ReactiveCommand.Create();
             
-            this.ChangeMappingDirection.ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.ChangeMappingDirectionExecute());
+            this.ChangeMappingDirection.Subscribe(_ => this.ChangeMappingDirectionExecute());
         }
 
         /// <summary>

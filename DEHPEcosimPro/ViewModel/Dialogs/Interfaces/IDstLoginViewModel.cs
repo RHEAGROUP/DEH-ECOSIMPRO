@@ -63,7 +63,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// <summary>
         /// Gets the server login command
         /// </summary>
-        ReactiveCommand<object> LoginCommand { get; }
+        ReactiveCommand<Unit> LoginCommand { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance

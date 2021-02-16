@@ -29,11 +29,13 @@ namespace DEHPEcosimPro.ViewModel
     using System.Linq;
     using System.Reactive;
     using System.Reactive.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Windows;
 
     using CDP4Dal;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.Events;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
@@ -105,17 +107,19 @@ namespace DEHPEcosimPro.ViewModel
                 .Subscribe(this.UpdateCanTransfer);
 
             this.TransferCommand = ReactiveCommand.CreateAsyncTask(
-                this.WhenAnyValue(x => x.CanTransfer), 
-                _ => this.TransferCommandExecute(),
+                this.WhenAnyValue(x => x.CanTransfer),
+                async _ => await this.TransferCommandExecute(),
                 RxApp.MainThreadScheduler);
 
-            //this.TransferCommand.Subscribe(_ => this.TransferCommandExecute());
-
+            this.TransferCommand.ThrownExceptions
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(e => this.statusBar.Append($"{e.Message}", StatusBarMessageSeverity.Error));
+            
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
-            this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel, 
-                _ => this.CancelTransfer(),
+
+            this.CancelCommand = ReactiveCommand.CreateAsyncTask(canCancel,
+                async _ => await this.CancelTransfer(),
                 RxApp.MainThreadScheduler);
-            //this.CancelCommand.Subscribe(_ => this.CancelTransfer());
         }
 
         /// <summary>
@@ -138,13 +142,14 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Executes the transfert command
         /// </summary>
+        /// <returns>A <see cref="Task"/></returns>
         private async Task TransferCommandExecute()
         {
             var timer = new Stopwatch();
             timer.Start();
             this.AreThereAnyTransferInProgress = true;
             this.IsIndeterminate = true;
-            Application.Current.Dispatcher.Invoke(() => this.statusBar.Append($"Transfers in progress"));
+            this.statusBar.Append($"Transfers in progress");
             await this.dstController.TransferMappedThingsToHub();
             this.dstController.TransferMappedThingsToDst();
             timer.Stop();

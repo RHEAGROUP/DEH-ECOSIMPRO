@@ -27,6 +27,8 @@ namespace DEHPEcosimPro.ViewModel
     using System;
 
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
 
     using DevExpress.CodeParser.Diagnostics;
 
@@ -79,6 +81,21 @@ namespace DEHPEcosimPro.ViewModel
         /// <see cref="ReactiveCommand{T}"/> for connecting to a data source
         /// </summary>
         public ReactiveCommand<object> ConnectCommand { get; set; }
+
+        /// <summary>
+        /// The <see cref="IObjectBrowserViewModel"/>
+        /// </summary>
+        public IObjectBrowserViewModel ObjectBrowser { get; set; }
+
+        /// <summary>
+        /// The <see cref="IPublicationBrowserViewModel"/>
+        /// </summary>
+        public IPublicationBrowserViewModel PublicationBrowser { get; set; }
+
+        /// <summary>
+        /// The <see cref="IHubBrowserHeaderViewModel"/>
+        /// </summary>
+        public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
 
         /// <summary>
         /// Initializes the <see cref="ReactiveCommand{T}"/>

@@ -76,7 +76,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
             
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(Task.CompletedTask);
+            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>()));
 
             this.variableRowViewModels = new List<VariableRowViewModel> 
             { 
@@ -139,13 +139,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel.CloseWindowBehavior = this.closeBehavior.Object;
             this.viewModel.ContinueCommand.Execute(null);
-            this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Returns(Task.CompletedTask);
-            this.viewModel.ContinueCommand.Execute(null);
             this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>())).Throws<InvalidOperationException>();
             this.viewModel.ContinueCommand.Execute(null);
 
-            this.closeBehavior.Verify(x => x.Close(), Times.Exactly(2));
-            this.dstController.Verify(x => x.Map(It.IsAny<List<VariableRowViewModel>>()), Times.Exactly(3));
+            this.closeBehavior.Verify(x => x.Close(), Times.Once);
+            this.dstController.Verify(x => x.Map(It.IsAny<List<VariableRowViewModel>>()), Times.Exactly(2));
         }
 
         [Test]

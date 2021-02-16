@@ -28,6 +28,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System.Linq;
     using System.Reactive;
     using System.Reactive.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using CDP4Common.EngineeringModelData;
@@ -163,7 +164,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Gets the server login command
         /// </summary>
-        public ReactiveCommand<object> LoginCommand { get; private set; }
+        public ReactiveCommand<Unit> LoginCommand { get; private set; }
         
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
@@ -271,10 +272,37 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     (!string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(username) || !requiresAuthentication)
                     && !string.IsNullOrWhiteSpace(uri) && (map != null || !string.IsNullOrWhiteSpace(mapNew)));
 
-            this.LoginCommand = ReactiveCommand.Create(canLogin);
-            this.LoginCommand.Subscribe(_ => this.ExecuteLogin());
+            this.LoginCommand = ReactiveCommand.CreateAsyncTask(canLogin, 
+                async _ => await this.ExecuteLogin(), RxApp.MainThreadScheduler);
+            
+            this.LoginCommand.ThrownExceptions
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(exception =>
+                {
+                    this.statusBarControlView.Append($"Loggin failed: {exception.Message}", StatusBarMessageSeverity.Error);
+                    this.IsBusy = false;
+                });
+
+            this.LoginCommand.ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.LoginCommandIsDoneExecuting());
 
             this.WhenAnyValue(x => x.CreateNewMappingConfigurationChecked).Subscribe(_ => this.UpdateExternalIdentifierSelectors());
+        }
+
+        private void LoginCommandIsDoneExecuting()
+        {
+            this.IsBusy = false;
+            this.LoginSuccessful = this.dstController.IsSessionOpen;
+
+            if (this.LoginSuccessful)
+            {
+                this.statusBarControlView.Append("Loggin successful");
+                this.CloseWindowBehavior?.Close();
+            }
+            else
+            {
+                this.statusBarControlView.Append($"Loggin failed", StatusBarMessageSeverity.Info);
+            }
         }
 
         /// <summary>
@@ -315,47 +343,26 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Executes login command
         /// </summary>
-        private void ExecuteLogin()
+        private async Task ExecuteLogin()
         {
             this.IsBusy = true;
 
-            this.ProcessExternalIdentifierMap().GetAwaiter().GetResult();
+            this.ProcessExternalIdentifierMap();
 
             this.statusBarControlView.Append("Loggin in...");
 
-            try
-            {
-                var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
-                this.dstController.Connect(this.Uri, true, credentials).GetAwaiter().GetResult(); ;
-                this.LoginSuccessful = this.dstController.IsSessionOpen;
+            var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
+            await this.dstController.Connect(this.Uri, true, credentials);
 
-                if (this.LoginSuccessful)
-                {
-                    this.statusBarControlView.Append("Loggin successful");
-                    Task.Delay(1000);
-                    this.CloseWindowBehavior?.Close();
-                }
-                else
-                {
-                    this.statusBarControlView.Append($"Loggin failed", StatusBarMessageSeverity.Info);
-                }
-            }
-            catch (Exception exception)
-            {
-                this.statusBarControlView.Append($"Loggin failed: {exception.Message}", StatusBarMessageSeverity.Error);
-            }
-            finally
-            {
-                this.IsBusy = false;
-            }
+            this.LoginCommandIsDoneExecuting();
         }
 
         /// <summary>
         /// Creates a new <see cref="ExternalIdentifierMap"/> and or set the <see cref="IDstController.ExternalIdentifierMap"/>
         /// </summary>
-        private async Task ProcessExternalIdentifierMap()
+        private void ProcessExternalIdentifierMap()
         {
-            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ?? await
+            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ??
                                                        this.dstController.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
         }
     }

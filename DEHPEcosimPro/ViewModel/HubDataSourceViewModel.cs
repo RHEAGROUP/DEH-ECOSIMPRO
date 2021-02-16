@@ -72,21 +72,6 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstController dstController;
 
         /// <summary>
-        /// The <see cref="IObjectBrowserViewModel"/>
-        /// </summary>
-        public IObjectBrowserViewModel ObjectBrowser { get; set; }
-
-        /// <summary>
-        /// The <see cref="IPublicationBrowserViewModel"/>
-        /// </summary>
-        public IPublicationBrowserViewModel PublicationBrowser { get; set; }
-
-        /// <summary>
-        /// The <see cref="IHubBrowserHeaderViewModel"/>
-        /// </summary>
-        public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
-
-        /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
         /// </summary>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
@@ -135,7 +120,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Executes the <see cref="IObjectBrowserViewModel.MapCommand"/>
         /// </summary>
-        private void MapCommandExecute()
+        public void MapCommandExecute()
         {
             var viewModel = AppContainer.Container.Resolve<IHubMappingConfigurationDialogViewModel>();
             

@@ -29,17 +29,27 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System.Reactive.Concurrency;
     using System.Threading;
 
+    using Autofac;
+
+    using CDP4Common.EngineeringModelData;
+    using CDP4Common.Types;
+
+    using DEHPCommon;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Dialogs;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using DevExpress.XtraPrinting.Native;
 
@@ -57,7 +67,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IObjectBrowserViewModel> objectBrowser;
         private Mock<IPublicationBrowserViewModel> publicationBrowser;
         private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
-        private IHubDataSourceViewModel viewModel;
+        private HubDataSourceViewModel viewModel;
         private Mock<IHubBrowserHeaderViewModel> hubBrowserHeader;
         private Mock<IDstController> dstController;
 
@@ -76,7 +86,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.objectBrowser.Setup(x => x.CanMap).Returns(new Mock<IObservable<bool>>().Object);
             this.objectBrowser.Setup(x => x.MapCommand).Returns(ReactiveCommand.Create());
             this.objectBrowser.Setup(x => x.Things).Returns(new ReactiveList<BrowserViewModelBase>());
-
+            
             this.publicationBrowser = new Mock<IPublicationBrowserViewModel>();
 
             this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
@@ -108,6 +118,43 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.hubController.Verify(x => x.Close(), Times.Once);
             this.navigationService.Verify(x => x.ShowDialog<Login>(), Times.Once);
+        }
+
+        [Test]
+        public void VerifyMapCommand()
+        {
+            var dialog = new Mock<IHubMappingConfigurationDialogViewModel>();
+
+            dialog.Setup(x => x.Elements)
+                .Returns(new ReactiveList<ElementDefinitionRowViewModel>());
+
+            var container = new ContainerBuilder();
+            container.RegisterInstance(dialog.Object).As<IHubMappingConfigurationDialogViewModel>();
+
+            AppContainer.Container = container.Build();
+
+            this.objectBrowser.Setup(x => x.SelectedThings)
+                .Returns(new ReactiveList<object>());
+
+            this.viewModel.ObjectBrowser.SelectedThings.Add(
+                new ElementDefinition()
+                {
+                    Parameter =
+                    {
+                        new Parameter()
+                        {
+                            ValueSet = { new ParameterValueSet()}
+                        }
+                    }
+                });
+
+            Assert.IsTrue(this.viewModel.ObjectBrowser.MapCommand.CanExecute(null));
+            Assert.DoesNotThrow(() => this.viewModel.ObjectBrowser.MapCommand.Execute(null));
+            Assert.DoesNotThrow(() => this.viewModel.MapCommandExecute());
+            
+            this.navigationService.Verify(x => 
+                x.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(It.IsAny<IHubMappingConfigurationDialogViewModel>()),
+                Times.Exactly(2));
         }
     }
 }

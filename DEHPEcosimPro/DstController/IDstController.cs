@@ -160,15 +160,13 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
-        /// <returns>A <see cref="Task"/></returns>
-        Task Map(List<VariableRowViewModel> dstVariables);
+        void Map(List<VariableRowViewModel> dstVariables);
 
         /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
-        /// <returns>A <see cref="Task"/></returns>
-        Task Map(List<MappedElementDefinitionRowViewModel> mappedElement);
+        void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
 
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
@@ -200,14 +198,14 @@ namespace DEHPEcosimPro.DstController
         /// Updates the configured mapping
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        Task UpdateExternalIdentifierMap();
+        void UpdateExternalIdentifierMap();
 
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
         /// <returns>A newly created <see cref="DstController.ExternalIdentifierMap"/></returns>
-        Task<ExternalIdentifierMap> CreateExternalIdentifierMap(string newName);
+        ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
 
         /// <summary>
         /// Adds one correspondance to the <see cref="IdCorrespondences"/>
