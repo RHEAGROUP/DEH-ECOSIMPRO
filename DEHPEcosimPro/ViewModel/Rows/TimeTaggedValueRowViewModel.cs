@@ -62,14 +62,30 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="TimeDelta"/>
+        /// </summary>
+        private TimeSpan timeDelta;
+
+        /// <summary>
+        /// Gets the value of the represented reference
+        /// </summary>
+        public TimeSpan TimeDelta
+        {
+            get => this.timeDelta;
+            set => this.RaiseAndSetIfChanged(ref this.timeDelta, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="TimeTaggedValueRowViewModel"/>
         /// </summary>
         /// <param name="value">The <see cref="object"/> value</param>
         /// <param name="serverTimestamp">The <see cref="DateTime"/> timeStamp</param>
-        public TimeTaggedValueRowViewModel(object value, DateTime serverTimestamp)
+        /// <param name="timestampOfReference">The <see cref="TimeDelta"/></param>
+        public TimeTaggedValueRowViewModel(object value, DateTime serverTimestamp, DateTime timestampOfReference = default)
         {
             this.value = value;
             this.TimeStamp = serverTimestamp;
+            this.TimeDelta = timestampOfReference == default ? default : serverTimestamp - timestampOfReference;
         }
     }
 }

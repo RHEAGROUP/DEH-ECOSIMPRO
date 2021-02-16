@@ -340,7 +340,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             if (!this.Values.Any(x => x.Value == value && x.TimeStamp == timeStamp))
             {
-                this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStamp));
+                this.Values.Add(new TimeTaggedValueRowViewModel(
+                    value, timeStamp, 
+                    this.Values.FirstOrDefault()?.TimeStamp ?? default));
             }
         }
 

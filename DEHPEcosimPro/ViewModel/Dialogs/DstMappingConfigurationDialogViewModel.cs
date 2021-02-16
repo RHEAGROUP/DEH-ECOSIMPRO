@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -189,10 +190,33 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.UpdateAvailableParameters();
                     this.UpdateAvailableElementUsages();
                 }));
-
+            
+            this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                {
+                    this.UpdateAvailableScales();
+                    this.UpdateAvailableParameters();
+                }));
+            
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.UpdateAvailableActualFiniteStates));
+        }
+
+        /// <summary>
+        /// Updates the <see cref="AvailableScales"/>
+        /// </summary>
+        private void UpdateAvailableScales()
+        {
+            if (this.SelectedThing?.SelectedParameterType is SampledFunctionParameterType sampledFunctionParameterType
+            && sampledFunctionParameterType.IndependentParameterType
+                .FirstOrDefault(x => x.ParameterType == )
+            {
+                return;
+            }
+            
+            this.AvailableScales = this.SelectedThing.SelectedParameterType
         }
 
         /// <summary>
@@ -219,10 +243,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.AvailableParameterTypes.AddRange(this.HubController.GetSiteDirectory().SiteReferenceDataLibrary
                 .SelectMany(x => x.ParameterType).Where(
-                    x => x is CompoundParameterType parameterType 
-                         && parameterType.Component.Count == 2 
-                         && parameterType.Component.Count(
-                             x => x.ParameterType is DateTimeParameterType) == 1)
+                    x => x is SampledFunctionParameterType parameterType 
+                         && parameterType.IndependentParameterType.Count == 1 
+                         && parameterType.DependentParameterType.Count == 1)
                 .OrderBy(x => x.Name));
 
             this.UpdateAvailableParameters();
@@ -272,7 +295,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.AvailableParameters.Clear();
             }
 
-            if (this.selectedThing?.SelectedElementDefinition != null)
+            if (this.SelectedThing?.SelectedElementDefinition != null)
             {
                 this.AvailableParameters.AddRange(
                     this.SelectedThing.SelectedElementDefinition.Parameter
@@ -307,34 +330,43 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 foreach (var idCorrespondence in variable.MappingConfigurations)
                 {
-                    if (this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, out Thing thing))
+                    if (!this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, out Thing thing))
                     {
-                        Action action = thing switch
+                        continue;
+                    }
+
+                    Action action = thing switch
+                    {
+                        ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
+                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
+
+                        ElementUsage elementUsage => (() =>
                         {
-                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
-                                this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
-
-                            ElementUsage elementUsage => (() =>
+                            if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
+                                .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
                             {
-                                if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
-                                    .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
-                                {
-                                    variable.SelectedElementUsages.Add(usage);
-                                }
-                            }),
+                                variable.SelectedElementUsages.Add(usage);
+                            }
+                        }),
 
-                            Parameter parameter => (() => variable.SelectedParameter = 
-                                this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
-                                    .FirstOrDefault(p => p.Iid == thing.Iid)),
+                        Parameter parameter => (() => variable.SelectedParameter = 
+                            this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
+                                .FirstOrDefault(p => p.Iid == thing.Iid)),
 
-                            Option option => (() => variable.SelectedOption = option),
+                        Option option => (() => variable.SelectedOption = option),
 
-                            ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+                        ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
 
-                            _ => null
-                        };
+                        _ => null
+                    };
                         
-                        action?.Invoke();
+                    action?.Invoke();
+
+                    if (action is null &&
+                        this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, 
+                            out SampledFunctionParameterType parameterType))
+                    {
+                        variable.SelectedParameterType = parameterType;
                     }
                 }
             }

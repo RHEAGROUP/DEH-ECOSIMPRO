@@ -124,9 +124,9 @@
                                 </dxg:TableView>
                             </dxg:GridControl.View>
                             <dxg:GridControl.Columns>
-                                <dxg:GridColumn FieldName="TimeStamp">
+                                <dxg:GridColumn FieldName="TimeDelta" Header="Time Delta">
                                     <dxg:GridColumn.EditSettings>
-                                        <dxe:DateEditSettings Mask="yy-MM-dd HH:mm:ss.fffffff" MaskUseAsDisplayFormat="True"/>
+                                        <dxe:DateEditSettings Mask="HH:mm:ss.fffffff" MaskUseAsDisplayFormat="True"/>
                                     </dxg:GridColumn.EditSettings>
                                 </dxg:GridColumn>
                                 <dxg:GridColumn FieldName="Value"/>
