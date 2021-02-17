@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MappingDirectionToBooleanConverter.cs" company="RHEA System S.A.">
+// <copyright file="MappingDirectionToIndexConverter.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -25,7 +25,6 @@
 namespace DEHPEcosimPro.Converters
 {
     using System;
-    using System.Windows;
     using System.Windows.Data;
 
     using DEHPCommon.Enumerators;
