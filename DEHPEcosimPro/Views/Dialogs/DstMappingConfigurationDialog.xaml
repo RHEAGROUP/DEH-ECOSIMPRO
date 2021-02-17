@@ -10,6 +10,7 @@
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
         xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="Mapping Configuration Dialog" MinHeight="450" MinWidth="800">
     <Window.Resources>
@@ -100,7 +101,26 @@
                         </dxc:ChartControl.Diagram>
                     </dxc:ChartControl>
                     <Grid Margin="5" Grid.Column="1">
-                        <dxg:GridControl AutoGenerateColumns="None"
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid Margin="1" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"></ColumnDefinition>
+                                <ColumnDefinition Width="3*"></ColumnDefinition>
+                                <ColumnDefinition Width="4*"></ColumnDefinition>
+                                <ColumnDefinition Width="2*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Label Content="Timestep: "></Label>
+                            <dxe:SpinEdit MinValue="0" Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" CausesValidation="False"
+                                          EditValue="{Binding SelectedThing.SelectedTimeStep, UpdateSourceTrigger=PropertyChanged}"
+                                          ValidateOnTextInput="False" EditValueType="{x:Type system:Double}" ValidateOnEnterKeyPressed="False"/>
+                            <dxe:ComboBoxEdit Grid.Column="2" Margin="2" AutoComplete="True" 
+                                               SelectedItem="{Binding SelectedThing.SelectedTimeUnit}" ItemsSource="{Binding TimeSteps}"/>
+                            <Button HorizontalAlignment="Stretch" Margin="2,2,0,2" Grid.Column="3" Command="{Binding ApplyTimeStepOnSelectionCommand}">Apply</Button>
+                        </Grid>
+                        <dxg:GridControl Grid.Row="1" AutoGenerateColumns="None"
                                          EnableSmartColumnsGeneration="False"
                                          HorizontalAlignment="Left"
                                          VerticalAlignment="Stretch"
@@ -145,6 +165,7 @@
                             <RowDefinition></RowDefinition>
                             <RowDefinition></RowDefinition>
                             <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
                         <Label Grid.Row="0" Grid.Column="0" Content="Option:"></Label>
                         <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="0" DisplayMember="ShortName" ValueMember="Name"
@@ -162,14 +183,32 @@
                                 <dxe:CheckedTokenComboBoxStyleSettings NewTokenPosition="Far" AllowEditTokens="False"/>
                             </dxe:ComboBoxEdit.StyleSettings>
                         </dxe:ComboBoxEdit>
-                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" ShowNullTextForEmptyValue="True"
+                                          AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameterType}" AllowNullInput="False"
+                                          ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}"
+                                          ApplyItemTemplateToSelectedItem="True">
+                            <dxe:ComboBoxEdit.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} {1} {2}">
+                                                <Binding Path="Name" />
+                                                <Binding Path="IndependentParameterType.First().ParameterType.Name" />
+                                                <Binding Path="DependentParameterType.First().ParameterType.Name" />
+                                            </MultiBinding>
+                                        </TextBlock.Text></TextBlock>
+                                </DataTemplate>
+                            </dxe:ComboBoxEdit.ItemTemplate>
+                        </dxe:ComboBoxEdit>
+                        <Label Grid.Row="4" Grid.Column="0" Content="Parameter:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="ParameterType.Name" ValueMember="ParameterType.Name" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameter}" NullText="Create New Parameter" AllowNullInput="True"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameters}"
                                                                   ApplyItemTemplateToSelectedItem="True">
                         </dxe:ComboBoxEdit>
-                        <Label Grid.Row="4" Grid.Column="0" Content="Actual Finite State:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="4" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
+                        <Label Grid.Row="5" Grid.Column="0" Content="Actual Finite State:"></Label>
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="5" DisplayMember="Name" ValueMember="Name" NullText="No State Depent Parameter Selected" ShowNullTextForEmptyValue="True"
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedActualFiniteState}"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableActualFiniteStates}"
                                                                   ApplyItemTemplateToSelectedItem="True">

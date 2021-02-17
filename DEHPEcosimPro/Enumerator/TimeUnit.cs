@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TimeScale.cs" company="RHEA System S.A.">
+// <copyright file="TimeUnit.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,30 +22,40 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Rows
+namespace DEHPEcosimPro.Enumerator
 {
-    using System.Collections.Generic;
+    using System;
 
-    public class TimeScales
-    {
-        public IEnumerable<TimeScale> (this TimeScales ts) => 
-    } 
+    using DEHPEcosimPro.ViewModel.Rows;
 
-    public struct TimeScale
+    /// <summary>
+    /// Possible time units to use for discrete sampling of <see cref="TimeTaggedValueRowViewModel"/>
+    /// </summary>
+    public enum TimeUnit
     {
-        public int Unit { get; set; }
-        public Scale Scale { get; set; }
-    }
-
-    public enum Scale
-    {
+        /// <summary>
+        /// Represents the <see cref="DateTime.Millisecond"/>
+        /// </summary>
         MilliSecond,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Second"/>
+        /// </summary>
         Second,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Minute"/>
+        /// </summary>
         Minute,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Minute"/>
+        /// </summary>
         Hour,
-        Day,
-        Week,
-        Month,
-        Year
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Day"/>
+        /// </summary>
+        Day
     }
 }

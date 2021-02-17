@@ -72,7 +72,7 @@
                                 </Grid>
 
                                 <TabControl Name="HubEngineeringModelPreview" Grid.Row="1" 
-                                            SelectedIndex="{Binding MappingDirection, Converter={StaticResource MappingDirectionToIndexConverter}, Mode=OneWay}">
+                                            SelectedIndex="{Binding MappingDirection, Converter={StaticResource MappingDirectionToIndexConverter}}">
                                     <TabItem Header="Hub Engineering Model">
                                         <objectBrowser:ObjectBrowser DataContext="{Binding HubNetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
                                     </TabItem>

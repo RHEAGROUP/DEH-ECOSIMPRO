@@ -38,6 +38,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -116,10 +117,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
         
         /// <summary>
-        /// Gets or sets all the selected values from <see cref="VariableRowViewModel.SelectedValues"/>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        public ReactiveList<object> SelectedValuesVariable { get; set; }
-
+        public ReactiveList<TimeUnit> TimeSteps { get; } = 
+            new ReactiveList<TimeUnit>(Enum.GetValues(typeof(TimeUnit)).Cast<TimeUnit>());
+        
+        /// <summary>
+        /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
+        /// </summary>
+        public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
+        
         /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
@@ -191,32 +198,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.UpdateAvailableElementUsages();
                 }));
             
-            this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(() =>
-                {
-                    this.UpdateAvailableScales();
-                    this.UpdateAvailableParameters();
-                }));
-            
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.UpdateAvailableActualFiniteStates));
-        }
 
-        /// <summary>
-        /// Updates the <see cref="AvailableScales"/>
-        /// </summary>
-        private void UpdateAvailableScales()
-        {
-            if (this.SelectedThing?.SelectedParameterType is SampledFunctionParameterType sampledFunctionParameterType
-            && sampledFunctionParameterType.IndependentParameterType
-                .FirstOrDefault(x => x.ParameterType == )
-            {
-                return;
-            }
-            
-            this.AvailableScales = this.SelectedThing.SelectedParameterType
+            this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
+            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ => this.SelectedThing?.ApplyTimeStep());
         }
 
         /// <summary>
@@ -238,10 +225,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.AvailableParameterTypes.Clear();
 
             this.AvailableElementDefinitions.AddRange(
-                this.HubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>())
-                    .Select(e => e.Clone(true)));
+                this.HubController.OpenIteration.Element.Select(e => e.Clone(true)));
 
-            this.AvailableParameterTypes.AddRange(this.HubController.GetSiteDirectory().SiteReferenceDataLibrary
+            this.AvailableParameterTypes.AddRange(
+                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>()
+                    .RequiredRdls
                 .SelectMany(x => x.ParameterType).Where(
                     x => x is SampledFunctionParameterType parameterType 
                          && parameterType.IndependentParameterType.Count == 1 
@@ -299,7 +287,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.AvailableParameters.AddRange(
                     this.SelectedThing.SelectedElementDefinition.Parameter
-                        .Where(this.AreTheseOwnedByTheDomain<Parameter>())
+                        .Where(x => this.HubController.Session.PermissionService.CanWrite(x))
                         .Where(x => this.AvailableParameters.FirstOrDefault(p => p.Iid == x.Iid) is null));
             }
         }
@@ -314,8 +302,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (this.selectedThing?.SelectedElementDefinition != null)
             {
                 this.AvailableElementUsages.AddRange(
-                    this.selectedThing.SelectedElementDefinition.ContainedElement.Where(
-                        this.AreTheseOwnedByTheDomain<ElementUsage>()).Distinct().Select(x => x.Clone(true)));
+                    this.selectedThing.SelectedElementDefinition.ContainedElement.Distinct().Select(x => x.Clone(true)));
             }
         }
 

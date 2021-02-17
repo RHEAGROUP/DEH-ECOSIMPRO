@@ -64,7 +64,7 @@ namespace DEHPEcosimPro.Converters
         /// <returns>A <see cref="NotSupportedException"/> is thrown</returns>
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            throw new NotSupportedException();
+            return default(MappingDirection);
         }
     }
 }
