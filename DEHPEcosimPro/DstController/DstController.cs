@@ -50,8 +50,6 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.Xpf.Core;
-
     using NLog;
 
     using Opc.Ua;

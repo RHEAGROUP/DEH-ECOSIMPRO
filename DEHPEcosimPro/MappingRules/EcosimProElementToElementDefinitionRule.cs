@@ -190,6 +190,9 @@ namespace DEHPEcosimPro.MappingRules
                     this.AddToExternalIdentifierMap(parameterOverride.Iid, this.dstParameterName);
                     hasAtLeastOneUpdatedOverride = true;
                 }
+                else
+                {
+                    parameterOverride = elementUsage.ParameterOverride.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName);
 
                 if (hasAtLeastOneUpdatedOverride)
                 {
