@@ -176,26 +176,38 @@
                                                                   AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedElementDefinition}" NullText="Create New Element Definition" AllowNullInput="True"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableElementDefinitions}"/>
                         <Label Grid.Row="2" Grid.Column="0" Content="Update Element Usages:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="2" DisplayMember="ElementDefinition.ShortName"  ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
-                                                                  AutoComplete="True" EditValue="{Binding SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}" NullText="Create New Element Usage" AllowNullInput="True"
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="2" DisplayMember="ElementDefinition.ShortName" ShowNullTextForEmptyValue="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True"
+                                                                  AutoComplete="True" EditValue="{Binding SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}" NullText="Select Element Usages" AllowNullInput="True"
                                                                   ValidateOnTextInput="False" ItemsSource="{Binding AvailableElementUsages}">
                             <dxe:ComboBoxEdit.StyleSettings>
                                 <dxe:CheckedTokenComboBoxStyleSettings NewTokenPosition="Far" AllowEditTokens="False"/>
                             </dxe:ComboBoxEdit.StyleSettings>
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:"></Label>
-                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" ShowNullTextForEmptyValue="True"
-                                          AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameterType}" AllowNullInput="False"
-                                          ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}"
-                                          ApplyItemTemplateToSelectedItem="True">
+                        <dxe:ComboBoxEdit Margin="2" Grid.Column="1" Grid.Row="3" ShowNullTextForEmptyValue="True" ValueMember="Name" DisplayMember="Name"
+                                          AutoComplete="True" SelectedItem="{Binding SelectedThing.SelectedParameterType}" AllowNullInput="True"
+                                          ValidateOnTextInput="False" ItemsSource="{Binding AvailableParameterTypes}" NullText="Select One Parameter Type"
+                                          ApplyItemTemplateToSelectedItem="True" NullValueButtonPlacement="EditBox" ClearSelectionOnBackspace="True">
+                            <dxe:ComboBoxEdit.EditTemplate>
+                                <ControlTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} => [{{1}}X{{2}}]">
+                                                <Binding Path="Name" />
+                                                <Binding Path="IndependentParameterType[0].ParameterType.Name" />
+                                                <Binding Path="DependentParameterType[0].ParameterType.Name" />
+                                            </MultiBinding>
+                                        </TextBlock.Text></TextBlock>
+                                </ControlTemplate>
+                            </dxe:ComboBoxEdit.EditTemplate>
                             <dxe:ComboBoxEdit.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock>
                                         <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0} {1} {2}">
+                                            <MultiBinding StringFormat="{}{0} => [{1}x{2}]">
                                                 <Binding Path="Name" />
-                                                <Binding Path="IndependentParameterType.First().ParameterType.Name" />
-                                                <Binding Path="DependentParameterType.First().ParameterType.Name" />
+                                                <Binding Path="IndependentParameterType[0].ParameterType.Name" />
+                                                <Binding Path="DependentParameterType[0].ParameterType.Name" />
                                             </MultiBinding>
                                         </TextBlock.Text></TextBlock>
                                 </DataTemplate>

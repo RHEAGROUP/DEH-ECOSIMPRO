@@ -25,7 +25,6 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -104,7 +103,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Gets the collection of the available <see cref="Parameter"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<Parameter> AvailableParameters { get; } = new ReactiveList<Parameter>();
+        public ReactiveList<ParameterOrOverrideBase> AvailableParameters { get; } = new ReactiveList<ParameterOrOverrideBase>();
         
         /// <summary>
         /// Gets the collection of the available <see cref="ActualFiniteState"/>s depending on the selected <see cref="Parameter"/>
@@ -196,11 +195,21 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 {
                     this.UpdateAvailableParameters();
                     this.UpdateAvailableElementUsages();
+                    this.CheckCanExecute();
                 }));
+
+            this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(this.UpdateSelectedParameter));
             
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.UpdateAvailableActualFiniteStates));
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                {
+                    this.UpdateSelectedParameterType();
+                    this.UpdateAvailableActualFiniteStates();
+                    this.CheckCanExecute();
+                }));
 
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
             this.ApplyTimeStepOnSelectionCommand.Subscribe(_ => this.SelectedThing?.ApplyTimeStep());
@@ -211,7 +220,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void CheckCanExecute()
         {
-            this.CanContinue = this.Variables.Any(x => x.SelectedValues.Any());
+            this.CanContinue = this.Variables.Any(x => x.IsValid());
         }
         
         /// <summary>
@@ -241,6 +250,48 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.UpdateAvailableActualFiniteStates();
 
             this.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SelectedThing"/> <see cref="ParameterType"/> according to the selected <see cref="Parameter"/>
+        /// </summary>
+        private void UpdateSelectedParameterType()
+        {
+            if (this.SelectedThing?.SelectedParameterType is null || this.SelectedThing?.SelectedParameter is null)
+            {
+                return;
+            }
+
+            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
+                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
+                && parameterType.IndependentParameterType.Count == 1
+                && parameterType.DependentParameterType.Count == 1)
+            {
+                this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
+            }
+
+            else if (this.SelectedThing.SelectedParameter is { })
+            {
+                this.SelectedThing.SelectedParameterType = null;
+            }
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SelectedThing"/> <see cref="Parameter"/> according to the selected <see cref="ParameterType"/>
+        /// </summary>
+        private void UpdateSelectedParameter()
+        {
+            if (this.SelectedThing?.SelectedParameter is null ||  this.SelectedThing?.SelectedParameterType is null)
+            {
+                return;
+            }
+
+            if (this.SelectedThing.SelectedParameter is { } parameter
+                && this.SelectedThing.SelectedParameterType is { } parameterType 
+                    && parameter.ParameterType.Iid != parameterType.Iid)
+            {
+                this.SelectedThing.SelectedParameter = null;
+            }
         }
 
         /// <summary>
@@ -278,10 +329,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateAvailableParameters()
         {
-            if (this.SelectedThing?.SelectedParameter is null || this.SelectedThing.SelectedElementDefinition is null)
-            {
-                this.AvailableParameters.Clear();
-            }
+            this.AvailableParameters.Clear();
 
             if (this.SelectedThing?.SelectedElementDefinition != null)
             {
@@ -302,7 +350,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (this.selectedThing?.SelectedElementDefinition != null)
             {
                 this.AvailableElementUsages.AddRange(
-                    this.selectedThing.SelectedElementDefinition.ContainedElement.Distinct().Select(x => x.Clone(true)));
+                    this.selectedThing.SelectedElementDefinition.ReferencingElementUsages()
+                        .Select(x => x.Clone(true)));
             }
         }
 
@@ -360,13 +409,5 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.IsBusy = false;
         }
-
-        /// <summary>
-        /// Verify that the <see cref="IOwnedThing"/> is owned by the current domain of expertise
-        /// </summary>
-        /// <typeparam name="T">The <see cref="IOwnedThing"/> type</typeparam>
-        /// <returns>A <see cref="Func{T,T}"/> input parameter is <see cref="IOwnedThing"/> and outputs an assert whether the verification return true </returns>
-        private Func<T, bool> AreTheseOwnedByTheDomain<T>() where T : IOwnedThing 
-            => x => x.Owner.Iid == this.HubController.CurrentDomainOfExpertise.Iid;
     }
 }

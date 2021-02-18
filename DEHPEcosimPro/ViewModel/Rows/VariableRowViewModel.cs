@@ -236,20 +236,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public string ParameterName => string.Join(".", this.Name.Split('.').Skip(1));
         
         /// <summary>
-        /// Backing field fopr <see cref="IsValid"/>
-        /// </summary>
-        private bool isValid;
-
-        /// <summary>
-        /// Gets a value indicating whether this <see cref="VariableRowViewModel"/> is ready to be mapped
-        /// </summary>
-        public bool IsValid
-        {
-            get => this.isValid;
-            set => this.RaiseAndSetIfChanged(ref this.isValid, value);
-        }
-
-        /// <summary>
         /// Backing field fopr <see cref="HasWriteAccess"/>
         /// </summary>
         private bool? hasWriteAccess;
@@ -281,7 +267,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/>
         /// </summary>
         public bool ShouldListenToChangeMessage { get; set; }
-
+        
         /// <summary>
         /// Backing field for <see cref="SelectedTimeUnit"/>
         /// </summary>
@@ -456,6 +442,19 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 new { this.Name, this.Values }
             });
+        }
+
+        /// <summary>
+        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to nbe mapped
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsValid()
+        {
+            var result = this.SelectedValues.Any()
+                         && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
+                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null));
+
+            return result;
         }
     }
 }
