@@ -27,6 +27,10 @@ namespace DEHPEcosimPro.ViewModel
     using System;
 
     using DEHPCommon.Services.NavigationService;
+    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
+
+    using DevExpress.CodeParser.Diagnostics;
 
     using ReactiveUI;
 
@@ -79,11 +83,26 @@ namespace DEHPEcosimPro.ViewModel
         public ReactiveCommand<object> ConnectCommand { get; set; }
 
         /// <summary>
+        /// The <see cref="IObjectBrowserViewModel"/>
+        /// </summary>
+        public IObjectBrowserViewModel ObjectBrowser { get; set; }
+
+        /// <summary>
+        /// The <see cref="IPublicationBrowserViewModel"/>
+        /// </summary>
+        public IPublicationBrowserViewModel PublicationBrowser { get; set; }
+
+        /// <summary>
+        /// The <see cref="IHubBrowserHeaderViewModel"/>
+        /// </summary>
+        public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
+
+        /// <summary>
         /// Initializes the <see cref="ReactiveCommand{T}"/>
         /// </summary>
         protected virtual void InitializeCommands()
         {
-            this.ConnectCommand = ReactiveCommand.Create();
+            this.ConnectCommand = ReactiveCommand.Create(null, RxApp.MainThreadScheduler);
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
         }
         

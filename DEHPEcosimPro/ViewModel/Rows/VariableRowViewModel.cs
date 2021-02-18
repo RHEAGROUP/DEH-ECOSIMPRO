@@ -81,6 +81,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public ReactiveList<TimeTaggedValueRowViewModel> SelectedValues { get; set; } = new ReactiveList<TimeTaggedValueRowViewModel>();
 
         /// <summary>
+        /// Gets or sets the collection of value collection to display in the chart view
+        /// </summary>
+        public ReactiveList<object> ChartValues { get; private set; }
+
+        /// <summary>
         /// Backing field for <see cref="InitialValue"/>
         /// </summary>
         private object initialValue;
@@ -225,24 +230,78 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// Gets this reprensented ParameterName
         /// </summary>
         public string ParameterName => string.Join(".", this.Name.Split('.').Skip(1));
+        
+        /// <summary>
+        /// Backing field fopr <see cref="IsValid"/>
+        /// </summary>
+        private bool isValid;
 
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="VariableRowViewModel"/> is ready to be mapped
+        /// </summary>
+        public bool IsValid
+        {
+            get => this.isValid;
+            set => this.RaiseAndSetIfChanged(ref this.isValid, value);
+        }
+
+        /// <summary>
+        /// Backing field fopr <see cref="HasWriteAccess"/>
+        /// </summary>
+        private bool? hasWriteAccess;
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="Reference"/> has write access
+        /// </summary>
+        public bool? HasWriteAccess
+        {
+            get => this.hasWriteAccess;
+            set => this.RaiseAndSetIfChanged(ref this.hasWriteAccess, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="IsHighlighted"/>
+        /// </summary>
+        private bool isHiglighted;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this row is highlighted
+        /// </summary>
+        public bool IsHighlighted
+        {
+            get => this.isHiglighted;
+            set => this.RaiseAndSetIfChanged(ref this.isHiglighted, value);
+        }
+
+        /// <summary>
+        /// A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/>
+        /// </summary>
+        public bool ShouldListenToChangeMessage { get; set; }
+        
         /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
-        public VariableRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData)
+        /// <param name="shouldListenToChangeMessage">A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/></param>
+        public VariableRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData, bool shouldListenToChangeMessage = true)
         {
             var (referenceDescriptionValue, dataValue) = referenceDescriptionAndData;
             this.Reference = referenceDescriptionValue;
             this.data = dataValue;
+            this.ShouldListenToChangeMessage = shouldListenToChangeMessage;
             this.SetProperties();
 
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
-                .Where(x => x.Id == this.Reference.NodeId.Identifier && x.TimeStamp > this.Values.Last().TimeStamp)
+                .Where(x => this.ShouldListenToChangeMessage && x.Id == this.Reference.NodeId.Identifier && x.TimeStamp > this.Values.Last().TimeStamp)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.OnNotification);
+
+            CDPMessageBus.Current.Listen<DstHighlightEvent>()
+                .Where(x => x.TargetThingId == this.Reference.NodeId.Identifier)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(x => this.IsHighlighted = x.ShouldHighlight);
         }
-        
+
         /// <summary>
         /// Sets the properties of this view model
         /// </summary>
@@ -306,6 +365,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
             }
 
             return valuesInDouble.Sum() / this.Values.Count;
+        }
+
+        /// <summary>
+        /// Updates the <see cref="ChartValues"/> properties
+        /// </summary>
+        public void SetChartValues()
+        {
+            this.ChartValues = new ReactiveList<object>(new List<object>()
+            {
+                new { this.Name, this.Values }
+            });
         }
     }
 }

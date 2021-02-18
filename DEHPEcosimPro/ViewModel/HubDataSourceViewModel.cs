@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HubDataSourceViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -25,10 +25,13 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
 
     using Autofac;
+
+    using CDP4Common.EngineeringModelData;
 
     using DEHPCommon;
     using DEHPCommon.Enumerators;
@@ -37,6 +40,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
@@ -66,21 +70,6 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
-
-        /// <summary>
-        /// The <see cref="IObjectBrowserViewModel"/>
-        /// </summary>
-        public IObjectBrowserViewModel ObjectBrowser { get; set; }
-
-        /// <summary>
-        /// The <see cref="IPublicationBrowserViewModel"/>
-        /// </summary>
-        public IPublicationBrowserViewModel PublicationBrowser { get; set; }
-
-        /// <summary>
-        /// The <see cref="IHubBrowserHeaderViewModel"/>
-        /// </summary>
-        public IHubBrowserHeaderViewModel HubBrowserHeader { get; set; }
 
         /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
@@ -119,15 +108,32 @@ namespace DEHPEcosimPro.ViewModel
 
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
             this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
+
+            this.WhenAny(x => x.hubController.OpenIteration,
+                x => x.hubController.IsSessionOpen,
+                (i, o) => 
+                    i.Value != null && o.Value)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateConnectButtonText);
         }
 
         /// <summary>
         /// Executes the <see cref="IObjectBrowserViewModel.MapCommand"/>
         /// </summary>
-        private void MapCommandExecute()
+        public void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IMappingConfigurationDialogViewModel>();
-            this.NavigationService.ShowDialog<MappingConfigurationDialog, IMappingConfigurationDialogViewModel>(viewModel);
+            var viewModel = AppContainer.Container.Resolve<IHubMappingConfigurationDialogViewModel>();
+            
+            viewModel.Elements.AddRange(this.ObjectBrowser
+                .SelectedThings
+                .OfType<ElementDefinitionRowViewModel>()
+                .Select(x =>
+                {
+                    x.Thing.Clone(true);
+                    return x;
+                }));
+            
+            this.NavigationService.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(viewModel);
         }
 
         /// <summary>
@@ -144,8 +150,6 @@ namespace DEHPEcosimPro.ViewModel
             {
                 this.NavigationService.ShowDialog<Login>();
             }
-
-            this.UpdateConnectButtonText(this.hubController.IsSessionOpen);
         }
     }
 }

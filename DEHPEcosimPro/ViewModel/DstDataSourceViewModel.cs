@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DstDataSourceViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Reactive.Linq;
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
@@ -90,8 +91,12 @@ namespace DEHPEcosimPro.ViewModel
                 (i,d , s) 
                     => d.Value || (i.Value != null && s.Value));
 
-            this.ConnectCommand = ReactiveCommand.Create(canExecute);
+            this.ConnectCommand = ReactiveCommand.Create(canExecute, RxApp.MainThreadScheduler);
             this.ConnectCommand.Subscribe(_ => this.ConnectCommandExecute());
+
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.UpdateConnectButtonText);
         }
 
         /// <summary>
@@ -110,7 +115,6 @@ namespace DEHPEcosimPro.ViewModel
                 this.NavigationService.ShowDialog<DstLogin>();
             }
 
-            this.UpdateConnectButtonText(this.dstController.IsSessionOpen);
             this.DstVariablesViewModel.IsBusy = false;
         }
     }

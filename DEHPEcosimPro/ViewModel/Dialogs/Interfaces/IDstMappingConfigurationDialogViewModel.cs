@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// <copyright file="IDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
+    using System.Reactive.Linq;
     using System.Windows.Input;
 
     using CDP4Common.EngineeringModelData;
@@ -36,20 +37,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
     using ReactiveUI;
 
     /// <summary>
-    /// Interface definition for <see cref="MappingConfigurationDialogViewModel"/>
+    /// Interface definition for <see cref="DstMappingConfigurationDialogViewModel"/>
     /// </summary>
-    public interface IMappingConfigurationDialogViewModel
+    public interface IDstMappingConfigurationDialogViewModel
     {
-        /// <summary>
-        /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
-        /// </summary>
-        ICloseWindowBehavior CloseWindowBehavior { get; set; }
-
-        /// <summary>
-        /// Gets or sets the assert indicating whether the view is busy
-        /// </summary>
-        bool IsBusy { get; set; }
-
         /// <summary>
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
         /// </summary>
@@ -89,11 +80,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
         ReactiveList<VariableRowViewModel> Variables { get; }
-
-        /// <summary>
-        /// Gets the <see cref="ICommand"/> to continue
-        /// </summary>
-        ReactiveCommand<object> ContinueCommand { get; set; }
 
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DEHPEcosimPro.Views.DstVariablesControl" 
+﻿<UserControl x:Class="DEHPEcosimPro.Views.DstNetChangePreview" 
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
@@ -35,7 +35,6 @@
             </HierarchicalDataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
-    <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid>
             <dxg:TreeListControl ItemsSource="{Binding Variables}"
                                  SelectedItem="{Binding SelectedThing}"
@@ -61,8 +60,8 @@
                                       TreeDerivationMode="HierarchicalDataTemplate"
                                       TreeLineStyle="Solid"
                                       VerticalScrollbarVisibility="Auto">
-                        <dxg:TreeListView.ContextMenu>
-                            <ContextMenu Name="RowContextMenu" />
+                    <dxg:TreeListView.ContextMenu>
+                        <ContextMenu Name="RowContextMenu" />
                     </dxg:TreeListView.ContextMenu>
                     <dxg:TreeListView.RowStyle>
                         <Style TargetType="{x:Type dxg:RowControl}">
@@ -85,8 +84,6 @@
                     <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
-
             </dxg:TreeListControl>
         </Grid>
-    </dx:LoadingDecorator>
 </UserControl>

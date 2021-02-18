@@ -147,6 +147,17 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
         }
 
         [Test]
+        public void VerifyWriteNode()
+        {
+            this.sessionHandler.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(new StatusCode(0));
+            Assert.IsTrue(this.client.WriteNode(new NodeId(), 42));
+            this.sessionHandler.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(new StatusCode(33294));
+            Assert.IsFalse(this.client.WriteNode(new NodeId(), default(object)));
+            this.sessionHandler.Verify(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>()), Times.Exactly(2));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()), Times.Exactly(18));
+        }
+
+        [Test]
         public void VerifyClose()
         {
             Assert.DoesNotThrow(() => this.client.CloseSession());

@@ -58,7 +58,7 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         ReferenceDescriptionCollection References { get; }
 
         /// <summary>
-        /// Connects the client to the endpoint opening a <see cref="Session"/>
+        /// Connects the client to the endpoint opening a <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
         /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
@@ -67,16 +67,16 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null);
 
         /// <summary>
-        /// Closes the <see cref="Session"/>
+        /// Closes the <see cref="Opc.Ua.Client.Session"/>
         /// </summary>
         void CloseSession();
-        
+
         /// <summary>
         /// Adds a subscription based on the nodeId to monitor
         /// </summary>
         /// <param name="nodeId">The the <see cref="NodeId"/> to monitor</param>
         void AddSubscription(NodeId nodeId);
-        
+
         /// <summary>
         /// Calls the specified method and returns the output arguments.
         /// </summary>
@@ -92,6 +92,15 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <param name="nodeId">The <see cref="NodeId"/> to read</param>
         /// <returns>The <see cref="DataValue"/></returns>
         DataValue ReadNode(NodeId nodeId);
+
+        /// <summary>
+        /// Writes a value to a node
+        /// </summary>
+        /// <typeparam name="T">The data type</typeparam>
+        /// <param name="nodeId">The <see cref="NodeId"/> of the node to update</param>
+        /// <param name="value">The value to write</param>
+        /// <returns>A value indicating whether the write operation succeed</returns>
+        bool WriteNode<T>(NodeId nodeId, T value);
 
         /// <summary>
         /// The <see cref="OpcClientService.CertificateValidator"/> validates

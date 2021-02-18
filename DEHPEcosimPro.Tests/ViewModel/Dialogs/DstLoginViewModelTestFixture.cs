@@ -139,14 +139,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.dstController.Verify(
                 x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
 
-            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(2));
+            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(3));
 
             this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()))
                 .Returns(Task.FromException(new TaskCanceledException()));
 
-            Assert.DoesNotThrowAsync(async () => await this.viewModel.LoginCommand.ExecuteAsyncTask(null));
+            Assert.ThrowsAsync<TaskCanceledException>(async () => await this.viewModel.LoginCommand.ExecuteAsyncTask(null));
 
-            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(3));
+            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(4));
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Once);
         }
 

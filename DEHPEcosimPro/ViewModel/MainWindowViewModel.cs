@@ -25,14 +25,20 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Reactive.Linq;
+    using System.Windows;
     using System.Windows.Input;
+    using System.Windows.Threading;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
+
+    using DevExpress.CodeParser;
 
     using ReactiveUI;
 
@@ -47,14 +53,29 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstController dstController;
 
         /// <summary>
+        /// Backing field for <see cref="MappingDirection"/>
+        /// </summary>
+        private MappingDirection mappingDirection;
+
+        /// <summary>
         /// Gets or sets the <see cref="ISwitchLayoutPanelOrderBehavior"/>
         /// </summary>
         public ISwitchLayoutPanelOrderBehavior SwitchPanelBehavior { get; set; }
 
         /// <summary>
+        /// Gets the <see cref="ITransferControlViewModel"/>
+        /// </summary>
+        public ITransferControlViewModel TransferControlViewModel { get; }
+
+        /// <summary>
         /// Gets the view model that represents the net change preview panel
         /// </summary>
-        public INetChangePreviewViewModel NetChangePreviewViewModel { get; }
+        public IHubNetChangePreviewViewModel HubNetChangePreviewViewModel { get; }
+
+        /// <summary>
+        /// Gets the view model that represents the net change preview panel
+        /// </summary>
+        public IDstNetChangePreviewViewModel DstNetChangePreviewViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the 10-25 data source
@@ -77,18 +98,32 @@ namespace DEHPEcosimPro.ViewModel
         public ReactiveCommand<object> ChangeMappingDirection { get; private set; }
 
         /// <summary>
+        /// Gets or sets the <see cref="MappingDirection"/> for proper binding
+        /// </summary>
+        public MappingDirection MappingDirection
+        {
+            get => this.mappingDirection;
+            set => this.RaiseAndSetIfChanged(ref this.mappingDirection, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="MainWindowViewModel"/>
         /// </summary>
         /// <param name="hubDataSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="dstSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="netChangePreviewViewModel">The <see cref="INetChangePreviewViewModel"/></param>
+        /// <param name="hubNetChangePreviewViewModel">The <see cref="IHubNetChangePreviewViewModel"/></param>
+        /// <param name="dstNetChangePreviewViewModel">The <see cref="IDstNetChangePreviewViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
+        /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
-            IStatusBarControlViewModel statusBarControlViewModel, INetChangePreviewViewModel netChangePreviewViewModel, IDstController dstController)
+            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
+            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, ITransferControlViewModel transferControlViewModel)
         {
             this.dstController = dstController;
-            this.NetChangePreviewViewModel = netChangePreviewViewModel;
+            this.TransferControlViewModel = transferControlViewModel;
+            this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;
+            this.DstNetChangePreviewViewModel = dstNetChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;
             this.StatusBarControlViewModel = statusBarControlViewModel; 
@@ -102,6 +137,7 @@ namespace DEHPEcosimPro.ViewModel
         private void InitializeCommands()
         {
             this.ChangeMappingDirection = ReactiveCommand.Create();
+            
             this.ChangeMappingDirection.Subscribe(_ => this.ChangeMappingDirectionExecute());
         }
 
@@ -112,6 +148,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.SwitchPanelBehavior?.Switch();
             this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection ?? MappingDirection.FromDstToHub;
+            this.MappingDirection = this.dstController.MappingDirection;
         }
     }
 }
