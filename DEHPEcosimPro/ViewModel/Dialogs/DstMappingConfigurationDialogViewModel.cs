@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// <copyright file="DstDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -37,6 +37,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -102,7 +104,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Gets the collection of the available <see cref="Parameter"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<Parameter> AvailableParameters { get; } = new ReactiveList<Parameter>();
+        public ReactiveList<ParameterOrOverrideBase> AvailableParameters { get; } = new ReactiveList<ParameterOrOverrideBase>();
         
         /// <summary>
         /// Gets the collection of the available <see cref="ActualFiniteState"/>s depending on the selected <see cref="Parameter"/>
@@ -115,10 +117,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
         
         /// <summary>
-        /// Gets or sets all the selected values from <see cref="VariableRowViewModel.SelectedValues"/>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        public ReactiveList<object> SelectedValuesVariable { get; set; }
-
+        public ReactiveList<TimeUnit> TimeSteps { get; } = 
+            new ReactiveList<TimeUnit>(Enum.GetValues(typeof(TimeUnit)).Cast<TimeUnit>());
+        
+        /// <summary>
+        /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
+        /// </summary>
+        public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
+        
         /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
@@ -188,11 +196,28 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 {
                     this.UpdateAvailableParameters();
                     this.UpdateAvailableElementUsages();
+                    this.CheckCanExecute();
                 }));
 
+            this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                    {
+                        this.UpdateSelectedParameter();
+                        this.CheckCanExecute();
+                    }));
+            
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.UpdateAvailableActualFiniteStates));
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                {
+                    this.UpdateSelectedParameterType();
+                    this.UpdateAvailableActualFiniteStates();
+                    this.CheckCanExecute();
+                }));
+
+            this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
+            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ => this.SelectedThing?.ApplyTimeStep());
         }
 
         /// <summary>
@@ -200,7 +225,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void CheckCanExecute()
         {
-            this.CanContinue = this.Variables.Any(x => x.SelectedValues.Any());
+            this.CanContinue = this.Variables.Any(x => x.IsValid());
         }
         
         /// <summary>
@@ -214,15 +239,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.AvailableParameterTypes.Clear();
 
             this.AvailableElementDefinitions.AddRange(
-                this.HubController.OpenIteration.Element.Where(this.AreTheseOwnedByTheDomain<ElementDefinition>())
-                    .Select(e => e.Clone(true)));
+                this.HubController.OpenIteration.Element.Select(e => e.Clone(true)));
 
-            this.AvailableParameterTypes.AddRange(this.HubController.GetSiteDirectory().SiteReferenceDataLibrary
+            this.AvailableParameterTypes.AddRange(
+                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>().RequiredRdls
                 .SelectMany(x => x.ParameterType).Where(
-                    x => x is CompoundParameterType parameterType 
-                         && parameterType.Component.Count == 2 
-                         && parameterType.Component.Count(
-                             x => x.ParameterType is DateTimeParameterType) == 1)
+                    x => x is SampledFunctionParameterType parameterType 
+                         && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
                 .OrderBy(x => x.Name));
 
             this.UpdateAvailableParameters();
@@ -230,6 +253,53 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.UpdateAvailableActualFiniteStates();
 
             this.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SelectedThing"/> <see cref="ParameterType"/> according to the selected <see cref="Parameter"/>
+        /// </summary>
+        private void UpdateSelectedParameterType()
+        {
+            if (this.SelectedThing?.SelectedParameter is null)
+            {
+                return;
+            }
+
+            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
+                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
+                && parameterType.IndependentParameterType.Count == 1
+                && parameterType.DependentParameterType.Count == 1)
+            {
+                this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
+            }
+
+            else if (this.SelectedThing.SelectedParameter is { })
+            {
+                this.SelectedThing.SelectedParameterType = null;
+            }
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SelectedThing"/> <see cref="Parameter"/> according to the selected <see cref="ParameterType"/>
+        /// </summary>
+        private void UpdateSelectedParameter()
+        {
+            if (this.SelectedThing?.SelectedParameterType is null)
+            {
+                return;
+            }
+
+            if (this.SelectedThing.SelectedParameter is { } parameter
+                && this.SelectedThing.SelectedParameterType is { } parameterType 
+                    && parameter.ParameterType.Iid != parameterType.Iid)
+            {
+                this.SelectedThing.SelectedParameter = null;
+            }
+            else if(this.AvailableParameters.FirstOrDefault(x => 
+                x.ParameterType.Iid == this.SelectedThing.SelectedParameterType.Iid) is Parameter parameterOrOverride )
+            {
+                this.SelectedThing.SelectedParameter = parameterOrOverride;
+            }
         }
 
         /// <summary>
@@ -267,16 +337,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateAvailableParameters()
         {
-            if (this.SelectedThing?.SelectedParameter is null || this.SelectedThing.SelectedElementDefinition is null)
-            {
-                this.AvailableParameters.Clear();
-            }
+            this.AvailableParameters.Clear();
 
-            if (this.selectedThing?.SelectedElementDefinition != null)
+            if (this.SelectedThing?.SelectedElementDefinition != null)
             {
                 this.AvailableParameters.AddRange(
                     this.SelectedThing.SelectedElementDefinition.Parameter
-                        .Where(this.AreTheseOwnedByTheDomain<Parameter>())
+                        .Where(x => this.HubController.Session.PermissionService.CanWrite(x))
                         .Where(x => this.AvailableParameters.FirstOrDefault(p => p.Iid == x.Iid) is null));
             }
         }
@@ -291,8 +358,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (this.selectedThing?.SelectedElementDefinition != null)
             {
                 this.AvailableElementUsages.AddRange(
-                    this.selectedThing.SelectedElementDefinition.ContainedElement.Where(
-                        this.AreTheseOwnedByTheDomain<ElementUsage>()).Distinct().Select(x => x.Clone(true)));
+                    this.selectedThing.SelectedElementDefinition.ReferencingElementUsages()
+                        .Select(x => x.Clone(true)));
             }
         }
 
@@ -307,47 +374,48 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 foreach (var idCorrespondence in variable.MappingConfigurations)
                 {
-                    if (this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, out Thing thing))
+                    if (!this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, out Thing thing))
                     {
-                        Action action = thing switch
+                        continue;
+                    }
+
+                    Action action = thing switch
+                    {
+                        ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
+                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
+
+                        ElementUsage elementUsage => (() =>
                         {
-                            ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
-                                this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
-
-                            ElementUsage elementUsage => (() =>
+                            if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
+                                .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
                             {
-                                if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
-                                    .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
-                                {
-                                    variable.SelectedElementUsages.Add(usage);
-                                }
-                            }),
+                                variable.SelectedElementUsages.Add(usage);
+                            }
+                        }),
 
-                            Parameter parameter => (() => variable.SelectedParameter = 
-                                this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
-                                    .FirstOrDefault(p => p.Iid == thing.Iid)),
+                        Parameter parameter => (() => variable.SelectedParameter = 
+                            this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
+                                .FirstOrDefault(p => p.Iid == thing.Iid)),
 
-                            Option option => (() => variable.SelectedOption = option),
+                        Option option => (() => variable.SelectedOption = option),
 
-                            ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+                        ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
 
-                            _ => null
-                        };
+                        _ => null
+                    };
                         
-                        action?.Invoke();
+                    action?.Invoke();
+
+                    if (action is null &&
+                        this.HubController.GetThingById(idCorrespondence.InternalThing, this.HubController.OpenIteration, 
+                            out SampledFunctionParameterType parameterType))
+                    {
+                        variable.SelectedParameterType = parameterType;
                     }
                 }
             }
 
             this.IsBusy = false;
         }
-
-        /// <summary>
-        /// Verify that the <see cref="IOwnedThing"/> is owned by the current domain of expertise
-        /// </summary>
-        /// <typeparam name="T">The <see cref="IOwnedThing"/> type</typeparam>
-        /// <returns>A <see cref="Func{T,T}"/> input parameter is <see cref="IOwnedThing"/> and outputs an assert whether the verification return true </returns>
-        private Func<T, bool> AreTheseOwnedByTheDomain<T>() where T : IOwnedThing 
-            => x => x.Owner.Iid == this.HubController.CurrentDomainOfExpertise.Iid;
     }
 }

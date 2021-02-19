@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reactive.Linq;
 
     using CDP4Common.EngineeringModelData;
@@ -34,6 +35,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
     using CDP4Dal;
 
+    using DEHPCommon.Extensions;
+
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Views;
 
@@ -232,20 +236,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public string ParameterName => string.Join(".", this.Name.Split('.').Skip(1));
         
         /// <summary>
-        /// Backing field fopr <see cref="IsValid"/>
-        /// </summary>
-        private bool isValid;
-
-        /// <summary>
-        /// Gets a value indicating whether this <see cref="VariableRowViewModel"/> is ready to be mapped
-        /// </summary>
-        public bool IsValid
-        {
-            get => this.isValid;
-            set => this.RaiseAndSetIfChanged(ref this.isValid, value);
-        }
-
-        /// <summary>
         /// Backing field fopr <see cref="HasWriteAccess"/>
         /// </summary>
         private bool? hasWriteAccess;
@@ -279,6 +269,34 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public bool ShouldListenToChangeMessage { get; set; }
         
         /// <summary>
+        /// Backing field for <see cref="SelectedTimeUnit"/>
+        /// </summary>
+        private TimeUnit selectedTimeUnit = TimeUnit.MilliSecond;
+
+        /// <summary>
+        /// Gets or sets the <see cref="TimeUnit"/> for discrete sampling
+        /// </summary>
+        public TimeUnit SelectedTimeUnit
+        {
+            get => this.selectedTimeUnit;
+            set => this.RaiseAndSetIfChanged(ref this.selectedTimeUnit, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedTimeStep"/>
+        /// </summary>
+        private double selectedTimeStep;
+
+        /// <summary>
+        /// Gets or sets the time step value
+        /// </summary>
+        public double SelectedTimeStep
+        {
+            get => this.selectedTimeStep;
+            set => this.RaiseAndSetIfChanged(ref this.selectedTimeStep, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
@@ -303,6 +321,46 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Updates the <see cref="SelectedValues"/> based on <see cref="SelectedTimeUnit"/>
+        /// and <see cref="SelectedTimeStep"/>
+        /// </summary>
+        public void ApplyTimeStep()
+        {
+            this.SelectedValues.Clear();
+            
+            if (this.SelectedTimeStep is 0)
+            {
+                this.SelectedValues.AddRange(this.Values);
+                return;
+            }
+
+            var lastValue = TimeSpan.Zero;
+
+            Func<double, TimeSpan> getValue = this.SelectedTimeUnit switch
+            {
+                TimeUnit.MilliSecond => TimeSpan.FromMilliseconds,
+                TimeUnit.Second => TimeSpan.FromSeconds,
+                TimeUnit.Minute => TimeSpan.FromMinutes,
+                TimeUnit.Hour => TimeSpan.FromHours,
+                TimeUnit.Day => TimeSpan.FromDays,
+                _ => throw new ArgumentOutOfRangeException(nameof(this.SelectedTimeUnit), $"{this.SelectedTimeUnit} as {nameof(TimeUnit)} is invalid")
+            };
+
+            this.SelectedValues.Add(this.Values.FirstOrDefault());
+
+            foreach (var timeTaggedValueRowViewModel in this.Values)
+            {
+                var lastValuePlusTimeStep = lastValue.Add(getValue(this.SelectedTimeStep));
+
+                if (timeTaggedValueRowViewModel.TimeDelta >= lastValuePlusTimeStep)
+                {
+                    this.SelectedValues.Add(timeTaggedValueRowViewModel);
+                    lastValue = timeTaggedValueRowViewModel.TimeDelta;
+                }
+            }
+        }
+
+        /// <summary>
         /// Sets the properties of this view model
         /// </summary>
         private void SetProperties()
@@ -313,7 +371,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
-                this.Values.Add(new TimeTaggedValueRowViewModel(this.data.Value, this.data.ServerTimestamp));
+                this.UpdateValueCollection(this.data.Value, this.data.ServerTimestamp);
             }
         }
         
@@ -338,10 +396,18 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="timeStamp">The <see cref="DateTime"/> time stamp associated with the <paramref name="value"/></param>
         private void UpdateValueCollection(object value, DateTime timeStamp)
         {
-            if (!this.Values.Any(x => x.Value == value && x.TimeStamp == timeStamp))
+            if (this.Values.Any(x => x.Value == value && x.TimeStamp == timeStamp))
             {
-                this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStamp));
+                return;
             }
+
+            this.Values.Add(new TimeTaggedValueRowViewModel(
+                value, timeStamp, 
+                this.Values.FirstOrDefault()?.TimeStamp ?? default));
+
+            var sortedValues = this.Values.OrderBy(x => x.TimeDelta).ToList();
+            this.Values.Clear();
+            this.Values.AddRange(sortedValues);
         }
 
         /// <summary>
@@ -376,6 +442,19 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 new { this.Name, this.Values }
             });
+        }
+
+        /// <summary>
+        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to nbe mapped
+        /// </summary>
+        /// <returns></returns>
+        internal bool IsValid()
+        {
+            var result = this.SelectedValues.Any()
+                         && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
+                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null));
+
+            return result;
         }
     }
 }

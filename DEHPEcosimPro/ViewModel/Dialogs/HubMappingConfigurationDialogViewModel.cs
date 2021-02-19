@@ -420,14 +420,23 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateProperties()
         {
+            this.IsBusy = true;
+
             this.AvailableVariables = new ReactiveList<VariableRowViewModel>(
-                this.DstController.Variables.Select(r =>
-                {
-                    r.Node = this.DstController.ReadNode(r.Reference);
-                    return new VariableRowViewModel(r, false);
-                }));
+                this.DstController.Variables
+                    .Where(x => this.DstController.IsVariableWritable(x.Reference))
+                    .Select(r =>
+                    {
+                        r.Node = this.DstController.ReadNode(r.Reference);
+                        return new VariableRowViewModel(r, false)
+                        {
+                            HasWriteAccess = true
+                        };
+                    }));
 
             this.MappedElements.ChangeTrackingEnabled = true;
+            
+            this.IsBusy = false;
         }
 
         /// <summary>

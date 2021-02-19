@@ -50,6 +50,8 @@ namespace DEHPEcosimPro
 
     using DevExpress.Xpf.Core;
 
+    using NLog;
+
     using DXSplashScreenViewModel = DevExpress.Mvvm.DXSplashScreenViewModel;
     using SplashScreen = DEHPCommon.UserInterfaces.Views.SplashScreen;
 
@@ -74,10 +76,16 @@ namespace DEHPEcosimPro
             AppContainer.BuildContainer(containerBuilder);
         }
 
+        /// <summary>
+        /// Warn when an exception is thrown and log it 
+        /// </summary>
+        /// <param name="sender">The <see cref="object"/> sender</param>
+        /// <param name="e">The <see cref="UnhandledExceptionEventArgs"/></param>
         private void CurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            var errorMessage = $"Current domain An unhandled exception occurred: {e.ExceptionObject}";
+            var errorMessage = $"{sender} has thrown {e.ExceptionObject.GetType()} \n\r {(e.ExceptionObject as Exception)?.Message}";
             MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            LogManager.GetCurrentClassLogger().Error(e.ExceptionObject);
         }
 
         /// <summary>

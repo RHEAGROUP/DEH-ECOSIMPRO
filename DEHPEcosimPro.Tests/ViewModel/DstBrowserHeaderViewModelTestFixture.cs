@@ -148,7 +148,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.CallServerMethod("method_run")).Returns(new List<object>());
             this.viewModel.CallRunMethodCommand.Execute(null);
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("Method executed successfully")), StatusBarMessageSeverity.Info), Times.Once);
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("executed")), StatusBarMessageSeverity.Info), Times.Once);
 
             this.dstController.Setup(x => x.CallServerMethod("method_run")).Throws(new Exception("dummy-exception"));
             this.viewModel.CallRunMethodCommand.Execute(null);
@@ -174,7 +174,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.CallServerMethod("method_reset")).Returns(new List<object>());
             this.viewModel.CallResetMethodCommand.Execute(null);
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("Method executed successfully")), StatusBarMessageSeverity.Info), Times.Once);
+            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("executed")), StatusBarMessageSeverity.Info), Times.Once);
 
             this.dstController.Setup(x => x.CallServerMethod("method_reset")).Throws(new Exception("dummy-exception"));
             this.viewModel.CallResetMethodCommand.Execute(null);

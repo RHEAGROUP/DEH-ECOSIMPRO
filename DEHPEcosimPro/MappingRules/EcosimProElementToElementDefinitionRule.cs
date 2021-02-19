@@ -45,6 +45,7 @@ namespace DEHPEcosimPro.MappingRules
     using DEHPCommon.MappingRules.Core;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using DevExpress.Xpf.Reports.UserDesigner.Native;
@@ -57,16 +58,6 @@ namespace DEHPEcosimPro.MappingRules
     /// </summary>
     public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, List<ElementDefinition>>
     {
-        /// <summary>
-        /// Gets the dependent parameter type name for one <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        private const string SampledFunctionParameterTypeValueMemberName = "Value";
-
-        /// <summary>
-        /// Gets the independent parameter type name for one <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        private const string SampledFunctionParameterTypeTimestampMemberName = "Timestamp";
-
         /// <summary>
         /// The current class logger
         /// </summary>
@@ -83,14 +74,6 @@ namespace DEHPEcosimPro.MappingRules
         private IDstController dstController;
 
         /// <summary>
-        /// Gets the <see cref="ModelReferenceDataLibrary"/> of the current <see cref="EngineeringModel"/>
-        /// </summary>
-        private ModelReferenceDataLibrary ReferenceDataLibrary =>
-            this.hubController.OpenIteration.GetContainerOfType<EngineeringModel>()
-                .RequiredRdls
-                .OfType<ModelReferenceDataLibrary>().First();
-        
-        /// <summary>
         /// The current <see cref="DomainOfExpertise"/>
         /// </summary>
         private DomainOfExpertise owner;
@@ -104,7 +87,7 @@ namespace DEHPEcosimPro.MappingRules
         /// Holds the current processing <see cref="VariableRowViewModel"/> parameter name
         /// </summary>
         private string dstParameterName;
-        
+
         /// <summary>
         /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementDefinition"/>
         /// </summary>
@@ -158,7 +141,8 @@ namespace DEHPEcosimPro.MappingRules
         /// <returns>An <see cref="ElementDefinition"/></returns>
         private ElementDefinition CreateElementDefinition()
         {
-            if (this.hubController.OpenIteration.Element.FirstOrDefault(x => x.Name == this.dstElementName) is { } element)
+            if (this.hubController.OpenIteration.Element
+                .FirstOrDefault(x => x.Name == this.dstElementName) is { } element)
             {
                 return element;
             }
@@ -173,67 +157,32 @@ namespace DEHPEcosimPro.MappingRules
         }
 
         /// <summary>
-        /// Gets the possible usable scales for the VALUE
-        /// </summary>
-        private List<MeasurementScale> GetMeasurementScales()
-        {
-            return this.ReferenceDataLibrary.QueryMeasurementScalesFromChainOfRdls().Where(x => x.NumberSet == NumberSetKind.REAL_NUMBER_SET).ToList();
-        }
-
-        /// <summary>
         /// Updates the parameters overrides from the selected <see cref="ElementUsage"/>s
         /// </summary>
         /// <param name="variable">The current <see cref="VariableRowViewModel"/></param>
         private void UpdateValueSetsFromElementUsage(VariableRowViewModel variable)
         {
+            var hasAtLeastOneUpdatedOverride = false;
+
             foreach (var elementUsage in variable.SelectedElementUsages)
             {
-                ParameterOverride parameterOverride;
-
-                if (variable.SelectedParameter is {} parameter)
+                if (variable.SelectedParameter is {} parameter
+                    && elementUsage.ParameterOverride
+                        .FirstOrDefault(x => x.Parameter == parameter) is {} parameterOverride)
                 {
-                    if (elementUsage.ParameterOverride.FirstOrDefault(x => x.Parameter == parameter) is {} existingOverride)
-                    {
-                        parameterOverride = existingOverride;
-                    }
-                    else
-                    {
-                        parameterOverride = this.Bake<ParameterOverride>(x =>
-                        {
-                            x.Parameter = parameter;
-                            x.ParameterType = parameter.ParameterType;
-                            x.StateDependence = parameter.StateDependence;
-                            x.IsOptionDependent = parameter.IsOptionDependent;
-                            x.Owner = this.owner;
-                        });
-                    }
-
-                    elementUsage.ParameterOverride.Add(parameterOverride);
+                    this.UpdateValueSet(variable, parameterOverride);
+                    this.AddToExternalIdentifierMap(parameterOverride.Iid, this.dstParameterName);
+                    hasAtLeastOneUpdatedOverride = true;
                 }
                 else
                 {
                     parameterOverride = elementUsage.ParameterOverride.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName);
 
-                    if (parameterOverride is null && 
-                        elementUsage.ElementDefinition.Parameter.FirstOrDefault(
-                            x => x.ParameterType.Name == this.dstParameterName) is { } parameterToOverride)
+                    if (hasAtLeastOneUpdatedOverride)
                     {
-                        parameterOverride = this.Bake<ParameterOverride>(x =>
-                        {
-                            x.Parameter = parameterToOverride;
-                            x.Owner = this.owner;
-                            x.Container = elementUsage;
-                        });
+                        this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
                     }
                 }
-
-                if (parameterOverride != null)
-                {
-                    this.UpdateValueSet(variable, parameterOverride);
-                    this.AddToExternalIdentifierMap(parameterOverride.Iid, this.dstParameterName);
-                }
-
-                this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
             }
         }
 
@@ -245,7 +194,8 @@ namespace DEHPEcosimPro.MappingRules
         {
             if (variable.SelectedParameter is null)
             {
-                if (variable.SelectedElementDefinition.Parameter.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName) 
+                if (variable.SelectedElementDefinition.Parameter.FirstOrDefault(
+                        x => x.ParameterType.Iid == variable.SelectedParameterType.Iid)
                     is {} parameter)
                 {
                     variable.SelectedParameter = parameter;
@@ -255,136 +205,25 @@ namespace DEHPEcosimPro.MappingRules
                 {
                     variable.SelectedParameter = this.Bake<Parameter>(x =>
                     {
-                        x.ParameterType = this.GetSampledFunctionParameterType();
+                        x.ParameterType = variable.SelectedParameterType;
                         x.Owner = this.owner;
                         x.Container = variable.SelectedElementDefinition;
 
                         x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                         {
                             set.Computed = new ValueArray<string>();
-                            set.Formula = new ValueArray<string>(new[] { "-" });
-                            set.Manual = new ValueArray<string>(new[] { "-" });
-                            set.Reference = new ValueArray<string>(new[] { "-" });
-                            set.Published = new ValueArray<string>(new[] { "-" });
+                            set.Formula = new ValueArray<string>(new[] { "-", "-" });
+                            set.Manual = new ValueArray<string>(new[] { "-", "-" });
+                            set.Reference = new ValueArray<string>(new[] { "-", "-" });
+                            set.Published = new ValueArray<string>(new[] { "-", "-" });
                         }));
                     });
 
                     variable.SelectedElementDefinition.Parameter.Add(variable.SelectedParameter);
                 }
             }
-            
+
             this.UpdateValueSet(variable, variable.SelectedParameter);
-        }
-
-        /// <summary>
-        /// Gets the existing or newly created <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        /// <returns>A <see cref="ParameterType"/></returns>
-        private ParameterType GetSampledFunctionParameterType()
-        {
-            return this.ReferenceDataLibrary.ParameterType.FirstOrDefault(
-                    x => x.Name == this.dstParameterName && x is SampledFunctionParameterType) ??
-                this.CreateSampledFunctionParameterType();
-        }
-
-        /// <summary>
-        /// Create a <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        /// <returns>A <see cref="SampledFunctionParameterType"/></returns>
-        private SampledFunctionParameterType CreateSampledFunctionParameterType()
-        {
-            var parameterType = this.Bake<SampledFunctionParameterType>(x =>
-            {
-                x.Name = this.dstParameterName;
-                
-                x.ShortName = this.dstParameterName
-                    .Replace('.', '_')
-                    .Replace("'", "");
-
-                x.Iid = Guid.NewGuid();
-                x.Container = this.ReferenceDataLibrary;
-
-                x.InterpolationPeriod = new ValueArray<string>(
-                    new List<string>() { "0", string.Empty });
-
-                x.Symbol = this.dstParameterName;
-            });
-
-            var timeAssignment = this.Bake<IndependentParameterTypeAssignment>(x =>
-            {
-                x.ParameterType = this.CreateParameterType<DateTimeParameterType>(SampledFunctionParameterTypeTimestampMemberName);
-                x.Iid = Guid.NewGuid();
-            });
-
-            parameterType.IndependentParameterType.Add(timeAssignment);
-
-            var valueAssignement = this.Bake<DependentParameterTypeAssignment>(x =>
-            {
-                x.MeasurementScale = this.GetMeasurementScales().FirstOrDefault();
-                x.Iid = Guid.NewGuid();
-                x.ParameterType = this.CreateParameterType<SimpleQuantityKind>(SampledFunctionParameterTypeValueMemberName, this.GetMeasurementScales());
-            });
-
-            parameterType.DependentParameterType.Add(valueAssignement);
-
-            var clone = this.ReferenceDataLibrary.Clone(false);
-            var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
-            clone.ParameterType.Add(parameterType);
-            transaction.CreateOrUpdate(clone);
-
-            transaction.Create(timeAssignment);
-            transaction.Create(valueAssignement);
-            transaction.Create(parameterType);
-
-            this.hubController.Write(transaction);
-            this.ReferenceDataLibrary.ParameterType.Add(parameterType);
-
-            return parameterType;
-        }
-        
-        /// <summary>
-        /// Gets or creates the parameter type used in the 
-        /// </summary>
-        /// <typeparam name="TParameter">The type of <see cref="ParameterType"/> to return</typeparam>
-        /// <param name="name">The name of the parameterType</param>
-        /// <param name="measurementScales">A optionnal list of possible scales</param>
-        /// <returns>A <see cref="TParameter"/></returns>
-        private TParameter CreateParameterType<TParameter>(string name, List<MeasurementScale> measurementScales = default) where TParameter : ParameterType, new()
-        {
-            var parameterType = this.ReferenceDataLibrary.AggregatedReferenceDataLibrary
-                .Select(x => x.ParameterType
-                    .OfType<TParameter>()
-                    .FirstOrDefault(p => p.Name == name))
-                .FirstOrDefault();
-
-            if (parameterType is null)
-            {
-                parameterType = this.Bake<TParameter>(x =>
-                {
-                    x.Iid = Guid.NewGuid();
-                    x.Name = name;
-                    x.ShortName = name;
-                    x.Symbol = string.Concat(name.Take(3));
-                    x.Container = this.ReferenceDataLibrary;
-                });
-
-                if (parameterType is QuantityKind quantityKind && measurementScales?.Any() is true)
-                {
-                    quantityKind.PossibleScale = measurementScales;
-                    quantityKind.DefaultScale = measurementScales.First();
-                }
-
-                var clone = this.ReferenceDataLibrary.Clone(false);
-                var transaction = new ThingTransaction(TransactionContextResolver.ResolveContext(clone), clone);
-                clone.ParameterType.Add(parameterType);
-                transaction.CreateOrUpdate(clone);
-                transaction.CreateOrUpdate(parameterType);
-
-                this.hubController.Write(transaction);
-                this.ReferenceDataLibrary.ParameterType.Add(parameterType);
-            }
-
-            return parameterType;
         }
 
         /// <summary>
@@ -406,19 +245,35 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="parameter">The <see cref="Thing"/> <see cref="Parameter"/> or <see cref="ParameterOverride"/></param>
         private void UpdateValueSet(VariableRowViewModel variable, ParameterBase parameter)
         {
-            var valueSet = (ParameterValueSetBase)parameter.QueryParameterBaseValueSet(variable.SelectedOption, variable.SelectedActualFiniteState);
+            var valueSet = (ParameterValueSetBase) parameter.QueryParameterBaseValueSet(variable.SelectedOption, variable.SelectedActualFiniteState);
 
-            if (parameter.ParameterType is SampledFunctionParameterType)
+            if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType 
+                && sampledFunctionParameterType
+                    .HasTheRightNumberOfParameterType(out var independantParameterType, out _))
             {
                 var values = new List<string>();
 
-                foreach (var value in variable.SelectedValues)
+                if (independantParameterType.IsQuantityKindOrText())
                 {
-                    values.Add($"{value.TimeStamp:s}");
-                    values.Add(FormattableString.Invariant($"{value.Value}"));
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{variable.SelectedValues.IndexOf(value)}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
+                }
+                else if (independantParameterType.IsTimeType())
+                {
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{value.TimeDelta}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
                 }
 
-                valueSet.Computed = new ValueArray<string>(values);
+                if (values.Any())
+                {
+                    valueSet.Computed = new ValueArray<string>(values);
+                }
             }
             else
             {
@@ -439,3 +294,4 @@ namespace DEHPEcosimPro.MappingRules
             => this.dstController.AddToExternalIdentifierMap(internalId, externalId);
     }
 }
+

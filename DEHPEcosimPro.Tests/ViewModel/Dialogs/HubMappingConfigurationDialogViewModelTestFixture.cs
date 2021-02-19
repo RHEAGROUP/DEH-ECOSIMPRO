@@ -436,16 +436,24 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void VerifyContinueCommand()
         {
-            var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel()
-            {
-                SelectedParameter = this.parameter1, SelectedVariable = this.viewModel.AvailableVariables.First(),
-                SelectedValue = new ValueSetValueRowViewModel(
-                    new ParameterValueSet(Guid.NewGuid(), null, null), "15", new CyclicRatioScale())
-            };
+            var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
 
             this.viewModel.MappedElements.Add(mappedElementDefinitionRowViewModel);
-            this.viewModel.AvailableVariables.First().HasWriteAccess = true;
+            mappedElementDefinitionRowViewModel.VerifyValidity();
             Assert.IsFalse(mappedElementDefinitionRowViewModel.IsValid);
+            mappedElementDefinitionRowViewModel.SelectedVariable = this.viewModel.AvailableVariables.First();
+            mappedElementDefinitionRowViewModel.VerifyValidity();
+            Assert.IsFalse(mappedElementDefinitionRowViewModel.IsValid);
+            mappedElementDefinitionRowViewModel.SelectedParameter = this.parameter1;
+            this.viewModel.AvailableVariables.First().HasWriteAccess = true;
+            mappedElementDefinitionRowViewModel.VerifyValidity();
+            Assert.IsFalse(mappedElementDefinitionRowViewModel.IsValid);
+
+            mappedElementDefinitionRowViewModel.SelectedValue = new ValueSetValueRowViewModel(
+                new ParameterValueSet(Guid.NewGuid(), null, null), "15", new CyclicRatioScale());
+
+            mappedElementDefinitionRowViewModel.VerifyValidity();
+            Assert.IsTrue(mappedElementDefinitionRowViewModel.IsValid);
             Assert.IsFalse(this.viewModel.CanContinue);
             mappedElementDefinitionRowViewModel.VerifyValidity();
             this.viewModel.CheckCanExecute();

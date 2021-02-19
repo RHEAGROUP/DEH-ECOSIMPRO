@@ -11,7 +11,6 @@
         xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
         xmlns:publicationBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.PublicationBrowser;assembly=DEHPCommon"
-        xmlns:converters="clr-namespace:DEHPEcosimPro.Converters"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
@@ -19,7 +18,6 @@
             <DataTemplate x:Key="MappedThingRowDataTemplate">
                 <dataTemplate:MappingRow />
             </DataTemplate>
-            <converters:MappingDirectionToIndexConverter x:Key="MappingDirectionToIndexConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <dxmvvm:Interaction.Behaviors>
@@ -72,7 +70,7 @@
                                 </Grid>
 
                                 <TabControl Name="HubEngineeringModelPreview" Grid.Row="1" 
-                                            SelectedIndex="{Binding MappingDirection, Converter={StaticResource MappingDirectionToIndexConverter}, Mode=OneWay}">
+                                            SelectedIndex="{Binding MappingDirection}"><!--, Converter={StaticResource MappingDirectionToIndexConverter}-->
                                     <TabItem Header="Hub Engineering Model">
                                         <objectBrowser:ObjectBrowser DataContext="{Binding HubNetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
                                     </TabItem>
