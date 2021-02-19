@@ -58,18 +58,33 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private DomainOfExpertise domain;
         private Mock<ICloseWindowBehavior> closeBehavior;
         private Mock<IStatusBarControlViewModel> statusBar;
+        private SampledFunctionParameterType parameterType;
+        private ModelReferenceDataLibrary modelReferenceDataLibrary;
 
         [SetUp]
         public void Setup()
         {
             this.domain = new DomainOfExpertise();
 
+            this.modelReferenceDataLibrary = new ModelReferenceDataLibrary();
+
             this.iteration = new Iteration()
             {
-                Option = { new Option() { Name = "TestOption" } },
-                Element = { new ElementDefinition() { Owner = this.domain } }
+                Element = { new ElementDefinition() { Owner = this.domain } },
+                Option = { new Option() },
+                Container = new EngineeringModel()
+                {
+                    EngineeringModelSetup = new EngineeringModelSetup()
+                    {
+                        RequiredRdl = { modelReferenceDataLibrary },
+                        Container = new SiteReferenceDataLibrary()
+                        {
+                            Container = new SiteDirectory()
+                        }
+                    }
+                }
             };
-
+            
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
@@ -102,10 +117,64 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
+            this.parameterType = new SampledFunctionParameterType()
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment()
+                    {
+                        ParameterType = new TextParameterType()
+                        {
+                            Name = "IndependentText"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment()
+                    {
+                        ParameterType = new SimpleQuantityKind()
+                        {
+                            Name = "DependentQuantityKing"
+                        }
+                    }
+                }
+            };
+
+            var invalidParameterType = new SampledFunctionParameterType()
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment()
+                    {
+                        ParameterType = new CompoundParameterType()
+                        {
+                            Name = "IndependentText"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment()
+                    {
+                        ParameterType = new SimpleQuantityKind()
+                        {
+                            Name = "DependentQuantityKing"
+                        }
+                    }
+                }
+            };
+            this.modelReferenceDataLibrary.ParameterType.Add(this.parameterType);
+            this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
 
             this.viewModel = new DstMappingConfigurationDialogViewModel(
-                this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+            this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
 
             this.closeBehavior = new Mock<ICloseWindowBehavior>();
@@ -119,7 +188,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.SelectedThing);
             Assert.IsFalse(this.viewModel.IsBusy);
             Assert.IsEmpty(this.viewModel.AvailableActualFiniteStates);
-            Assert.IsEmpty(this.viewModel.AvailableParameterTypes);
+            Assert.AreEqual(1, this.viewModel.AvailableParameterTypes.Count);
             Assert.IsNotEmpty(this.viewModel.AvailableElementDefinitions);
             Assert.IsEmpty(this.viewModel.AvailableElementUsages);
             Assert.IsEmpty(this.viewModel.AvailableParameters);
@@ -135,6 +204,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsFalse(this.viewModel.ContinueCommand.CanExecute(null));
             this.viewModel.SelectedThing = this.variableRowViewModels.First();
             this.viewModel.Variables.First().SelectedValues.AddRange(this.variableRowViewModels.First().Values);
+            this.viewModel.Variables.First().SelectedParameterType = this.parameterType;
             Assert.IsTrue(this.viewModel.ContinueCommand.CanExecute(null));
 
             this.viewModel.CloseWindowBehavior = this.closeBehavior.Object;

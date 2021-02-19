@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.167" />
+    <PackageReference Include="DEHPCommon" Version="1.0.174" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />
     <PackageReference Include="DevExpress.Wpf.Reporting" Version="20.1.8" />
     <PackageReference Include="reactiveui-core.Net40" Version="6.5.0" />

@@ -45,6 +45,7 @@ namespace DEHPEcosimPro.MappingRules
     using DEHPCommon.MappingRules.Core;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using DevExpress.Xpf.Reports.UserDesigner.Native;
@@ -57,16 +58,6 @@ namespace DEHPEcosimPro.MappingRules
     /// </summary>
     public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, List<ElementDefinition>>
     {
-        /// <summary>
-        /// Gets the dependent parameter type name for one <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        private const string SampledFunctionParameterTypeValueMemberName = "Value";
-
-        /// <summary>
-        /// Gets the independent parameter type name for one <see cref="SampledFunctionParameterType"/>
-        /// </summary>
-        private const string SampledFunctionParameterTypeTimestampMemberName = "Timestamp";
-
         /// <summary>
         /// The current class logger
         /// </summary>
@@ -83,13 +74,6 @@ namespace DEHPEcosimPro.MappingRules
         private IDstController dstController;
 
         /// <summary>
-        /// Gets the <see cref="ModelReferenceDataLibrary"/> of the current <see cref="EngineeringModel"/>
-        /// </summary>
-        private ModelReferenceDataLibrary ReferenceDataLibrary =>
-            this.hubController.OpenIteration.GetContainerOfType<EngineeringModel>()
-                .RequiredRdls.OfType<ModelReferenceDataLibrary>().First();
-        
-        /// <summary>
         /// The current <see cref="DomainOfExpertise"/>
         /// </summary>
         private DomainOfExpertise owner;
@@ -103,7 +87,7 @@ namespace DEHPEcosimPro.MappingRules
         /// Holds the current processing <see cref="VariableRowViewModel"/> parameter name
         /// </summary>
         private string dstParameterName;
-        
+
         /// <summary>
         /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementDefinition"/>
         /// </summary>
@@ -171,7 +155,7 @@ namespace DEHPEcosimPro.MappingRules
                 x.Container = this.hubController.OpenIteration;
             });
         }
-        
+
         /// <summary>
         /// Updates the parameters overrides from the selected <see cref="ElementUsage"/>s
         /// </summary>
@@ -182,7 +166,7 @@ namespace DEHPEcosimPro.MappingRules
 
             foreach (var elementUsage in variable.SelectedElementUsages)
             {
-                if (variable.SelectedParameter is {} parameter 
+                if (variable.SelectedParameter is {} parameter
                     && elementUsage.ParameterOverride
                         .FirstOrDefault(x => x.Parameter == parameter) is {} parameterOverride)
                 {
@@ -194,9 +178,10 @@ namespace DEHPEcosimPro.MappingRules
                 {
                     parameterOverride = elementUsage.ParameterOverride.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName);
 
-                if (hasAtLeastOneUpdatedOverride)
-                {
-                    this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
+                    if (hasAtLeastOneUpdatedOverride)
+                    {
+                        this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
+                    }
                 }
             }
         }
@@ -209,7 +194,8 @@ namespace DEHPEcosimPro.MappingRules
         {
             if (variable.SelectedParameter is null)
             {
-                if (variable.SelectedElementDefinition.Parameter.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName) 
+                if (variable.SelectedElementDefinition.Parameter.FirstOrDefault(
+                        x => x.ParameterType.Iid == variable.SelectedParameterType.Iid)
                     is {} parameter)
                 {
                     variable.SelectedParameter = parameter;
@@ -236,7 +222,7 @@ namespace DEHPEcosimPro.MappingRules
                     variable.SelectedElementDefinition.Parameter.Add(variable.SelectedParameter);
                 }
             }
-            
+
             this.UpdateValueSet(variable, variable.SelectedParameter);
         }
 
@@ -259,18 +245,15 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="parameter">The <see cref="Thing"/> <see cref="Parameter"/> or <see cref="ParameterOverride"/></param>
         private void UpdateValueSet(VariableRowViewModel variable, ParameterBase parameter)
         {
-            var valueSet = (ParameterValueSetBase)parameter.QueryParameterBaseValueSet(variable.SelectedOption, variable.SelectedActualFiniteState);
+            var valueSet = (ParameterValueSetBase) parameter.QueryParameterBaseValueSet(variable.SelectedOption, variable.SelectedActualFiniteState);
 
-            if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType
-                && sampledFunctionParameterType.DependentParameterType.SingleOrDefault()?.ParameterType is ScalarParameterType 
-                && sampledFunctionParameterType.IndependentParameterType.SingleOrDefault()?.ParameterType is { } independantParameterType )
+            if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType 
+                && sampledFunctionParameterType
+                    .HasTheRightNumberOfParameterType(out var independantParameterType, out _))
             {
                 var values = new List<string>();
 
-                if ((independantParameterType is TextParameterType
-                    || independantParameterType is QuantityKind) && dependantParameterType is TextParameterType
-                                                                         || ependantParameterType is QuantityKind)
-                {)
+                if (independantParameterType.IsQuantityKindOrText())
                 {
                     foreach (var value in variable.SelectedValues)
                     {
@@ -278,7 +261,7 @@ namespace DEHPEcosimPro.MappingRules
                         values.Add(FormattableString.Invariant($"{value.Value}"));
                     }
                 }
-                else
+                else if (independantParameterType.IsTimeType())
                 {
                     foreach (var value in variable.SelectedValues)
                     {
@@ -287,7 +270,10 @@ namespace DEHPEcosimPro.MappingRules
                     }
                 }
 
-                valueSet.Computed = new ValueArray<string>(values);
+                if (values.Any())
+                {
+                    valueSet.Computed = new ValueArray<string>(values);
+                }
             }
             else
             {
@@ -308,3 +294,4 @@ namespace DEHPEcosimPro.MappingRules
             => this.dstController.AddToExternalIdentifierMap(internalId, externalId);
     }
 }
+

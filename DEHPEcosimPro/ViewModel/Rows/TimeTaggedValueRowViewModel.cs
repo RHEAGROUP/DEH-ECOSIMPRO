@@ -83,7 +83,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="timestampOfReference">The <see cref="TimeDelta"/></param>
         public TimeTaggedValueRowViewModel(object value, DateTime serverTimestamp, DateTime timestampOfReference = default)
         {
-            this.value = value;
+            this.Value = value;
             this.TimeStamp = serverTimestamp;
             this.TimeDelta = timestampOfReference == default ? default : serverTimestamp - timestampOfReference;
         }

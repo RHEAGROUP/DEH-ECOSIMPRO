@@ -307,7 +307,7 @@ namespace DEHPEcosimPro.Tests.DstController
         public void VerifyTransferToHub()
         {
             this.navigationService.Setup(
-                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                x => x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                 It.IsAny<CreateLogEntryDialogViewModel>())).Returns(true);
 
             this.controller.ExternalIdentifierMap = new ExternalIdentifierMap(Guid.NewGuid(), null, null)
@@ -321,19 +321,24 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.DoesNotThrowAsync(async () => await this.controller.TransferMappedThingsToHub());
 
             this.controller.DstMapResult.Add(new ElementDefinition());
-
-
+            
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
             this.navigationService.Setup(
-                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                x => x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                     It.IsAny<CreateLogEntryDialogViewModel>())).Returns(false);
             
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
             
             this.navigationService.Setup(
-                x => x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                x => x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                     It.IsAny<CreateLogEntryDialogViewModel>())).Returns(default(bool?));
+            
+            Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
+            
+            this.navigationService.Setup(
+                x => x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                    It.IsAny<CreateLogEntryDialogViewModel>())).Returns(true);
             
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
             
@@ -343,15 +348,15 @@ namespace DEHPEcosimPro.Tests.DstController
             
             this.navigationService.Verify(
                 x => 
-                    x.ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
+                    x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                         It.IsAny<CreateLogEntryDialogViewModel>())
-                , Times.Exactly(3));
+                , Times.Exactly(4));
             
             this.hubController.Verify(
-                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(2));
+                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(4));
 
             this.hubController.Verify(
-                x => x.Refresh(), Times.Once);
+                x => x.Refresh(), Times.Exactly(2));
         }
 
         [Test]

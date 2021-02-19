@@ -38,6 +38,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -200,7 +201,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.UpdateSelectedParameter));
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                    {
+                        this.UpdateSelectedParameter();
+                        this.CheckCanExecute();
+                    }));
             
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -237,12 +242,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.HubController.OpenIteration.Element.Select(e => e.Clone(true)));
 
             this.AvailableParameterTypes.AddRange(
-                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>()
-                    .RequiredRdls
+                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>().RequiredRdls
                 .SelectMany(x => x.ParameterType).Where(
                     x => x is SampledFunctionParameterType parameterType 
-                         && parameterType.IndependentParameterType.Count == 1 
-                         && parameterType.DependentParameterType.Count == 1)
+                         && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
                 .OrderBy(x => x.Name));
 
             this.UpdateAvailableParameters();
@@ -257,7 +260,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateSelectedParameterType()
         {
-            if (this.SelectedThing?.SelectedParameterType is null || this.SelectedThing?.SelectedParameter is null)
+            if (this.SelectedThing?.SelectedParameter is null)
             {
                 return;
             }
@@ -281,7 +284,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateSelectedParameter()
         {
-            if (this.SelectedThing?.SelectedParameter is null ||  this.SelectedThing?.SelectedParameterType is null)
+            if (this.SelectedThing?.SelectedParameterType is null)
             {
                 return;
             }
@@ -291,6 +294,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     && parameter.ParameterType.Iid != parameterType.Iid)
             {
                 this.SelectedThing.SelectedParameter = null;
+            }
+            else if(this.AvailableParameters.FirstOrDefault(x => 
+                x.ParameterType.Iid == this.SelectedThing.SelectedParameterType.Iid) is Parameter parameterOrOverride )
+            {
+                this.SelectedThing.SelectedParameter = parameterOrOverride;
             }
         }
 

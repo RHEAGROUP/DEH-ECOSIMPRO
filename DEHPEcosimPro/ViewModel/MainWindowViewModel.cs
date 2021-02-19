@@ -55,7 +55,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Backing field for <see cref="MappingDirection"/>
         /// </summary>
-        private MappingDirection mappingDirection;
+        private int mappingDirection;
 
         /// <summary>
         /// Gets or sets the <see cref="ISwitchLayoutPanelOrderBehavior"/>
@@ -100,7 +100,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Gets or sets the <see cref="MappingDirection"/> for proper binding
         /// </summary>
-        public MappingDirection MappingDirection
+        public int MappingDirection
         {
             get => this.mappingDirection;
             set => this.RaiseAndSetIfChanged(ref this.mappingDirection, value);
@@ -147,8 +147,10 @@ namespace DEHPEcosimPro.ViewModel
         private void ChangeMappingDirectionExecute()
         {
             this.SwitchPanelBehavior?.Switch();
-            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection ?? MappingDirection.FromDstToHub;
-            this.MappingDirection = this.dstController.MappingDirection;
+            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection 
+                                                  ?? DEHPCommon.Enumerators.MappingDirection.FromDstToHub;
+
+            this.MappingDirection = (int)this.dstController.MappingDirection;
         }
     }
 }

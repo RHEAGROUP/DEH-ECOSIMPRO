@@ -26,12 +26,8 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
-    using System.Reactive;
     using System.Reactive.Linq;
-    using System.Threading;
     using System.Threading.Tasks;
-    using System.Windows;
 
     using CDP4Dal;
 
@@ -75,17 +71,17 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
-        /// Backing field for <see cref="CanTransfert"/>
+        /// Backing field for <see cref="CanTransfer"/>
         /// </summary>
-        private bool canTransfert;
+        private bool canTransfer;
 
         /// <summary>
         /// Gets or sets a value indicating whether there is any awaiting transfer
         /// </summary>
         public bool CanTransfer
         {
-            get => this.canTransfert;
-            set => this.RaiseAndSetIfChanged(ref this.canTransfert, value);
+            get => this.canTransfer;
+            set => this.RaiseAndSetIfChanged(ref this.canTransfer, value);
         }
 
         /// <summary>
@@ -133,10 +129,16 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Cancels the transfer in progress
         /// </summary>
-        /// <returns>A <see cref="Task"/><returns>
-        private Task CancelTransfer()
+        /// <returns>A <see cref="Task"/></returns>
+        private async Task CancelTransfer()
         {
-            throw new NotImplementedException();
+            this.dstController.DstMapResult.Clear();
+            this.dstController.HubMapResult.Clear();
+            await Task.Delay(1);
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent() { Reset = true });
+            this.AreThereAnyTransferInProgress = false;
+            this.IsIndeterminate = false;
         }
 
         /// <summary>
