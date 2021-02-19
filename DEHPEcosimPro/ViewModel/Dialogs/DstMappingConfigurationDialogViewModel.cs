@@ -258,17 +258,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Sets the <see cref="SelectedThing"/> <see cref="ParameterType"/> according to the selected <see cref="Parameter"/>
         /// </summary>
-        private void UpdateSelectedParameterType()
+        public void UpdateSelectedParameterType()
         {
             if (this.SelectedThing?.SelectedParameter is null)
             {
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
-                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
-                && parameterType.IndependentParameterType.Count == 1
-                && parameterType.DependentParameterType.Count == 1)
+            if (this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
+                && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
             {
                 this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
             }
@@ -282,15 +280,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Sets the <see cref="SelectedThing"/> <see cref="Parameter"/> according to the selected <see cref="ParameterType"/>
         /// </summary>
-        private void UpdateSelectedParameter()
+        public void UpdateSelectedParameter()
         {
             if (this.SelectedThing?.SelectedParameterType is null)
             {
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter is { } parameter
-                && this.SelectedThing.SelectedParameterType is { } parameterType 
+            if (this.SelectedThing.SelectedParameterType is { } parameterType 
+                    && this.SelectedThing.SelectedParameter is { } parameter 
                     && parameter.ParameterType.Iid != parameterType.Iid)
             {
                 this.SelectedThing.SelectedParameter = null;

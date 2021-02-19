@@ -123,6 +123,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         [Test]
         public void VerifyMapToNewElementDefinition()
         {
+            this.iteration.Element.Add(new ElementDefinition(){ Name = "Cap" });
             var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
 
             this.variables.Add(new VariableRowViewModel((
@@ -234,7 +235,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameterOverride = first.ParameterOverride.Last();
             Assert.AreEqual(1, first.ParameterOverride.Count);
             var set = parameterOverride.ValueSet.First();
-            Assert.AreEqual($"-", set.Computed.First());
+            Assert.AreEqual($"{TimeSpan.Zero}", set.Computed.First());
+            Assert.AreEqual($"0.2", set.Computed[1]);
         }
 
         private void SetParameterTypes()

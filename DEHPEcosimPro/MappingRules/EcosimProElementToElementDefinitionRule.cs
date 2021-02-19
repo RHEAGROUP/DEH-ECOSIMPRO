@@ -162,26 +162,13 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="variable">The current <see cref="VariableRowViewModel"/></param>
         private void UpdateValueSetsFromElementUsage(VariableRowViewModel variable)
         {
-            var hasAtLeastOneUpdatedOverride = false;
-
             foreach (var elementUsage in variable.SelectedElementUsages)
             {
-                if (variable.SelectedParameter is {} parameter
-                    && elementUsage.ParameterOverride
-                        .FirstOrDefault(x => x.Parameter == parameter) is {} parameterOverride)
+                if (elementUsage.ParameterOverride.FirstOrDefault(x => 
+                        x.ParameterType.Iid == variable.SelectedParameterType.Iid) is { } parameterOverride)
                 {
                     this.UpdateValueSet(variable, parameterOverride);
-                    this.AddToExternalIdentifierMap(parameterOverride.Iid, this.dstParameterName);
-                    hasAtLeastOneUpdatedOverride = true;
-                }
-                else
-                {
-                    parameterOverride = elementUsage.ParameterOverride.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName);
-
-                    if (hasAtLeastOneUpdatedOverride)
-                    {
-                        this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
-                    }
+                    this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
                 }
             }
         }

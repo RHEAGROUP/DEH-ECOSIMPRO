@@ -620,7 +620,7 @@ namespace DEHPEcosimPro.DstController
                 externalIdentifierMapClone.Iid = Guid.NewGuid();
                 this.ExternalIdentifierMap.Iid = externalIdentifierMapClone.Iid;
                 ((Iteration)transaction.AssociatedClone).ExternalIdentifierMap.Add(externalIdentifierMapClone);
-                transaction.CreateOrUpdate(externalIdentifierMapClone);
+                transaction.Create(externalIdentifierMapClone);
             }
 
             var idCorrespondencesToPersist = externalIdentifierMapClone.Correspondence.ToList();
