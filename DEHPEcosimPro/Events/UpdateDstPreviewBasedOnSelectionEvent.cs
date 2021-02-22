@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UpdateDstVariableTreeEvent.cs" company="RHEA System S.A.">
+// <copyright file="UpdateDstPreviewBasedOnSelectionEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,14 +24,28 @@
 
 namespace DEHPEcosimPro.Events
 {
-    using CDP4Dal;
+    using System.Collections.Generic;
 
     using DEHPCommon.Events;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
+
+    using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.NetChangePreview;
 
     /// <summary>
-    /// The <see cref="OpcVariableChangedEvent"/> represents an event for the <see cref="CDPMessageBus"/>
+    /// Event for the <see cref="CDP4Dal.CDPMessageBus"/> that allows listener to be notified
+    /// The <see cref="UpdateDstPreviewBasedOnSelectionEvent"/> is for filtering the dst impact view based on a selection
     /// </summary>
-    public class UpdateDstVariableTreeEvent : UpdateTreeBaseEvent
+    public class UpdateDstPreviewBasedOnSelectionEvent : UpdatePreviewBasedOnSelectionBaseEvent<ElementDefinitionRowViewModel, IDstNetChangePreviewViewModel>
     {
+        /// <summary>
+        /// Initializes a new <see cref="T:DEHPCommon.Events.UpdatePreviewBasedOnSelectionBaseEvent`2" />
+        /// </summary>
+        /// <param name="things">The collection of <see cref="ElementDefinitionRowViewModel"/> selection</param>
+        /// <param name="target">The target <see cref="T:System.Type" /></param>
+        /// <param name="reset">a value indicating whether the listener should reset its tree</param>
+        public UpdateDstPreviewBasedOnSelectionEvent(IEnumerable<ElementDefinitionRowViewModel> things, IDstNetChangePreviewViewModel target, bool reset) : base(things, target, reset)
+        {
+        }
     }
 }

@@ -34,6 +34,8 @@ namespace DEHPEcosimPro.ViewModel
 
     using CDP4Common.CommonData;
 
+    using CDP4Dal;
+
     using DEHPCommon;
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -42,7 +44,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
@@ -145,9 +147,21 @@ namespace DEHPEcosimPro.ViewModel
                 .Subscribe(_ => this.UpdateProperties());
 
             this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.Changed)
-                .Subscribe(_ => this.PopulateContextMenu());
+                .Subscribe(_ =>
+                {
+                    this.PopulateContextMenu();
+                    this.UpdateNetChangePreviewBasedOnSelection();
+                });
 
             this.InitializeCommands();
+        }
+
+        /// <summary>
+        /// Sends an update event to the Hub net change preview based on the current <see cref="SelectedThings"/>
+        /// </summary>
+        private void UpdateNetChangePreviewBasedOnSelection()
+        {
+            CDPMessageBus.Current.SendMessage(new UpdatePreviewBasedOnSelectionEvent(this.SelectedThings));
         }
 
         /// <summary>
@@ -185,6 +199,7 @@ namespace DEHPEcosimPro.ViewModel
             timer.Stop();
             this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
             this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+            this.SelectedThings.Clear();
             this.statusBar.Append($"Mapping in progress");
         }
 

@@ -40,6 +40,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
 
     using DevExpress.Mvvm.Native;
@@ -64,16 +65,28 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             this.dstController = dstController;
 
-            CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
+            CDPMessageBus.Current.Listen<UpdateHubPreviewBasedOnSelectionEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x => this.UpdateTree(x.Reset));
+                .Subscribe(this.UpdateTreeBasedOnSelection);
+        }
+
+        /// <summary>
+        /// Updates the tree and filter changed things based on a selection
+        /// </summary>
+        /// <param name="eventArguments">The <see cref="UpdatePreviewBasedOnSelectionBaseEvent{TThing,TTarget}"/></param>
+        private void UpdateTreeBasedOnSelection(UpdateHubPreviewBasedOnSelectionEvent eventArguments)
+        {
+            foreach (var variable in eventArguments.Selection)
+            {
+                
+            }
         }
 
         /// <summary>
         /// Updates the tree
         /// </summary>
         /// <param name="shouldReset">A value indicating whether the tree should remove the element in preview</param>
-        public void UpdateTree(bool shouldReset)
+        public override void UpdateTree(bool shouldReset)
         {
             if (shouldReset)
             {
@@ -82,6 +95,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             else
             {
                 this.IsBusy = true;
+                this.ThingsAtPreviousState.Clear();
+                this.ThingsAtPreviousState.AddRange(this.Things);
                 this.ComputeValues();
                 this.IsBusy = false;
             }
