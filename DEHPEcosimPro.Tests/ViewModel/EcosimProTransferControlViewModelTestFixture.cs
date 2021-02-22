@@ -27,6 +27,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System;
     using System.Threading.Tasks;
 
+    using CDP4Common.EngineeringModelData;
+
     using CDP4Dal;
 
     using DEHPCommon.Events;
@@ -34,10 +36,13 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using Moq;
 
     using NUnit.Framework;
+
+    using ReactiveUI;
 
     [TestFixture]
     public class EcosimProTransferControlViewModelTestFixture
@@ -53,6 +58,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
+            
             this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object);
         }
 
@@ -82,11 +88,24 @@ namespace DEHPEcosimPro.Tests.ViewModel
         [Test]
         public void VerifyCancelCommand()
         {
+            this.dstController.Setup(x => x.DstMapResult).Returns(new ReactiveList<ElementDefinition>()
+            {
+                new ElementDefinition()
+            });
+
+            this.dstController.Setup(x => x.HubMapResult).Returns(new ReactiveList<MappedElementDefinitionRowViewModel>()
+            {
+                new MappedElementDefinitionRowViewModel()
+            });
+            
             Assert.IsFalse(this.viewModel.CancelCommand.CanExecute(null));
             this.viewModel.AreThereAnyTransferInProgress = true;
             Assert.IsTrue(this.viewModel.CancelCommand.CanExecute(null));
-
-            Assert.ThrowsAsync<NotImplementedException>(() => this.viewModel.CancelCommand.ExecuteAsyncTask(null));
+            Assert.IsNotEmpty(this.dstController.Object.HubMapResult);
+            Assert.IsNotEmpty(this.dstController.Object.DstMapResult);
+            Assert.DoesNotThrow(() => this.viewModel.CancelCommand.ExecuteAsyncTask(null));
+            Assert.IsEmpty(this.dstController.Object.HubMapResult);
+            Assert.IsEmpty(this.dstController.Object.DstMapResult);
         }
     }
 }

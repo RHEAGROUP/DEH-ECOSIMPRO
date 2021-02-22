@@ -58,18 +58,33 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private DomainOfExpertise domain;
         private Mock<ICloseWindowBehavior> closeBehavior;
         private Mock<IStatusBarControlViewModel> statusBar;
+        private SampledFunctionParameterType parameterType;
+        private ModelReferenceDataLibrary modelReferenceDataLibrary;
 
         [SetUp]
         public void Setup()
         {
             this.domain = new DomainOfExpertise();
 
+            this.modelReferenceDataLibrary = new ModelReferenceDataLibrary();
+
             this.iteration = new Iteration()
             {
-                Option = { new Option() { Name = "TestOption" } },
-                Element = { new ElementDefinition() { Owner = this.domain } }
+                Element = { new ElementDefinition() { Owner = this.domain } },
+                Option = { new Option() },
+                Container = new EngineeringModel()
+                {
+                    EngineeringModelSetup = new EngineeringModelSetup()
+                    {
+                        RequiredRdl = { this.modelReferenceDataLibrary },
+                        Container = new SiteReferenceDataLibrary()
+                        {
+                            Container = new SiteDirectory()
+                        }
+                    }
+                }
             };
-
+            
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
@@ -102,10 +117,65 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
+            this.parameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment()
+                    {
+                        ParameterType = new TextParameterType()
+                        {
+                            Name = "IndependentText"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment()
+                    {
+                        ParameterType = new SimpleQuantityKind()
+                        {
+                            Name = "DependentQuantityKing"
+                        }
+                    }
+                }
+            };
+
+            var invalidParameterType = new SampledFunctionParameterType()
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment()
+                    {
+                        ParameterType = new CompoundParameterType()
+                        {
+                            Name = "IndependentText"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment()
+                    {
+                        ParameterType = new SimpleQuantityKind()
+                        {
+                            Name = "DependentQuantityKing"
+                        }
+                    }
+                }
+            };
+
+            this.modelReferenceDataLibrary.ParameterType.Add(this.parameterType);
+            this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
 
             this.viewModel = new DstMappingConfigurationDialogViewModel(
-                this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+            this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
 
             this.closeBehavior = new Mock<ICloseWindowBehavior>();
@@ -119,12 +189,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.SelectedThing);
             Assert.IsFalse(this.viewModel.IsBusy);
             Assert.IsEmpty(this.viewModel.AvailableActualFiniteStates);
-            Assert.IsEmpty(this.viewModel.AvailableParameterTypes);
+            Assert.AreEqual(1, this.viewModel.AvailableParameterTypes.Count);
             Assert.IsNotEmpty(this.viewModel.AvailableElementDefinitions);
             Assert.IsEmpty(this.viewModel.AvailableElementUsages);
             Assert.IsEmpty(this.viewModel.AvailableParameters);
             Assert.IsNotEmpty(this.viewModel.AvailableOptions);
             Assert.IsNotEmpty(this.viewModel.Variables);
+            Assert.IsNotEmpty(this.viewModel.TimeSteps);
             Assert.IsNotNull(this.viewModel.ContinueCommand);
         }
 
@@ -135,6 +206,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsFalse(this.viewModel.ContinueCommand.CanExecute(null));
             this.viewModel.SelectedThing = this.variableRowViewModels.First();
             this.viewModel.Variables.First().SelectedValues.AddRange(this.variableRowViewModels.First().Values);
+            this.viewModel.Variables.First().SelectedParameterType = this.parameterType;
             Assert.IsTrue(this.viewModel.ContinueCommand.CanExecute(null));
 
             this.viewModel.CloseWindowBehavior = this.closeBehavior.Object;
@@ -183,6 +255,71 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             Assert.DoesNotThrow(() => this.viewModel.UpdatePropertiesBasedOnMappingConfiguration());
             this.hubController.Verify(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out It.Ref<Thing>.IsAny), Times.Exactly(5));
+        }
+
+        [Test]
+        public void VerifyApplyTimeStep()
+        {
+            Assert.IsNotNull(this.viewModel.ApplyTimeStepOnSelectionCommand);
+            Assert.IsTrue(this.viewModel.ApplyTimeStepOnSelectionCommand.CanExecute(null));
+            Assert.DoesNotThrow(() => this.viewModel.ApplyTimeStepOnSelectionCommand.Execute(null));
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            Assert.IsEmpty(this.viewModel.SelectedThing.SelectedValues);
+            Assert.DoesNotThrow(() => this.viewModel.ApplyTimeStepOnSelectionCommand.Execute(null));
+            Assert.IsNotEmpty(this.viewModel.SelectedThing.SelectedValues);
+        }
+
+        [Test]
+        public void VerifyUpdateSelectedParameterType()
+        {
+            this.viewModel.SelectedThing = null;
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameterType());
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            var randomParameterType = new BooleanParameterType();
+            this.viewModel.SelectedThing.SelectedParameterType = randomParameterType;
+
+            this.viewModel.SelectedThing.SelectedParameter = new Parameter()
+            {
+                ParameterType = randomParameterType
+            };
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameterType());
+            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameterType);
+
+            this.viewModel.SelectedThing.SelectedParameter = new Parameter()
+            {
+                ParameterType = this.parameterType
+            };
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameterType());
+            Assert.AreSame(this.viewModel.SelectedThing.SelectedParameter.ParameterType, this.viewModel.SelectedThing.SelectedParameterType);
+        }
+
+        [Test]
+        public void VerifyUpdateSelectedParameter()
+        {
+            this.viewModel.SelectedThing = null;
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
+
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
+
+            this.viewModel.SelectedThing.SelectedParameter = new Parameter()
+            {
+                ParameterType = new BooleanParameterType()
+            };
+
+            this.viewModel.SelectedThing.SelectedParameterType = this.parameterType;
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
+            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameter);
+
+            this.viewModel.AvailableParameters.Add(new Parameter()
+            {
+                ParameterType = this.parameterType
+            });
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
+            Assert.AreSame(this.viewModel.SelectedThing.SelectedParameterType, this.viewModel.SelectedThing.SelectedParameter.ParameterType);
         }
     }
 }

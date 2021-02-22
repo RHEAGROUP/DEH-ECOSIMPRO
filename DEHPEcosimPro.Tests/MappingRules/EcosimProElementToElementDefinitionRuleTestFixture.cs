@@ -62,6 +62,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private Mock<ISession> session;
         private Iteration iteration;
         private Mock<IDstController> dstController;
+        private SampledFunctionParameterType scalarParameterType;
+        private SampledFunctionParameterType dateTimeParameterType;
 
         [SetUp]
         public void Setup()
@@ -104,18 +106,24 @@ namespace DEHPEcosimPro.Tests.MappingRules
             AppContainer.Container = containerBuilder.Build();
 
             this.rule = new EcosimProElementToElementDefinitionRule();
+            
+            this.SetParameterTypes();
 
             this.variables = new List<VariableRowViewModel>()
             {
                 new VariableRowViewModel((
-                    new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")}, 
+                    new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
+                {
+                    SelectedParameterType = this.scalarParameterType
+                }
             };
         }
 
         [Test]
         public void VerifyMapToNewElementDefinition()
         {
+            this.iteration.Element.Add(new ElementDefinition(){ Name = "Cap" });
             var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
 
             this.variables.Add(new VariableRowViewModel((
@@ -123,7 +131,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
-                SelectedValues = { timeTaggedValueRowViewModel }
+                SelectedValues = { timeTaggedValueRowViewModel },
+                SelectedParameterType = this.scalarParameterType
             });
 
             this.variables.Add(new VariableRowViewModel((
@@ -131,14 +140,18 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
-                SelectedValues = { timeTaggedValueRowViewModel }
+                SelectedValues = { timeTaggedValueRowViewModel },
+                SelectedParameterType = this.dateTimeParameterType
             });
+
+            this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, DateTime.Now, DateTime.Now));
 
             var elements = this.rule.Transform(this.variables).ToList();
             Assert.AreEqual(3, elements.Count);
             var parameter = elements.Last().Parameter.First();
-            Assert.AreEqual("a", parameter.ParameterType.Name);
+            Assert.AreEqual("TextXQuantity", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
+            Assert.AreEqual("0", parameterValueSet.Computed[0]);
             Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
         }
         
@@ -212,7 +225,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 Values = { timeTaggedValueRowViewModel },
                 SelectedValues = { timeTaggedValueRowViewModel },
                 SelectedElementDefinition = elementDefinition,
-                SelectedElementUsages = { elementUsage }
+                SelectedElementUsages = { elementUsage },
+                SelectedParameterType = parameter.ParameterType
             });
 
             var elements = this.rule.Transform(this.variables);
@@ -221,7 +235,63 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameterOverride = first.ParameterOverride.Last();
             Assert.AreEqual(1, first.ParameterOverride.Count);
             var set = parameterOverride.ValueSet.First();
-            Assert.AreEqual($"{timeTaggedValueRowViewModel.TimeStamp:s}", set.Computed.First());
+            Assert.AreEqual($"{TimeSpan.Zero}", set.Computed.First());
+            Assert.AreEqual($"0.2", set.Computed[1]);
+        }
+
+        private void SetParameterTypes()
+        {
+            this.scalarParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                    {
+                        ParameterType = new TextParameterType(Guid.NewGuid(),null,null)
+                        {
+                            Name = "IndependentText"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                    {
+                        ParameterType = new SimpleQuantityKind(Guid.NewGuid(),null,null)
+                        {
+                            Name = "DependentQuantityKing"
+                        }
+                    }
+                }
+            };
+
+            this.dateTimeParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "DateTimeXText",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                    {
+                        ParameterType = new DateTimeParameterType(Guid.NewGuid(),null,null)
+                        {
+                            Name = "IndependentDateTime"
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                    {
+                        ParameterType = new TextParameterType(Guid.NewGuid(),null,null)
+                        {
+                            Name = "DependentText"
+                        }
+                    }
+                }
+            };
         }
     }
 }

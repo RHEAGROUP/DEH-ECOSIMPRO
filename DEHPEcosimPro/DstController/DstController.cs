@@ -620,7 +620,7 @@ namespace DEHPEcosimPro.DstController
                 externalIdentifierMapClone.Iid = Guid.NewGuid();
                 this.ExternalIdentifierMap.Iid = externalIdentifierMapClone.Iid;
                 ((Iteration)transaction.AssociatedClone).ExternalIdentifierMap.Add(externalIdentifierMapClone);
-                transaction.CreateOrUpdate(externalIdentifierMapClone);
+                transaction.Create(externalIdentifierMapClone);
             }
 
             var idCorrespondencesToPersist = externalIdentifierMapClone.Correspondence.ToList();
@@ -630,7 +630,6 @@ namespace DEHPEcosimPro.DstController
             foreach (var clonedCorrespondence in idCorrespondencesToPersist)
             {
                 externalIdentifierMapClone.Correspondence.Add(clonedCorrespondence);
-                clonedCorrespondence.Container = externalIdentifierMapClone;
                 transaction.CreateOrUpdate(clonedCorrespondence);
             }
 
@@ -654,6 +653,7 @@ namespace DEHPEcosimPro.DstController
                 ExternalToolName = this.ThisToolName,
                 ExternalModelName = newName,
                 Owner = this.hubController.CurrentDomainOfExpertise,
+                Container = this.hubController.OpenIteration
             };
         }
 
@@ -688,7 +688,7 @@ namespace DEHPEcosimPro.DstController
             var vm = new CreateLogEntryDialogViewModel();
 
             var dialogResult = this.navigation
-                .ShowDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(vm);
+                .ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(vm);
 
             if (dialogResult != true)
             {

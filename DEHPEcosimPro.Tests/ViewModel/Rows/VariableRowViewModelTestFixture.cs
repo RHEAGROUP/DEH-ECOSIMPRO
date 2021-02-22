@@ -26,9 +26,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     using CDP4Dal;
 
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -110,6 +112,67 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             Assert.AreEqual(-1496.6653040374986d, viewModel.ComputeAverageValue());
             viewModel.Values.Add(new TimeTaggedValueRowViewModel("15%", DateTime.MinValue.AddDays(2)));
             Assert.AreEqual("-", viewModel.ComputeAverageValue());
+        }
+
+        [Test]
+        public void VerifyDiscreetSampling()
+        {
+            var dateTime = DateTime.Now;
+                
+            var viewModel = new VariableRowViewModel((new ReferenceDescription()
+            {
+                NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                DisplayName = new LocalizedText("", "DummyVariable0")
+            }, new DataValue() { Value = .2, ServerTimestamp = dateTime}));
+
+            var newValues = new List<TimeTaggedValueRowViewModel>()
+            {
+                new TimeTaggedValueRowViewModel(13123324, dateTime.AddMilliseconds(1), dateTime),
+                new TimeTaggedValueRowViewModel(-98.52243, dateTime.AddMilliseconds(3),dateTime),
+                new TimeTaggedValueRowViewModel(292312443u, dateTime.AddMilliseconds(14), dateTime),
+                new TimeTaggedValueRowViewModel(44.87613, dateTime.AddMilliseconds(15), dateTime),
+                new TimeTaggedValueRowViewModel(0.432e2, dateTime.AddMilliseconds(160000), dateTime),
+                new TimeTaggedValueRowViewModel(.12387, dateTime.AddMilliseconds(160001), dateTime),
+                new TimeTaggedValueRowViewModel(223ul, dateTime.AddMilliseconds(5000000), dateTime),
+                new TimeTaggedValueRowViewModel(67ul, dateTime.AddSeconds(5), dateTime),
+                new TimeTaggedValueRowViewModel(34, dateTime.AddSeconds(8), dateTime),
+                new TimeTaggedValueRowViewModel(1, dateTime.AddHours(1), dateTime),
+                new TimeTaggedValueRowViewModel(1.2, dateTime.AddHours(21.2), dateTime),
+                new TimeTaggedValueRowViewModel(-2342, dateTime.AddDays(1), dateTime),
+                new TimeTaggedValueRowViewModel(38831.2, dateTime.AddDays(1.2), dateTime),
+            };
+
+            viewModel.SelectedTimeStep = 1;
+            viewModel.SelectedTimeUnit = TimeUnit.MilliSecond;
+            viewModel.Values.AddRange(newValues.OrderBy(x => x.TimeDelta).ToList());
+            Assert.IsEmpty(viewModel.SelectedValues);
+            viewModel.ApplyTimeStep();
+            Assert.IsNotEmpty(viewModel.SelectedValues);
+            Assert.AreEqual(14, viewModel.SelectedValues.Count);
+
+            viewModel.SelectedTimeStep = 1;
+            viewModel.SelectedTimeUnit = TimeUnit.Second;
+            viewModel.ApplyTimeStep();
+            Assert.AreEqual(9, viewModel.SelectedValues.Count);
+
+            viewModel.SelectedTimeStep = 1;
+            viewModel.SelectedTimeUnit = TimeUnit.Hour;
+            viewModel.ApplyTimeStep();
+            Assert.AreEqual(5, viewModel.SelectedValues.Count);
+
+            viewModel.SelectedTimeStep = 1;
+            viewModel.SelectedTimeUnit = TimeUnit.Day;
+            viewModel.ApplyTimeStep();
+            Assert.AreEqual(2, viewModel.SelectedValues.Count);
+
+            viewModel.SelectedTimeStep = 0;
+            viewModel.SelectedTimeUnit = TimeUnit.Day;
+            viewModel.ApplyTimeStep();
+            Assert.AreEqual(14, viewModel.SelectedValues.Count);
+
+            viewModel.SelectedTimeStep = 3;
+            viewModel.SelectedTimeUnit = (TimeUnit)254;
+            Assert.Throws<ArgumentOutOfRangeException>(() => viewModel.ApplyTimeStep());
         }
     }
 }

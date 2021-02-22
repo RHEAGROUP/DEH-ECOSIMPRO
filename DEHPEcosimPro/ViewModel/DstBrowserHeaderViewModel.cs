@@ -36,7 +36,9 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
+
     using Opc.Ua;
+
     using ReactiveUI;
 
     /// <summary>
@@ -94,7 +96,9 @@ namespace DEHPEcosimPro.ViewModel
             this.dstController = dstController;
             this.statusBarControlViewModel = statusBarControlViewModel;
 
-            this.WhenAnyValue(x => x.dstController.IsSessionOpen).Subscribe(_ => this.UpdateProperties());
+            this.WhenAnyValue(x => x.dstController.IsSessionOpen)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateProperties());
 
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => Equals(x.Id, this.currentServerTimeNodeId.Identifier))
                 .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
@@ -207,7 +211,7 @@ namespace DEHPEcosimPro.ViewModel
 
                 if (callMethodResult != null)
                 {
-                    this.statusBarControlViewModel.Append($"Method executed successfully. {string.Join(", ", callMethodResult)}");
+                    this.statusBarControlViewModel.Append($"{string.Join(", ", callMethodResult)} executed successfully.");
                 }
                 else
                 {
