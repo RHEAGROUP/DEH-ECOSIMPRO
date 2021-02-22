@@ -157,9 +157,14 @@ namespace DEHPEcosimPro.DstController
         public IList<ReferenceDescription> References => this.opcClientService.References;
 
         /// <summary>
-        /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
+        /// Gets the colection of mapped <see cref="Parameter"/>s And <see cref="ParameterOverride"/>s through their container
         /// </summary>
-        public ReactiveList<ElementDefinition> DstMapResult { get; private set; } = new ReactiveList<ElementDefinition>();
+        public ReactiveList<ElementBase> DstMapResult { get; private set; } = new ReactiveList<ElementBase>();
+
+        /// <summary>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// </summary>
+        public Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; } = new Dictionary<ParameterOrOverrideBase, object>();
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
@@ -330,13 +335,26 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public void Map(List<VariableRowViewModel> dstVariables)
         {
-            if (this.mappingEngine.Map(dstVariables) is List<ElementDefinition> mapResult && mapResult.Any())
+            if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, object> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
-                this.DstMapResult.AddRange(mapResult);
+                this.DstMapResult.AddRange(elements);
+                this.UpdateParmeterNodeId(parameterNodeIds);
             }
 
             this.UpdateExternalIdentifierMap();
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
+        }
+        
+        /// <summary>
+        /// Updates <see cref="ParameterNodeIds"/> by adding or replacing values
+        /// </summary>
+        /// <param name="parameterNodeIds">The  </param>
+        private void UpdateParmeterNodeId(Dictionary<ParameterOrOverrideBase, object> parameterNodeIds)
+        {
+            foreach (var keyValue in parameterNodeIds)
+            {
+                this.ParameterNodeIds[keyValue.Key] = keyValue.Value;
+            }
         }
 
         /// <summary>
@@ -376,7 +394,7 @@ namespace DEHPEcosimPro.DstController
                 });
             }
 
-            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
 
         /// <summary>
@@ -416,27 +434,37 @@ namespace DEHPEcosimPro.DstController
                     return;
                 }
 
-                foreach (var elementDefinition in this.DstMapResult)
+                foreach (var element in this.DstMapResult)
                 {
-                    var elementDefinitionCloned = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
-
-                    foreach (var parameter in elementDefinition.Parameter)
+                    switch (element)
                     {
-                        this.TransactionCreateOrUpdate(transaction, parameter, elementDefinitionCloned.Parameter);
-                    }
+                        case ElementDefinition elementDefinition:
+                        {
+                            var elementClone = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
 
-                    foreach (var parameterOverride in elementDefinition.ContainedElement.SelectMany(x => x.ParameterOverride))
-                    {
-                        var elementUsageClone = (ElementUsage)parameterOverride.Container.Clone(false);
-                        transaction.CreateOrUpdate(elementUsageClone);
+                            foreach (var parameter in elementDefinition.Parameter)
+                            {
+                                this.TransactionCreateOrUpdate(transaction, parameter, elementClone.Parameter);
+                            }
 
-                        this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
+                            break;
+                        }
+                        case ElementUsage elementUsage:
+                        {
+                            foreach (var parameterOverride in elementUsage.ParameterOverride)
+                            {
+                                var elementUsageClone = elementUsage.Clone(false);
+                                transaction.CreateOrUpdate(elementUsageClone);
+
+                                this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
+                            }
+
+                            break;
+                        }
                     }
                 }
 
-                this.UpdateExternalIdentifierMap();
-
-                this.PersistExternalIdentifierMap(transaction);
+                this.PersistExternalIdentifierMap(transaction, iterationClone);
 
                 transaction.CreateOrUpdate(iterationClone);
 
@@ -445,6 +473,9 @@ namespace DEHPEcosimPro.DstController
                 await this.UpdateParametersValueSets();
 
                 await this.hubController.Refresh();
+                this.DstMapResult.Clear();
+                this.ParameterNodeIds.Clear();
+
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }
             catch (Exception e)
@@ -472,8 +503,8 @@ namespace DEHPEcosimPro.DstController
         {
             var (iterationClone, transaction) = this.GetIterationTransaction();
 
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.Parameter));
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.SelectMany(x => x.ContainedElement.SelectMany(p => p.ParameterOverride)));
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.OfType<ElementDefinition>().SelectMany(x => x.Parameter));
+            this.UpdateParametersValueSets(transaction, this.DstMapResult.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride));
 
             transaction.CreateOrUpdate(iterationClone);
             await this.hubController.Write(transaction);
@@ -608,35 +639,43 @@ namespace DEHPEcosimPro.DstController
         /// Updates the configured mapping, registering the <see cref="ExternalIdentifierMap"/> and its <see cref="IdCorrespondence"/>
         /// to a <see name="IThingTransaction"/>
         /// </summary>
-        /// <param name="transaction">the <see cref="IThingTransaction"/></param>
-        private void PersistExternalIdentifierMap(IThingTransaction transaction)
+        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
+        /// <param name="iterationClone">The <see cref="Iteration"/> clone</param>
+        private void PersistExternalIdentifierMap(IThingTransaction transaction, Iteration iterationClone)
         {
             this.UpdateExternalIdentifierMap();
             
-            var externalIdentifierMapClone = this.ExternalIdentifierMap.Clone(true);
+            var externalIdentifierMapClone = this.ExternalIdentifierMap.Clone(false);
 
             if (externalIdentifierMapClone.Iid == Guid.Empty)
             {
                 externalIdentifierMapClone.Iid = Guid.NewGuid();
                 this.ExternalIdentifierMap.Iid = externalIdentifierMapClone.Iid;
-                ((Iteration)transaction.AssociatedClone).ExternalIdentifierMap.Add(externalIdentifierMapClone);
-                transaction.CreateOrUpdate(externalIdentifierMapClone);
+                iterationClone.ExternalIdentifierMap.Add(externalIdentifierMapClone);
             }
 
-            var idCorrespondencesToPersist = externalIdentifierMapClone.Correspondence.ToList();
-
-            externalIdentifierMapClone.Correspondence.Clear();
-
-            foreach (var clonedCorrespondence in idCorrespondencesToPersist)
+            var idCorrespondencesToPersist = this.ExternalIdentifierMap.Correspondence.ToList();
+            
+            foreach (var correspondence in idCorrespondencesToPersist)
             {
-                externalIdentifierMapClone.Correspondence.Add(clonedCorrespondence);
-                transaction.CreateOrUpdate(clonedCorrespondence);
+                var correspondenceClone = correspondence.Clone(false);
+
+                if (correspondence.Iid == Guid.Empty)
+                {
+                    correspondence.Iid = Guid.NewGuid();
+                    correspondenceClone.Iid = correspondence.Iid;
+                    externalIdentifierMapClone.Correspondence.Add(correspondenceClone);
+                    transaction.Create(correspondenceClone);
+                }
+                else
+                {
+                    correspondenceClone.Container = externalIdentifierMapClone;
+                    transaction.CreateOrUpdate(correspondenceClone);
+                }
             }
 
             transaction.CreateOrUpdate(externalIdentifierMapClone);
 
-            this.ExternalIdentifierMap.Correspondence.Clear();
-            this.ExternalIdentifierMap.Correspondence.AddRange(idCorrespondencesToPersist);
             this.statusBar.Append("Mapping configuration processed");
         }
 
@@ -665,12 +704,10 @@ namespace DEHPEcosimPro.DstController
         public void AddToExternalIdentifierMap(Guid internalId, string externalId)
         {
             if (internalId != Guid.Empty && !this.ExternalIdentifierMap.Correspondence
-                                             .Any(
-                x => x.ExternalId == externalId && x.InternalThing == internalId)
-                && !this.IdCorrespondences
-                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
+                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId)
+                && !this.IdCorrespondences.Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
             {
-                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
+                this.IdCorrespondences.Add(new IdCorrespondence()
                 {
                     ExternalId = externalId,
                     InternalThing = internalId

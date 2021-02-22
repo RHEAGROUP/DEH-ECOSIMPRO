@@ -134,9 +134,10 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.dstController.DstMapResult.Clear();
             this.dstController.HubMapResult.Clear();
+            this.dstController.ParameterNodeIds.Clear();
             await Task.Delay(1);
-            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
-            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent() { Reset = true });
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             this.AreThereAnyTransferInProgress = false;
             this.IsIndeterminate = false;
         }

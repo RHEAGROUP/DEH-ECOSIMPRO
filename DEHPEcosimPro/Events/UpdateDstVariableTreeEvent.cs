@@ -33,5 +33,12 @@ namespace DEHPEcosimPro.Events
     /// </summary>
     public class UpdateDstVariableTreeEvent : UpdateTreeBaseEvent
     {
+        /// <summary>
+        /// Initializes a new <see cref="UpdateDstVariableTreeEvent" />
+        /// </summary>
+        /// <param name="reset">a value indicating whether the listener should reset its tree</param>
+        public UpdateDstVariableTreeEvent(bool reset = false) : base(reset)
+        {
+        }
     }
 }

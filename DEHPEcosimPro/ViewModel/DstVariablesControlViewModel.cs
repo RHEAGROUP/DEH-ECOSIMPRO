@@ -146,7 +146,7 @@ namespace DEHPEcosimPro.ViewModel
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateProperties());
 
-            this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.Changed)
+            this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.CountChanged)
                 .Subscribe(_ =>
                 {
                     this.PopulateContextMenu();
@@ -161,7 +161,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void UpdateNetChangePreviewBasedOnSelection()
         {
-            CDPMessageBus.Current.SendMessage(new UpdatePreviewBasedOnSelectionEvent(this.SelectedThings));
+            CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.SelectedThings, null, false));
         }
 
         /// <summary>

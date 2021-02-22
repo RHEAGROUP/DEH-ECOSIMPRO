@@ -52,11 +52,13 @@ namespace DEHPEcosimPro.MappingRules
 
     using NLog;
 
+    using Opc.Ua;
+
     /// <summary>
     /// The <see cref="EcosimProElementToElementDefinitionRule"/> is a <see cref="IMappingRule"/> for the <see cref="MappingEngine"/>
     /// That takes a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> as input and outputs a E-TM-10-25 <see cref="ElementDefinition"/>
     /// </summary>
-    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, List<ElementDefinition>>
+    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases)>
     {
         /// <summary>
         /// The current class logger
@@ -89,11 +91,16 @@ namespace DEHPEcosimPro.MappingRules
         private string dstParameterName;
 
         /// <summary>
-        /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementDefinition"/>
+        /// Holds a <see cref="Dictionary{TKey,TValue}"/> of <see cref="ParameterOrOverrideBase"/> and <see cref="NodeId.Identifier"/>
+        /// </summary>
+        private Dictionary<ParameterOrOverrideBase, object> parameterNodeIdIdentifier = new Dictionary<ParameterOrOverrideBase, object>();
+
+        /// <summary>
+        /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementBase"/>
         /// </summary>
         /// <param name="input">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> to transform</param>
-        /// <returns>An <see cref="ElementDefinition"/></returns>
-        public override List<ElementDefinition> Transform(List<VariableRowViewModel> input)
+        /// <returns>A collection of (<see cref="NodeId"/>, <see cref="ElementBase"/>)</returns>
+        public override (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases) Transform(List<VariableRowViewModel> input)
         {
             try
             {
@@ -125,7 +132,10 @@ namespace DEHPEcosimPro.MappingRules
                     }
                 }
 
-                return input.Select(x => x.SelectedElementDefinition).ToList();
+                var result = input.Select(x => (ElementBase)x.SelectedElementDefinition)
+                    .Union(input.SelectMany(x => x.SelectedElementUsages.Cast<ElementBase>())).ToList();
+
+                return (this.parameterNodeIdIdentifier, result);
             }
             catch (Exception exception)
             {
@@ -162,28 +172,18 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="variable">The current <see cref="VariableRowViewModel"/></param>
         private void UpdateValueSetsFromElementUsage(VariableRowViewModel variable)
         {
-            var hasAtLeastOneUpdatedOverride = false;
-
             foreach (var elementUsage in variable.SelectedElementUsages)
             {
                 if (variable.SelectedParameter is {} parameter
                     && elementUsage.ParameterOverride
-                        .FirstOrDefault(x => x.Parameter == parameter) is {} parameterOverride)
+                        .FirstOrDefault(x => x.Parameter.Iid == parameter.Iid) is {} parameterOverride)
                 {
                     this.UpdateValueSet(variable, parameterOverride);
-                    this.AddToExternalIdentifierMap(parameterOverride.Iid, this.dstParameterName);
-                    hasAtLeastOneUpdatedOverride = true;
-                }
-                else
-                {
-                    parameterOverride = elementUsage.ParameterOverride.FirstOrDefault(x => x.ParameterType.Name == this.dstParameterName);
-
-                    if (hasAtLeastOneUpdatedOverride)
-                    {
-                        this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
-                    }
+                    this.parameterNodeIdIdentifier[parameterOverride] = variable.Reference.NodeId.Identifier;
                 }
             }
+
+            this.AddToExternalIdentifierMap(variable.SelectedParameter.Iid, this.dstParameterName);
         }
 
         /// <summary>
@@ -224,6 +224,8 @@ namespace DEHPEcosimPro.MappingRules
             }
 
             this.UpdateValueSet(variable, variable.SelectedParameter);
+
+            this.parameterNodeIdIdentifier[variable.SelectedParameter] = variable.Reference.NodeId.Identifier;
         }
 
         /// <summary>
