@@ -183,7 +183,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                         if (elementToUpdate is {})
                         {
-                            elementDefinition.Parameter.AddRange(elementToUpdate.Thing.Parameter.Where(x => elementDefinition.Parameter.All(p => p.Iid != x.Iid)));
+                            elementDefinition.Parameter.AddRange(elementToUpdate.Thing
+                                .Parameter.Where(x => elementDefinition.Parameter.All(p => p.Iid != x.Iid)));
 
                             foreach (var parameterOrOverrideBaseRowViewModel in elementToUpdate.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
                             {

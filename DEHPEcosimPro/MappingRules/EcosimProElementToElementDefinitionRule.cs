@@ -154,7 +154,7 @@ namespace DEHPEcosimPro.MappingRules
             if (this.hubController.OpenIteration.Element
                 .FirstOrDefault(x => x.Name == this.dstElementName) is { } element)
             {
-                return element;
+                return element.Clone(true);
             }
 
             return this.Bake<ElementDefinition>(x =>
@@ -207,7 +207,6 @@ namespace DEHPEcosimPro.MappingRules
                     {
                         x.ParameterType = variable.SelectedParameterType;
                         x.Owner = this.owner;
-                        x.Container = variable.SelectedElementDefinition;
 
                         x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                         {

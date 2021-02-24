@@ -135,15 +135,29 @@
                         </Grid.RowDefinitions>
                         <Label Grid.Row="1" Grid.Column="0" Content="Option:" />
                         <dxe:ComboBoxEdit Grid.Row="1" Grid.Column="1" Margin="2" AutoComplete="True" DisplayMember="ShortName"
-                                                  ItemsSource="{Binding AvailableOptions}" SelectedIndex="0"
-                                                  SelectedItem="{Binding SelectedThing.SelectedOption}"
-                                                  ValidateOnTextInput="False" ValueMember="Name" />
+                                                  ItemsSource="{Binding AvailableOptions}" SelectedIndex="0" NullText="Select an option"
+                                                  SelectedItem="{Binding SelectedThing.SelectedOption}" NullValueButtonPlacement="EditBox"
+                                                  ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" 
+                                                  ValueMember="Name" AllowNullInput="True"/>
                         <Label Grid.Row="2" Grid.Column="0" Content="Element Definition:" />
-                        <dxe:ComboBoxEdit Grid.Row="2" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ShortName"
-                                                  ItemsSource="{Binding AvailableElementDefinitions}"
-                                                  NullText="Create New Element Definition" NullValueButtonPlacement="EditBox"
-                                                  SelectedItem="{Binding SelectedThing.SelectedElementDefinition}"
-                                                  ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
+                        <dxe:ComboBoxEdit Grid.Row="2" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" 
+                                          DisplayMember="ShortName" ItemsSource="{Binding AvailableElementDefinitions}"
+                                          NullText="Create New Element Definition" NullValueButtonPlacement="EditBox"
+                                          SelectedItem="{Binding SelectedThing.SelectedElementDefinition}"
+                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name">
+                            <dxe:ComboBoxEdit.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} [{1}]">
+                                                <Binding Path="Name" />
+                                                <Binding Path="ShortName" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </dxe:ComboBoxEdit.ItemTemplate>
+                        </dxe:ComboBoxEdit>
                         <Label Grid.Row="3" Grid.Column="0" Content="Update Element Usages:" />
                         <dxe:ComboBoxEdit Grid.Row="3" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ElementDefinition.ShortName"
                                                   EditValue="{Binding SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}"
@@ -154,12 +168,13 @@
                             </dxe:ComboBoxEdit.StyleSettings>
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="4" Grid.Column="0" Content="Parameter type:" />
-                        <dxe:ComboBoxEdit Grid.Row="4" Grid.Column="1" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" ClearSelectionOnBackspace="True" DisplayMember="Name"
-                                                  IsTextEditable="False"
-                                                  ItemsSource="{Binding AvailableParameterTypes}"
-                                                  NullText="Select One Parameter Type" NullValueButtonPlacement="EditBox"
-                                                  SelectedItem="{Binding SelectedThing.SelectedParameterType}"
-                                                  ShowNullTextForEmptyValue="True" ValueMember="Name">
+                        <dxe:ComboBoxEdit Grid.Row="4" Grid.Column="1" Margin="2" AllowNullInput="True" ClearSelectionOnBackspace="True"
+                                          DisplayMember="Name"
+                                          IsTextEditable="False"
+                                          ItemsSource="{Binding AvailableParameterTypes}"
+                                          NullText="Select One Parameter Type" NullValueButtonPlacement="EditBox"
+                                          SelectedItem="{Binding SelectedThing.SelectedParameterType}"
+                                          ShowNullTextForEmptyValue="True" ValueMember="Name">
                             <dxe:ComboBoxEdit.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock>

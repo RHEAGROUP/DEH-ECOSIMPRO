@@ -386,12 +386,8 @@ namespace DEHPEcosimPro.DstController
                 .ToList())
             {
                 this.HubMapResult.Remove(mappedElement);
-
-                this.IdCorrespondences.Add(new IdCorrespondence(Guid.NewGuid(), null, null)
-                {
-                    ExternalId = mappedElement.SelectedVariable.Name,
-                    InternalThing = ((Thing) mappedElement.SelectedValue.Container).Iid
-                });
+                
+                this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
@@ -586,7 +582,6 @@ namespace DEHPEcosimPro.DstController
                 thing.Iid = clone.Iid;
                 transaction.Create(clone);
                 containerClone.Add((TThing) clone);
-                this.AddIdCorrespondence(clone);
             }
             else
             {
@@ -595,43 +590,13 @@ namespace DEHPEcosimPro.DstController
 
             return (TThing) clone;
         }
-
-        /// <summary>
-        /// If the <see cref="Thing"/> is new save the mapping
-        /// </summary>
-        /// <param name="clone">The <see cref="Thing"/></param>
-        private void AddIdCorrespondence(Thing clone)
-        {
-            string externalId;
-
-            switch (clone)
-            {
-                case INamedThing namedThing:
-                    externalId = namedThing.Name;
-                    break;
-                case ParameterOrOverrideBase parameterOrOverride:
-                    externalId = parameterOrOverride.ParameterType.Name;
-                    break;
-                default:
-                    return;
-            }
-
-            this.AddToExternalIdentifierMap(clone.Iid, externalId);
-        }
-
+        
         /// <summary>
         /// Updates the configured mapping 
         /// </summary>
         public void UpdateExternalIdentifierMap()
         {
-            var unsusedIdCorrespondences = this.ExternalIdentifierMap.Correspondence
-                .Where(x => this.IdCorrespondences
-                    .All(c => c.Iid != x.Iid || c.ExternalId != x.ExternalId))
-                .ToList();
-
-            this.ExternalIdentifierMap.Correspondence.Clear();
             this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
-            this.ExternalIdentifierMap.Correspondence.AddRange(unsusedIdCorrespondences);
             this.IdCorrespondences.Clear();
         }
 
@@ -645,36 +610,22 @@ namespace DEHPEcosimPro.DstController
         {
             this.UpdateExternalIdentifierMap();
             
-            var externalIdentifierMapClone = this.ExternalIdentifierMap.Clone(false);
-
-            if (externalIdentifierMapClone.Iid == Guid.Empty)
+            if (this.ExternalIdentifierMap.Iid == Guid.Empty)
             {
-                externalIdentifierMapClone.Iid = Guid.NewGuid();
-                this.ExternalIdentifierMap.Iid = externalIdentifierMapClone.Iid;
-                iterationClone.ExternalIdentifierMap.Add(externalIdentifierMapClone);
+                this.ExternalIdentifierMap.Iid = Guid.NewGuid();
+                iterationClone.ExternalIdentifierMap.Add(this.ExternalIdentifierMap);
             }
 
-            var idCorrespondencesToPersist = this.ExternalIdentifierMap.Correspondence.ToList();
-            
-            foreach (var correspondence in idCorrespondencesToPersist)
+            foreach (var correspondence in this.ExternalIdentifierMap.Correspondence)
             {
-                var correspondenceClone = correspondence.Clone(false);
-
                 if (correspondence.Iid == Guid.Empty)
                 {
                     correspondence.Iid = Guid.NewGuid();
-                    correspondenceClone.Iid = correspondence.Iid;
-                    externalIdentifierMapClone.Correspondence.Add(correspondenceClone);
-                    transaction.Create(correspondenceClone);
-                }
-                else
-                {
-                    correspondenceClone.Container = externalIdentifierMapClone;
-                    transaction.CreateOrUpdate(correspondenceClone);
+                    transaction.Create(correspondence);
                 }
             }
 
-            transaction.CreateOrUpdate(externalIdentifierMapClone);
+            transaction.CreateOrUpdate(this.ExternalIdentifierMap);
 
             this.statusBar.Append("Mapping configuration processed");
         }
@@ -691,8 +642,7 @@ namespace DEHPEcosimPro.DstController
                 Name = newName,
                 ExternalToolName = this.ThisToolName,
                 ExternalModelName = newName,
-                Owner = this.hubController.CurrentDomainOfExpertise,
-                Container = this.hubController.OpenIteration
+                Owner = this.hubController.CurrentDomainOfExpertise
             };
         }
 
