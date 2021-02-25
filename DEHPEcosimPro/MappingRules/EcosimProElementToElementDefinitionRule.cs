@@ -235,25 +235,8 @@ namespace DEHPEcosimPro.MappingRules
                     .HasTheRightNumberOfParameterType(out var independantParameterType, out _))
             {
                 var values = new List<string>();
-
-                if (independantParameterType.IsQuantityKindOrText())
-                {
-                    foreach (var value in variable.SelectedValues)
-                    {
-                        values.Add($"{variable.SelectedValues.IndexOf(value)}");
-                        values.Add(FormattableString.Invariant($"{value.Value}"));
-                    }
-                }
-                else if (independantParameterType.IsTimeType())
-                {
-                    foreach (var value in variable.SelectedValues)
-                    {
-                        values.Add($"{value.TimeDelta}");
-                        values.Add(FormattableString.Invariant($"{value.Value}"));
-                    }
-                }
-
-                else if (independantParameterType.IsTimeQuantityKind(variable.SelectedTimeUnit, out var scale))
+                
+                if (independantParameterType.IsTimeQuantityKind(variable.SelectedTimeUnit, out var scale))
                 {
                     parameter.Scale = scale;
 
@@ -270,6 +253,24 @@ namespace DEHPEcosimPro.MappingRules
                     foreach (var value in variable.SelectedValues)
                     {
                         values.Add($"{independantValue(value)}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
+                }
+
+                else if (independantParameterType.IsQuantityKindOrText())
+                {
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{variable.SelectedValues.IndexOf(value)}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
+                }
+
+                else if (independantParameterType.IsTimeType())
+                {
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{value.TimeDelta}");
                         values.Add(FormattableString.Invariant($"{value.Value}"));
                     }
                 }
