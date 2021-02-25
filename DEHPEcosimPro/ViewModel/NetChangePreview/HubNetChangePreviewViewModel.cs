@@ -258,71 +258,52 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// </summary>
         public override void ComputeValues()
         {
-            foreach (var parameterOrOverrideBase in this.dstController.DstMapResult.OfType<ElementUsage>()
+            foreach (var parameterOverride in this.dstController.DstMapResult.OfType<ElementUsage>()
                 .SelectMany(x => x.ParameterOverride))
             {
-                var parameterRows = this.GetRows(parameterOrOverrideBase).ToList();
+                var parameterRows = this.GetRows(parameterOverride).ToList();
 
                 foreach (var parameterRow in parameterRows)
                 {
-                    //var oldElement = this.GetOldElement(parameterRow.Thing);
-
                     if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
                     {
-                        this.UpdateRow(parameterOrOverrideBase, (ElementUsage)elementUsageRow.ContainerViewModel.Thing, elementUsageRow);
+                        this.UpdateRow(parameterOverride, (ElementUsage)elementUsageRow.ContainerViewModel.Thing, elementUsageRow);
                     }
 
                     this.ThingsAtPreviousStateBix.Add(parameterRow.ContainerViewModel.Thing.Clone(true));
                 }
             }
 
-            foreach (var parameterOrOverrideBase in this.dstController.DstMapResult.OfType<ElementDefinition>()
+            foreach (var parameter in this.dstController.DstMapResult.OfType<ElementDefinition>()
                 .SelectMany(x => x.Parameter))
             {
-                var elementRow = this.VerifyElementIsInTheTree(parameterOrOverrideBase);
+                var elementRow = this.VerifyElementIsInTheTree(parameter);
 
-                if (parameterOrOverrideBase.Iid == Guid.Empty)
+                if (parameter.Iid == Guid.Empty)
                 {
-                    this.UpdateRow(parameterOrOverrideBase, (ElementDefinition)parameterOrOverrideBase.Container, elementRow);
+                    this.UpdateRow(parameter, (ElementDefinition)parameter.Container, elementRow);
                     continue;
                 }
 
-                var parameterRows = this.GetRows(parameterOrOverrideBase).ToList();
+                var parameterRows = this.GetRows(parameter).ToList();
                 
                 foreach (var parameterRow in parameterRows)
                 {
-                    //var oldElement = this.GetOldElement(parameterRow.Thing);
-
                     if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
                     {
-                        this.UpdateRow(parameterOrOverrideBase, (ElementDefinition)parameterRow.ContainerViewModel.Thing, elementDefinitionRow);
+                        this.UpdateRow(parameter, (ElementDefinition)parameterRow.ContainerViewModel.Thing, elementDefinitionRow);
                     }
 
                     else if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
                     {
-                        this.UpdateRow(parameterOrOverrideBase, (ElementUsage)parameterRow.ContainerViewModel.Thing, elementUsageRow);
+                        this.UpdateRow(parameter, (ElementUsage)parameterRow.ContainerViewModel.Thing, elementUsageRow);
                     }
 
                     this.ThingsAtPreviousStateBix.Add(parameterRow.ContainerViewModel.Thing.Clone(true));
                 }
             }
         }
-
-        private ElementBase GetOldElement(Thing parameterOrOverrideBase)
-        {
-            var elementDefinitionRowViewModels = this.Things.OfType<ElementDefinitionsBrowserViewModel>()
-                .SelectMany(x => x.ContainedRows.OfType<ElementDefinitionRowViewModel>()).ToList();
-
-            bool IsItTheRightContainer(IRowViewModelBase<ElementBase> x) => x.Thing.Iid == parameterOrOverrideBase.Container.Iid && x.Thing.Name == ((INamedThing)parameterOrOverrideBase.Container).Name;
-
-            var element = elementDefinitionRowViewModels.FirstOrDefault(IsItTheRightContainer)?.Thing 
-                                  ?? (ElementBase) elementDefinitionRowViewModels
-                                      .SelectMany(x => x.ContainedRows.OfType<ElementUsageRowViewModel>())
-                                      .FirstOrDefault(IsItTheRightContainer)?.Thing;
-
-            return element;
-        }
-
+        
         private ElementDefinitionRowViewModel VerifyElementIsInTheTree(Thing parameterOrOverrideBase)
         {
             var iterationRow =
@@ -330,7 +311,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
             var elementDefinitionRow = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
                 .FirstOrDefault(e => e.Thing.Iid == parameterOrOverrideBase.Container.Iid
-                                     && e.Thing.ShortName == ((INamedThing) parameterOrOverrideBase.Container).Name);
+                                     && e.Thing.Name == ((INamedThing) parameterOrOverrideBase.Container).Name);
 
             if (elementDefinitionRow is null)
             {
