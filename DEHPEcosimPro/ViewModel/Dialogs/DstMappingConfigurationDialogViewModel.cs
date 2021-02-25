@@ -341,8 +341,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             if (this.SelectedThing?.SelectedElementDefinition is { } element)
             {
-                var parameters = 
-                    element.Parameter.Where(x => this.HubController.Session.PermissionService.CanWrite(x));
+                var parameters = element.Parameter.ToList();
+                
+                if(element.Iid != Guid.Empty)
+                {
+                    parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
+                }
 
                 if (this.SelectedThing.SelectedValues.Count > 1)
                 {
@@ -376,7 +380,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableElementUsages.Clear();
 
-            if (this.selectedThing?.SelectedElementDefinition != null)
+            if (this.selectedThing?.SelectedElementDefinition is { } elementDefinition && elementDefinition.Iid != Guid.Empty)
             {
                 this.AvailableElementUsages.AddRange(
                     this.selectedThing.SelectedElementDefinition.ReferencingElementUsages()

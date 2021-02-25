@@ -462,6 +462,9 @@ namespace DEHPEcosimPro.DstController
                 await this.UpdateParametersValueSets();
 
                 await this.hubController.Refresh();
+                this.hubController.GetThingById(this.ExternalIdentifierMap.Iid, this.hubController.OpenIteration, out ExternalIdentifierMap map);
+                this.ExternalIdentifierMap = map.Clone(true);
+
                 this.DstMapResult.Clear();
                 this.ParameterNodeIds.Clear();
 
