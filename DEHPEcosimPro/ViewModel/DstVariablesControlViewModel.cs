@@ -150,8 +150,9 @@ namespace DEHPEcosimPro.ViewModel
                 .Subscribe(_ =>
                 {
                     this.PopulateContextMenu();
-                    this.UpdateNetChangePreviewBasedOnSelection();
                 });
+
+            this.SelectedThings.CountChanged.Subscribe(_ => this.UpdateNetChangePreviewBasedOnSelection());
 
             this.InitializeCommands();
         }

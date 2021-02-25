@@ -24,9 +24,12 @@
 
 namespace DEHPEcosimPro.Extensions
 {
+    using System;
     using System.Linq;
 
     using CDP4Common.SiteDirectoryData;
+
+    using DEHPEcosimPro.Enumerator;
 
     /// <summary>
     /// Provides extension methods for <see cref="SampledFunctionParameterType"/>
@@ -92,6 +95,28 @@ namespace DEHPEcosimPro.Extensions
         public static bool IsTimeType(this ParameterType parameterType)
         {
             return parameterType is DateTimeParameterType || parameterType is TimeOfDayParameterType;
+        }
+
+        /// <summary>
+        /// Verify that the <paramref name="parameterType"/> is a <see cref="QuantityKind"/>
+        /// that holds amount of time expressed in the selected Scales
+        /// </summary>
+        /// <param name="parameterType">The <see cref="ParameterType"/></param>
+        /// <param name="selectedTimeUnit">The <see cref="TimeUnit"/></param>
+        /// <param name="scale">the scale that should be applied</param>
+        /// <returns>An value indicating if the <paramref name="parameterType"/> matches</returns>
+        public static bool IsTimeQuantityKind(this ParameterType parameterType, TimeUnit selectedTimeUnit, out MeasurementScale scale)
+        {
+            scale = null;
+
+            if (parameterType is QuantityKind quantityKind &&
+                quantityKind.AllPossibleScale.FirstOrDefault(p => string.Equals(p.Name, $"{selectedTimeUnit}", StringComparison.CurrentCultureIgnoreCase))
+                    is { } newScale)
+            {
+                scale = newScale;
+            }
+
+            return scale != null;
         }
     }
 }

@@ -25,12 +25,16 @@
 namespace DEHPEcosimPro.ViewModel.NetChangePreview
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
 
     using CDP4Dal;
+
+    using CDP4JsonSerializer.JsonConverter;
 
     using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
@@ -85,10 +89,9 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                 if (!eventArguments.Selection.Any())
                 {
-                    if (this.ThingsAtPreviousState.Any())
+                    if (this.ThingsAtPreviousStateBix.Any())
                     {
-                        this.Things.Clear();
-                        this.Things.AddRange(this.ThingsAtPreviousState);
+                        this.RestoreThings();
                     }
                     else
                     {
@@ -97,8 +100,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 }
                 else
                 {
-                    this.Things.Clear();
-                    this.Things.AddRange(this.ThingsAtPreviousState);
+                    this.RestoreThings();
 
                     foreach (var variable in eventArguments.Selection)
                     {
@@ -108,35 +110,23 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                         foreach (var parameterOrOverrideBase in parameters)
                         {
-                            foreach (var iterationRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>())
+                            var parameterRows = this.GetRows(parameterOrOverrideBase);
+
+                            foreach (var parameterRow in parameterRows)
                             {
-                                if (parameterOrOverrideBase is Parameter parameter)
+                                var oldElement = this.ThingsAtPreviousStateBix.FirstOrDefault(t => t.Iid == parameterRow.ContainerViewModel.Thing.Iid);
+                                
+                                if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
                                 {
-                                    var elementToUpdate = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
-                                        .FirstOrDefault(x => x.Thing.Parameter.Any(p => p.ParameterType.Name == parameter.ParameterType.Name));
+                                    var updatedElement = ((ElementDefinition)oldElement).Clone(true);
 
-                                    var parameterToUpdate = elementToUpdate.Thing.Parameter.FirstOrDefault(p => p.ParameterType.Name == parameter.ParameterType.Name);
-                                    elementToUpdate.Thing.Parameter.Remove(parameterToUpdate);
-                                    elementToUpdate.Thing.Parameter.Add(parameter);
+                                    this.AddOrReplaceParameter(updatedElement, parameterRow);
 
-                                    CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
-                                    elementToUpdate.UpdateChildren();
-                                }
+                                    CDPMessageBus.Current.SendMessage(new HighlightEvent(elementDefinitionRow.Thing), elementDefinitionRow.Thing);
 
-                                else if (parameterOrOverrideBase is ParameterOverride parameterOverride)
-                                {
-                                    var elementToUpdate = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
-                                        .SelectMany(x => x.ContainedRows.OfType<ElementUsageRowViewModel>())
-                                        .FirstOrDefault(x => x.Thing.ParameterOverride.Any(p => p.ParameterType.Name == parameterOverride.ParameterType.Name));
+                                    elementDefinitionRow.UpdateThing(updatedElement);
 
-                                    var parameterToUpdate = elementToUpdate.Thing.ParameterOverride
-                                        .FirstOrDefault(p => p.ParameterType.Name == parameterOverride.ParameterType.Name);
-
-                                    elementToUpdate.Thing.ParameterOverride.Remove(parameterToUpdate);
-                                    elementToUpdate.Thing.ParameterOverride.Add(parameterOverride);
-
-                                    CDPMessageBus.Current.SendMessage(new HighlightEvent(elementToUpdate.Thing), elementToUpdate.Thing);
-                                    elementToUpdate.UpdateChildren();
+                                    elementDefinitionRow.UpdateChildren();
                                 }
                             }
                         }
@@ -146,6 +136,82 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 this.IsBusy = false;
             }
         }
+
+        private void RestoreThings()
+        {
+            var isExpanded = this.Things.First().IsExpanded;
+            this.UpdateTree(true);
+            this.Things.First().IsExpanded = isExpanded;
+        }
+
+        private void AddOrReplaceParameter(ElementBase updatedElement, IRowViewModelBase<ParameterOrOverrideBase> parameterRow)
+        {
+            if (updatedElement is ElementDefinition elementDefinition)
+            {
+                if (elementDefinition.Parameter.FirstOrDefault(p => p.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid)
+                    is { } parameter)
+                {
+                    elementDefinition.Parameter.Remove(parameter);
+                }
+
+                elementDefinition.Parameter.Add((Parameter) parameterRow.Thing);
+            }
+
+            else if (updatedElement is ElementUsage elementUsage)
+            {
+                if (elementUsage.ParameterOverride.FirstOrDefault(p => p.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid)
+                    is { } parameter)
+                {
+                    elementUsage.ParameterOverride.Remove(parameter);
+                }
+
+                elementUsage.ParameterOverride.Add((ParameterOverride)parameterRow.Thing);
+            }
+        }
+
+        private IEnumerable<IRowViewModelBase<ParameterOrOverrideBase>> GetRows(ParameterBase parameter)
+        {
+            var result = new List<IRowViewModelBase<ParameterOrOverrideBase>>();
+
+            foreach (var elementDefinitionRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>()
+                .SelectMany(x => x.ContainedRows.OfType<ElementDefinitionRowViewModel>()))
+            {
+                foreach (var parameterRow in elementDefinitionRow.ContainedRows.OfType<ElementUsageRowViewModel>()
+                    .SelectMany(x => x.ContainedRows.OfType<IRowViewModelBase<ParameterOrOverrideBase>>()))
+                {
+                    result.AddRange(VerifyRowContainsTheParameter(parameter, parameterRow));
+                }
+
+                foreach (var parameterRow in elementDefinitionRow.ContainedRows.OfType<IRowViewModelBase<ParameterOrOverrideBase>>())
+                {
+                    result.AddRange(VerifyRowContainsTheParameter(parameter, parameterRow));
+                }
+            }
+
+            return result;
+        }
+
+        private static IEnumerable<IRowViewModelBase<ParameterOrOverrideBase>> VerifyRowContainsTheParameter(ParameterBase parameter, IRowViewModelBase<ParameterOrOverrideBase> parameterRow)
+        {
+            var result = new List<IRowViewModelBase<ParameterOrOverrideBase>>();
+
+            var containerIsTheRightOne = (parameterRow.ContainerViewModel.Thing.Iid == parameter.Container.Iid ||
+                                          (parameterRow.ContainerViewModel.Thing is ElementUsage elementUsage
+                                           && (elementUsage.ElementDefinition.Iid == parameter.Container.Iid
+                                           || elementUsage.Iid == parameter.Container.Iid)));
+
+            var parameterIsTheRightOne = (parameterRow.Thing.Iid == parameter.Iid ||
+                                          (parameter.Iid == Guid.Empty
+                                           && parameter.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid));
+
+            if (containerIsTheRightOne && parameterIsTheRightOne)
+            {
+                result.Add(parameterRow);
+            }
+
+            return result;
+        }
+
 
         /// <summary>
         /// Updates the tree
@@ -160,9 +226,10 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             else
             {
                 this.IsBusy = true;
-                this.ThingsAtPreviousState.Clear();
-                this.ThingsAtPreviousState.AddRange(this.Things);
+                this.ThingsAtPreviousStateBix.Clear();
+                var isExpanded = this.Things.First().IsExpanded;
                 this.ComputeValues();
+                this.Things.First().IsExpanded = isExpanded;
                 this.IsBusy = false;
             }
         }
@@ -183,6 +250,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                         if (elementToUpdate is {})
                         {
+                            this.ThingsAtPreviousStateBix.Add(elementToUpdate.Thing.Clone(true));
+
                             elementDefinition.Parameter.AddRange(elementToUpdate.Thing
                                 .Parameter.Where(x => elementDefinition.Parameter.All(p => p.Iid != x.Iid)));
 
@@ -254,6 +323,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 }
             }
         }
+
+        public List<Thing> ThingsAtPreviousStateBix { get; set; } = new List<Thing>();
 
         /// <summary>
         /// Not available for the net change preview panel

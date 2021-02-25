@@ -164,7 +164,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 variable.MappingConfigurations.AddRange(
                     this.DstController.ExternalIdentifierMap.Correspondence.Where(
                         x => x.ExternalId == variable.ElementName ||
-                             x.ExternalId == variable.ParameterName));
+                             x.ExternalId == variable.Name));
             }
         }
 
@@ -276,7 +276,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
             }
 
-            else if (this.SelectedThing.SelectedParameter is { })
+            else if (!(this.SelectedThing.SelectedParameter?.ParameterType is SampledFunctionParameterType))
             {
                 this.SelectedThing.SelectedParameterType = null;
             }

@@ -105,12 +105,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
         /// </summary>
         ExternalIdentifierMap ExternalIdentifierMap { get; set; }
-
-        /// <summary>
-        /// Gets the collection of <see cref="IdCorrespondences"/>
-        /// </summary>
-        List<IdCorrespondence> IdCorrespondences { get; }
-
+        
         /// <summary>
         /// Connects to the provided endpoint
         /// </summary>
@@ -205,12 +200,7 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         Task UpdateParametersValueSets();
-
-        /// <summary>
-        /// Updates the configured mapping 
-        /// </summary>
-        void UpdateExternalIdentifierMap();
-
+        
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
@@ -219,7 +209,7 @@ namespace DEHPEcosimPro.DstController
         ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
+        /// Adds one correspondance to the <see cref="IDstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>

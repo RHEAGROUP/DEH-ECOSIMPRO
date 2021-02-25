@@ -177,11 +177,6 @@ namespace DEHPEcosimPro.DstController
         public ExternalIdentifierMap ExternalIdentifierMap { get; set; }
 
         /// <summary>
-        /// Gets the collection of <see cref="IdCorrespondences"/>
-        /// </summary>
-        public List<IdCorrespondence> IdCorrespondences { get; } = new List<IdCorrespondence>();
-
-        /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
@@ -341,7 +336,6 @@ namespace DEHPEcosimPro.DstController
                 this.UpdateParmeterNodeId(parameterNodeIds);
             }
 
-            this.UpdateExternalIdentifierMap();
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
         }
         
@@ -369,7 +363,6 @@ namespace DEHPEcosimPro.DstController
                 this.HubMapResult.AddRange(mappedElement);
             }
 
-            this.UpdateExternalIdentifierMap();
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent());
         }
 
@@ -592,15 +585,6 @@ namespace DEHPEcosimPro.DstController
         }
         
         /// <summary>
-        /// Updates the configured mapping 
-        /// </summary>
-        public void UpdateExternalIdentifierMap()
-        {
-            this.ExternalIdentifierMap.Correspondence.AddRange(this.IdCorrespondences);
-            this.IdCorrespondences.Clear();
-        }
-
-        /// <summary>
         /// Updates the configured mapping, registering the <see cref="ExternalIdentifierMap"/> and its <see cref="IdCorrespondence"/>
         /// to a <see name="IThingTransaction"/>
         /// </summary>
@@ -608,10 +592,9 @@ namespace DEHPEcosimPro.DstController
         /// <param name="iterationClone">The <see cref="Iteration"/> clone</param>
         private void PersistExternalIdentifierMap(IThingTransaction transaction, Iteration iterationClone)
         {
-            this.UpdateExternalIdentifierMap();
-            
             if (this.ExternalIdentifierMap.Iid == Guid.Empty)
             {
+                this.ExternalIdentifierMap = this.ExternalIdentifierMap.Clone(true);
                 this.ExternalIdentifierMap.Iid = Guid.NewGuid();
                 iterationClone.ExternalIdentifierMap.Add(this.ExternalIdentifierMap);
             }
@@ -622,6 +605,10 @@ namespace DEHPEcosimPro.DstController
                 {
                     correspondence.Iid = Guid.NewGuid();
                     transaction.Create(correspondence);
+                }
+                else
+                {
+                    transaction.CreateOrUpdate(correspondence);
                 }
             }
 
@@ -653,11 +640,22 @@ namespace DEHPEcosimPro.DstController
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
         public void AddToExternalIdentifierMap(Guid internalId, string externalId)
         {
-            if (internalId != Guid.Empty && !this.ExternalIdentifierMap.Correspondence
-                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId)
-                && !this.IdCorrespondences.Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
+            if (internalId == Guid.Empty)
             {
-                this.IdCorrespondences.Add(new IdCorrespondence()
+                return;
+            }
+
+            if (this.ExternalIdentifierMap.Correspondence
+                .FirstOrDefault(x => x.ExternalId == externalId 
+                                     && x.InternalThing != internalId) is { } correspondence)
+            {
+                correspondence.InternalThing = internalId;
+            }
+
+            else if (!this.ExternalIdentifierMap.Correspondence
+                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
+            {
+                this.ExternalIdentifierMap.Correspondence.Add(new IdCorrespondence()
                 {
                     ExternalId = externalId,
                     InternalThing = internalId
