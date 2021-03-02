@@ -55,8 +55,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
 
+    using DevExpress.Xpf.Core;
     using DevExpress.XtraPrinting.Native;
 
     using Moq;
@@ -172,15 +174,30 @@ namespace DEHPEcosimPro.Tests.ViewModel
         [Test]
         public void VerifyConnectCommand()
         {
+            this.dstController.Setup(x => x.DstMapResult)
+                .Returns(new ReactiveList<ElementBase>());
+
+            this.dstController.Setup(x => x.HubMapResult)
+                .Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
+
             Assert.IsTrue(this.viewModel.ConnectCommand.CanExecute(null));
             this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.viewModel.ConnectCommand.Execute(null);
+            this.viewModel.ConnectCommand.Execute(null); //
             Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.ConnectCommand.Execute(null);
-            Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
+            this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
+            
+            this.dstController.Setup(x => x.DstMapResult).Returns(new ReactiveList<ElementBase>()
+            {
+                new ElementDefinition()
+            });
 
-            this.hubController.Verify(x => x.Close(), Times.Once);
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(true);
+            this.viewModel.ConnectCommand.Execute(null);
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(false);
+            this.viewModel.ConnectCommand.Execute(null);
+            this.hubController.Verify(x => x.Close(), Times.Exactly(3));
             this.navigationService.Verify(x => x.ShowDialog<Login>(), Times.Once);
         }
 
@@ -227,6 +244,22 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.navigationService.Verify(x => 
                 x.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(It.IsAny<IHubMappingConfigurationDialogViewModel>()),
                 Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyRefreshCommand()
+        {
+            this.hubController.Setup(x => x.Refresh());
+            Assert.IsFalse(this.viewModel.RefreshCommand.CanExecute(null));
+            this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
+            this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
+
+            this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object,
+                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object);
+
+            Assert.IsTrue(this.viewModel.RefreshCommand.CanExecute(null));
+            Assert.DoesNotThrowAsync(async () => await this.viewModel.RefreshCommand.ExecuteAsyncTask(null));
+            this.hubController.Verify(x => x.Refresh(), Times.Once);
         }
     }
 }

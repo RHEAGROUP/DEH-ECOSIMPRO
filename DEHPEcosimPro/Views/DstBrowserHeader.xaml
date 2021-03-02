@@ -61,7 +61,7 @@
         <TextBlock Grid.Row="2" Grid.Column="2" Height="Auto" Margin="6,3,3,3" FontSize="10" FontWeight="Bold" Text="Current Server Time: " />
         <TextBlock Grid.Row="2" Grid.Column="3" Height="Auto" Margin="3" FontSize="10" TextTrimming="CharacterEllipsis" Text="{Binding CurrentServerTime}"/>
 
-        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Run" ToolTip="Call Run Method" Command="{Binding CallRunMethodCommand}"/>
-        <Button Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Reset" ToolTip="Call Reset Method" Command="{Binding CallResetMethodCommand}"/>
+        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Run" ToolTip="Run the experiment" Command="{Binding CallRunMethodCommand}"/>
+        <Button Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Height="35" Margin="3" HorizontalAlignment="Stretch" Content="Reset" ToolTip="Reset variables to their initial values" Command="{Binding CallResetMethodCommand}"/>
     </Grid>
 </UserControl>

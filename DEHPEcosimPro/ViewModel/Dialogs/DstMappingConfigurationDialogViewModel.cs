@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DstDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
@@ -369,8 +369,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <returns>A value indicating whether the <paramref name="parameterType"/> complies</returns>
         private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType)
         {
-            return (parameterType is SampledFunctionParameterType sampledFunctionParameterType
-                    && sampledFunctionParameterType.HasCompatibleDependentAndIndependentParameterTypes());
+            return parameterType is SampledFunctionParameterType sampledFunctionParameterType
+                    && sampledFunctionParameterType.HasCompatibleDependentAndIndependentParameterTypes();
         }
 
         /// <summary>
@@ -380,14 +380,20 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableElementUsages.Clear();
 
-            if (this.selectedThing?.SelectedElementDefinition is { } elementDefinition && elementDefinition.Iid != Guid.Empty)
+            if (this.SelectedThing?.SelectedElementDefinition is { } elementDefinition && elementDefinition.Iid != Guid.Empty)
             {
-                this.AvailableElementUsages.AddRange(
-                    this.selectedThing.SelectedElementDefinition.ReferencingElementUsages()
-                        .Select(x => x.Clone(true)));
+                var elementUsages = this.AvailableElementDefinitions.SelectMany(d => d.ContainedElement)
+                    .Where(u => u.ElementDefinition.Iid == elementDefinition.Iid);
+
+                if (this.SelectedThing.SelectedOption is { } option)
+                {
+                    elementUsages = elementUsages.Where(x => !x.ExcludeOption.Contains(option));
+                }
+
+                this.AvailableElementUsages.AddRange(elementUsages.Select(x => x.Clone(true)));
             }
         }
-
+        
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements
         /// </summary>
@@ -406,25 +412,25 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
                     Action action = thing switch
                     {
-                        ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
-                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
+                        ElementDefinition elementDefinition => () => variable.SelectedElementDefinition = 
+                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid),
 
-                        ElementUsage elementUsage => (() =>
+                        ElementUsage elementUsage => () =>
                         {
                             if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
                                 .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
                             {
                                 variable.SelectedElementUsages.Add(usage);
                             }
-                        }),
+                        },
 
-                        Parameter parameter => (() => variable.SelectedParameter = 
+                        Parameter parameter => () => variable.SelectedParameter = 
                             this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
-                                .FirstOrDefault(p => p.Iid == thing.Iid)),
+                                .FirstOrDefault(p => p.Iid == thing.Iid),
 
-                        Option option => (() => variable.SelectedOption = option),
+                        Option option => () => variable.SelectedOption = option,
 
-                        ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+                        ActualFiniteState state => () => variable.SelectedActualFiniteState = state,
 
                         _ => null
                     };

@@ -43,6 +43,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using DevExpress.Xpf.NavBar;
+
     using Moq;
 
     using NUnit.Framework;
@@ -98,7 +100,6 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
 
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.IdCorrespondences).Returns(new List<IdCorrespondence>());
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
@@ -112,7 +113,11 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.variables = new List<VariableRowViewModel>()
             {
                 new VariableRowViewModel((
-                    new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                    new ReferenceDescription() 
+                    { 
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), 
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a")
+                    },
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
                 {
                     SelectedParameterType = this.scalarParameterType
@@ -126,7 +131,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
 
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.a") },
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.a") },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
@@ -135,7 +140,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.b") },
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.b") },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
@@ -144,14 +149,14 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, DateTime.Now, DateTime.Now));
-
-            var elements = this.rule.Transform(this.variables).ToList();
-            Assert.AreEqual(3, elements.Count);
+            var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>().ToList();
+            Assert.AreEqual(2, elements.Count);
             var parameter = elements.Last().Parameter.First();
             Assert.AreEqual("TextXQuantity", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
             Assert.AreEqual("0", parameterValueSet.Computed[0]);
             Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
+
         }
         
         [Test]
@@ -228,7 +233,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedParameterType = parameter.ParameterType
             });
 
-            var elements = this.rule.Transform(this.variables);
+            var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>();
             var definition = elements.Last();
             var first = definition.ContainedElement.First();
             var parameterOverride = first.ParameterOverride.Last();

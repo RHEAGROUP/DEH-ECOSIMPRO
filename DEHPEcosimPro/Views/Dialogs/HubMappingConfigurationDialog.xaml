@@ -170,12 +170,15 @@
                         <dxe:ComboBoxEdit Grid.Row="0" Grid.Column="1" Margin="2" AllowNullInput="False" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ShortName"
                                           ItemsSource="{Binding ElementDefinitions}"
                                           SelectedItem="{Binding SelectedElementDefinition}" NullText="Select Element Definition"
-                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
+                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" 
+                                          ToolTip="The selected ElementDefinition"/>
                         <Label Grid.Row="1" Grid.Column="0" Content="Element Usages:" />
                         <dxe:ComboBoxEdit Grid.Row="1" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ElementDefinition.ShortName"
                                           SelectedItem="{Binding SelectedElementUsage}"
                                           ItemsSource="{Binding ElementUsages}"
-                                          NullText="Select Element Usage" NullValueButtonPlacement="EditBox" ShowNullTextForEmptyValue="True" ValidateOnTextInput="False">
+                                          NullText="Select Element Usage" NullValueButtonPlacement="EditBox" 
+                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False"
+                                          ToolTip="The selected ElementUsage">
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="2" Grid.Column="0" Content="Parameters:" />
                         <dxe:ComboBoxEdit Grid.Row="2" Grid.Column="1" Margin="2" AllowNullInput="False" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
@@ -183,13 +186,15 @@
                                           ItemsSource="{Binding Parameters}"
                                           NullText="Create New Parameter" NullValueButtonPlacement="EditBox"
                                           SelectedItem="{Binding SelectedMappedElement.SelectedParameter}"
-                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="ParameterType.Name" />
+                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="ParameterType.Name" 
+                                          ToolTip="The selected Parameter"/>
                         <Label Grid.Row="3" Grid.Column="0" Content="Values:" />
                         <dxe:ComboBoxEdit Grid.Row="3" Grid.Column="1" Margin="2" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" DisplayMember="Representation"
                                           ItemsSource="{Binding Values}"
                                           NullText="Select one value"
                                           SelectedItem="{Binding SelectedMappedElement.SelectedValue}"
-                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False"/>
+                                          ShowNullTextForEmptyValue="True" ValidateOnTextInput="False"
+                                          ToolTip="The selected value, all the value from the selected parameter are selectable except default value -"/>
                     </Grid>
                     <Grid Grid.Column="1" Margin="5">
                         <dxg:TreeListControl ItemsSource="{Binding AvailableVariables}"
@@ -228,7 +233,8 @@
             </GroupBox>
             <GroupBox Grid.Row="2"  Margin="10" Padding="10" Header="MappedElement">
                 <ListView x:Name="Mapping" HorizontalContentAlignment="Stretch" SelectedItem="{Binding SelectedMappedElement}"
-                          ItemsSource="{Binding MappedElements}" SelectionMode="Single">
+                          ItemsSource="{Binding MappedElements}" SelectionMode="Single"
+                          ToolTip="Select here a parameter">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid HorizontalAlignment="Stretch">
@@ -293,7 +299,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="2" Width="117" Height="Auto" MinWidth="100" Margin="5" HorizontalAlignment="Right" Command="{Binding ContinueCommand}">
+                <Button ToolTip="Map the selected variables values" Grid.Column="2" Width="117" Height="Auto" MinWidth="100" Margin="5" HorizontalAlignment="Right" Command="{Binding ContinueCommand}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Continue" />
                         <Image Width="24" Height="24" Source="{dx:DXImage Image=Right_32x32.png}" Stretch="Uniform" />

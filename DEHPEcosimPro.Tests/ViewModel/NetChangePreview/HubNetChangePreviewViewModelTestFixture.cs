@@ -192,7 +192,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.dstController = new Mock<IDstController>();
 
             this.dstController.Setup(x => x.DstMapResult)
-                .Returns(new ReactiveList<ElementDefinition>() 
+                .Returns(new ReactiveList<ElementBase>() 
                 {
                     new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                     {
@@ -276,12 +276,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.AreEqual(1,this.viewModel.Things.Count);
             Assert.AreEqual(3,elements.Count);
             Assert.DoesNotThrow(() => this.viewModel.ComputeValues());
-            Assert.AreEqual(5, elements.Count);
+            Assert.AreEqual(4, elements.Count);
 
-            var parameterRowViewModels = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid).ContainedRows.OfType<ParameterRowViewModel>();
+            var parameterRowViewModels = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid)
+                .ContainedRows.OfType<ParameterRowViewModel>();
+
             Assert.AreEqual("42", parameterRowViewModels.First().Value);
-            var lastElementParameters = elements.First(x => x.Thing.Iid == this.elementDefinition1.Iid).ContainedRows.OfType<ParameterRowViewModel>();
-            Assert.AreEqual(2, lastElementParameters.Count());
+            
+            var lastElementParameters = elements.First(x => x.Thing.Iid == this.elementDefinition1.Iid)
+                .ContainedRows.OfType<ParameterRowViewModel>();
+            
+            Assert.AreEqual(1, lastElementParameters.Count());
 
             CDPMessageBus.Current.ClearSubscriptions();
         }

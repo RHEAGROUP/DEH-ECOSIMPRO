@@ -9,14 +9,14 @@
     <Product>DEHPEcosimPro</Product>
     <Description>DEHPEcosimPro desktop application</Description>
     <Copyright>Copyright © RHEA System S.A.</Copyright>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.2.0</AssemblyVersion>
+    <FileVersion>1.2.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <StartupObject>DEHPEcosimPro.App</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="2.0.30" />
+    <PackageReference Include="DEHPCommon" Version="1.0.183" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />
     <PackageReference Include="DevExpress.Wpf.Reporting" Version="20.1.8" />
     <PackageReference Include="reactiveui" Version="6.5.0" />
