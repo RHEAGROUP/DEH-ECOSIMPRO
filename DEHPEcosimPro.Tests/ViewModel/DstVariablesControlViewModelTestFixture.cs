@@ -150,12 +150,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
         [Test]
         public void VerifyMapCommandExecute()
         {
+            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+            var variables = this.viewModel.Variables.ToList();
             Assert.IsFalse(this.viewModel.MapCommand.CanExecute(null));
             this.viewModel.SelectedThings.Clear();
             this.viewModel.SelectedThing = this.viewModel.Variables.First();
             this.viewModel.InitializeCommands();
             Assert.IsTrue(this.viewModel.MapCommand.CanExecute(null));
-            this.viewModel.SelectedThings.AddRange(this.viewModel.Variables);
+            this.viewModel.SelectedThings.AddRange(variables);
             this.viewModel.SelectedThing = null;
             this.viewModel.InitializeCommands();
             Assert.IsTrue(this.viewModel.MapCommand.CanExecute(null));
