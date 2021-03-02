@@ -79,6 +79,7 @@ for:
     project: DEHPEcosimPro.sln
   
   test_script:
+    - nunit3-console DEHPEcosimPro-tests.nunit --result=testresults.xml;format=AppVeyor
     - >
       OpenCover.Console.exe
       -log:Error
