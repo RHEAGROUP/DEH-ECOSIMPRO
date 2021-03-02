@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.MappingRules
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
     using System.Runtime.ExceptionServices;
 
     using Autofac;
@@ -37,26 +36,25 @@ namespace DEHPEcosimPro.MappingRules
     using CDP4Common.SiteDirectoryData;
     using CDP4Common.Types;
 
-    using CDP4Dal.Operations;
-
     using DEHPCommon;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
     using DEHPCommon.MappingRules.Core;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.Xpf.Reports.UserDesigner.Native;
-
     using NLog;
+
+    using Opc.Ua;
 
     /// <summary>
     /// The <see cref="EcosimProElementToElementDefinitionRule"/> is a <see cref="IMappingRule"/> for the <see cref="MappingEngine"/>
     /// That takes a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> as input and outputs a E-TM-10-25 <see cref="ElementDefinition"/>
     /// </summary>
-    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, List<ElementDefinition>>
+    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases)>
     {
         /// <summary>
         /// The current class logger
@@ -77,23 +75,18 @@ namespace DEHPEcosimPro.MappingRules
         /// The current <see cref="DomainOfExpertise"/>
         /// </summary>
         private DomainOfExpertise owner;
-
+        
         /// <summary>
-        /// Holds the current processing <see cref="VariableRowViewModel"/> element name
+        /// Holds a <see cref="Dictionary{TKey,TValue}"/> of <see cref="ParameterOrOverrideBase"/> and <see cref="NodeId.Identifier"/>
         /// </summary>
-        private string dstElementName;
+        private readonly Dictionary<ParameterOrOverrideBase, object> parameterNodeIdIdentifier = new Dictionary<ParameterOrOverrideBase, object>();
 
         /// <summary>
-        /// Holds the current processing <see cref="VariableRowViewModel"/> parameter name
-        /// </summary>
-        private string dstParameterName;
-
-        /// <summary>
-        /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementDefinition"/>
+        /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementBase"/>
         /// </summary>
         /// <param name="input">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> to transform</param>
-        /// <returns>An <see cref="ElementDefinition"/></returns>
-        public override List<ElementDefinition> Transform(List<VariableRowViewModel> input)
+        /// <returns>A collection of (<see cref="NodeId"/>, <see cref="ElementBase"/>)</returns>
+        public override (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases) Transform(List<VariableRowViewModel> input)
         {
             try
             {
@@ -103,9 +96,6 @@ namespace DEHPEcosimPro.MappingRules
 
                 foreach (var variable in input.ToList())
                 {
-                    this.dstElementName = variable.ElementName;
-                    this.dstParameterName = variable.ParameterName;
-
                     if (variable.SelectedElementUsages.Any())
                     {
                         this.UpdateValueSetsFromElementUsage(variable);
@@ -114,18 +104,21 @@ namespace DEHPEcosimPro.MappingRules
                     {
                         if (variable.SelectedElementDefinition is null)
                         {
-                            var existingElement = input.FirstOrDefault(x => x.SelectedElementDefinition?.Name == this.dstElementName)?.SelectedElementDefinition;
+                            var existingElement = input.FirstOrDefault(x => x.SelectedElementDefinition?.Name == variable.ElementName)?.SelectedElementDefinition;
 
-                            variable.SelectedElementDefinition = existingElement ?? this.CreateElementDefinition();
+                            variable.SelectedElementDefinition = existingElement ?? this.CreateElementDefinition(variable.ElementName);
                         }
 
                         this.AddsValueSetToTheSelectectedParameter(variable);
 
-                        this.AddToExternalIdentifierMap(variable.SelectedElementDefinition.Iid, this.dstElementName);
+                        this.AddToExternalIdentifierMap(variable.SelectedElementDefinition.Iid, variable.ElementName);
                     }
                 }
 
-                return input.Select(x => x.SelectedElementDefinition).ToList();
+                var result = input.Select(x => (ElementBase)x.SelectedElementDefinition)
+                    .Union(input.SelectMany(x => x.SelectedElementUsages.Cast<ElementBase>())).ToList();
+
+                return (this.parameterNodeIdIdentifier, result);
             }
             catch (Exception exception)
             {
@@ -138,21 +131,21 @@ namespace DEHPEcosimPro.MappingRules
         /// <summary>
         /// Creates an <see cref="ElementDefinition"/> if it does not exist yet
         /// </summary>
+        /// <param name="name">The name</param>
         /// <returns>An <see cref="ElementDefinition"/></returns>
-        private ElementDefinition CreateElementDefinition()
+        private ElementDefinition CreateElementDefinition(string name)
         {
             if (this.hubController.OpenIteration.Element
-                .FirstOrDefault(x => x.Name == this.dstElementName) is { } element)
+                .FirstOrDefault(x => x.Name == name) is { } element)
             {
-                return element;
+                return element.Clone(true);
             }
 
             return this.Bake<ElementDefinition>(x =>
             {
-                x.Name = this.dstElementName;
-                x.ShortName = this.dstElementName;
+                x.Name = name;
+                x.ShortName = name;
                 x.Owner = this.owner;
-                x.Container = this.hubController.OpenIteration;
             });
         }
 
@@ -164,11 +157,12 @@ namespace DEHPEcosimPro.MappingRules
         {
             foreach (var elementUsage in variable.SelectedElementUsages)
             {
-                if (elementUsage.ParameterOverride.FirstOrDefault(x => 
-                        x.ParameterType.Iid == variable.SelectedParameterType.Iid) is { } parameterOverride)
+                if (variable.SelectedParameter is {} parameter
+                    && elementUsage.ParameterOverride
+                        .FirstOrDefault(x => x.Parameter.Iid == parameter.Iid) is {} parameterOverride)
                 {
                     this.UpdateValueSet(variable, parameterOverride);
-                    this.AddToExternalIdentifierMap(elementUsage.Iid, this.dstElementName);
+                    this.parameterNodeIdIdentifier[parameterOverride] = variable.Reference.NodeId.Identifier;
                 }
             }
         }
@@ -194,7 +188,6 @@ namespace DEHPEcosimPro.MappingRules
                     {
                         x.ParameterType = variable.SelectedParameterType;
                         x.Owner = this.owner;
-                        x.Container = variable.SelectedElementDefinition;
 
                         x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                         {
@@ -211,6 +204,8 @@ namespace DEHPEcosimPro.MappingRules
             }
 
             this.UpdateValueSet(variable, variable.SelectedParameter);
+
+            this.parameterNodeIdIdentifier[variable.SelectedParameter] = variable.Reference.NodeId.Identifier;
         }
 
         /// <summary>
@@ -239,8 +234,29 @@ namespace DEHPEcosimPro.MappingRules
                     .HasTheRightNumberOfParameterType(out var independantParameterType, out _))
             {
                 var values = new List<string>();
+                
+                if (independantParameterType.IsTimeQuantityKind(variable.SelectedTimeUnit, out var scale))
+                {
+                    parameter.Scale = scale;
 
-                if (independantParameterType.IsQuantityKindOrText())
+                    Func<TimeTaggedValueRowViewModel, string> independantValue = variable.SelectedTimeUnit switch
+                    {
+                        TimeUnit.MilliSecond => x => $"{x.TimeDelta.TotalMilliseconds}",
+                        TimeUnit.Second => x => $"{x.TimeDelta.TotalSeconds}",
+                        TimeUnit.Minute => x => $"{x.TimeDelta.TotalMinutes}",
+                        TimeUnit.Hour => x => $"{x.TimeDelta.TotalHours}",
+                        TimeUnit.Day => x => $"{x.TimeDelta.TotalDays}",
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{independantValue(value)}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
+                }
+
+                else if (independantParameterType.IsQuantityKindOrText())
                 {
                     foreach (var value in variable.SelectedValues)
                     {
@@ -248,6 +264,15 @@ namespace DEHPEcosimPro.MappingRules
                         values.Add(FormattableString.Invariant($"{value.Value}"));
                     }
                 }
+                else if (independantParameterType.IsTimeType())
+                {
+                    foreach (var value in variable.SelectedValues)
+                    {
+                        values.Add($"{value.TimeDelta}");
+                        values.Add(FormattableString.Invariant($"{value.Value}"));
+                    }
+                }
+
                 else if (independantParameterType.IsTimeType())
                 {
                     foreach (var value in variable.SelectedValues)
@@ -269,11 +294,31 @@ namespace DEHPEcosimPro.MappingRules
 
             valueSet.ValueSwitch = ParameterSwitchKind.COMPUTED;
 
-            this.AddToExternalIdentifierMap(parameter.Iid, this.dstParameterName);
+            this.AddParameterToExternalIdentifierMap(parameter, variable);
         }
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="IHubController.IdCorrespondences"/>
+        /// Adds the <see cref="Parameter"/> and its mapped <see cref="Option"/> and mapped <see cref="ActualFiniteState"/>
+        /// </summary>
+        /// <param name="parameter">The <see cref="Parameter"/></param>
+        /// <param name="variable">The external identifier: the variable name</param>
+        private void AddParameterToExternalIdentifierMap(ParameterBase parameter, VariableRowViewModel variable)
+        {
+            this.AddToExternalIdentifierMap(parameter.Iid, variable.Name);
+
+            if (parameter.IsOptionDependent)
+            {
+                this.AddToExternalIdentifierMap(variable.SelectedOption.Iid, variable.Name);
+            }
+
+            if (parameter.StateDependence is {})
+            {
+                this.AddToExternalIdentifierMap(variable.SelectedActualFiniteState.Iid, variable.Name);
+            }
+        }
+
+        /// <summary>
+        /// Adds one correspondance to the <see cref="IHubController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>

@@ -26,12 +26,12 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Linq;
+    using System.Reactive;
     using System.Reactive.Linq;
+    using System.Threading.Tasks;
     using System.Windows.Input;
 
     using Autofac;
-
-    using CDP4Common.EngineeringModelData;
 
     using DEHPCommon;
     using DEHPCommon.Enumerators;
@@ -72,6 +72,11 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstController dstController;
 
         /// <summary>
+        /// Gets or sets the command to refresh the session
+        /// </summary>
+        public ReactiveCommand<Unit> RefreshCommand { get; set; }
+
+        /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
         /// </summary>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
@@ -109,12 +114,25 @@ namespace DEHPEcosimPro.ViewModel
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
             this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
 
-            this.WhenAny(x => x.hubController.OpenIteration,
+            var isConnectedObservable = this.WhenAny(x => x.hubController.OpenIteration,
                 x => x.hubController.IsSessionOpen,
                 (i, o) => 
                     i.Value != null && o.Value)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateConnectButtonText);
+                .ObserveOn(RxApp.MainThreadScheduler);
+            
+            isConnectedObservable.Subscribe(this.UpdateConnectButtonText);
+
+            this.RefreshCommand = ReactiveCommand.CreateAsyncTask(isConnectedObservable, async _ =>
+                await this.RefreshCommandExecute(), RxApp.MainThreadScheduler);
+        }
+
+        /// <summary>
+        /// Executes the <see cref="RefreshCommand"/>
+        /// </summary>
+        /// <returns></returns>
+        private async Task RefreshCommandExecute()
+        {
+            await this.hubController.Refresh();
         }
 
         /// <summary>
@@ -143,8 +161,14 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (this.hubController.IsSessionOpen)
             {
-                this.ObjectBrowser.Things.Clear();
-                this.hubController.Close();
+                if ((this.dstController.DstMapResult.Any() && this.NavigationService.ShowDxDialog<HubLogoutConfirmDialog>() is true)
+                    || !this.dstController.DstMapResult.Any())
+                {
+                    this.dstController.HubMapResult.Clear();
+                    this.dstController.DstMapResult.Clear();
+                    this.ObjectBrowser.Things.Clear();
+                    this.hubController.Close();
+                }
             }
             else
             {

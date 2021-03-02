@@ -62,7 +62,7 @@ namespace DEHPEcosimPro.ViewModel
         private bool areThereAnyTransferInProgress;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the TransfertCommand" is executing
+        /// Gets or sets a value indicating whether the TransferCommand" is executing
         /// </summary>
         public bool AreThereAnyTransferInProgress
         {
@@ -102,6 +102,9 @@ namespace DEHPEcosimPro.ViewModel
                 .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.UpdateCanTransfer);
 
+            this.dstController.DstMapResult.CountChanged.Subscribe(x => this.UpdateCanTransfer(x > 0));
+            this.dstController.HubMapResult.CountChanged.Subscribe(x => this.UpdateCanTransfer(x > 0));
+
             this.TransferCommand = ReactiveCommand.CreateAsyncTask(
                 this.WhenAnyValue(x => x.CanTransfer),
                 async _ => await this.TransferCommandExecute(),
@@ -134,15 +137,16 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.dstController.DstMapResult.Clear();
             this.dstController.HubMapResult.Clear();
+            this.dstController.ParameterNodeIds.Clear();
             await Task.Delay(1);
-            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent() { Reset = true });
-            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent() { Reset = true });
+            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
+            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             this.AreThereAnyTransferInProgress = false;
             this.IsIndeterminate = false;
         }
 
         /// <summary>
-        /// Executes the transfert command
+        /// Executes the transfer command
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         private async Task TransferCommandExecute()

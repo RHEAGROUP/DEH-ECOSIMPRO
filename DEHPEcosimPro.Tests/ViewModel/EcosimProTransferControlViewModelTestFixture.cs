@@ -58,6 +58,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
+            this.dstController.Setup(x => x.DstMapResult)
+                .Returns(new ReactiveList<ElementBase>());
+
+            this.dstController.Setup(x => x.HubMapResult)
+                .Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
             
             this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object);
         }
@@ -88,7 +93,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         [Test]
         public void VerifyCancelCommand()
         {
-            this.dstController.Setup(x => x.DstMapResult).Returns(new ReactiveList<ElementDefinition>()
+            this.dstController.Setup(x => x.DstMapResult).Returns(new ReactiveList<ElementBase>()
             {
                 new ElementDefinition()
             });

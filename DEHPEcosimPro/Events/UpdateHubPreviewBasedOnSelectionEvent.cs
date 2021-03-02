@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UpdateDstVariableTreeEvent.cs" company="RHEA System S.A.">
+// <copyright file="UpdateHubPreviewBasedOnSelectionEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -24,20 +24,26 @@
 
 namespace DEHPEcosimPro.Events
 {
-    using CDP4Dal;
+    using System.Collections.Generic;
 
     using DEHPCommon.Events;
 
+    using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
+
     /// <summary>
-    /// The <see cref="OpcVariableChangedEvent"/> represents an event for the <see cref="CDPMessageBus"/>
+    /// Event for the <see cref="CDP4Dal.CDPMessageBus"/> that allows listener to be notified
+    /// The <see cref="UpdateHubPreviewBasedOnSelectionEvent"/> is for filtering the hub impact view based on a selection
     /// </summary>
-    public class UpdateDstVariableTreeEvent : UpdateTreeBaseEvent
+    public class UpdateHubPreviewBasedOnSelectionEvent : UpdatePreviewBasedOnSelectionBaseEvent<VariableRowViewModel, IHubNetChangePreviewViewModel>
     {
         /// <summary>
-        /// Initializes a new <see cref="UpdateDstVariableTreeEvent" />
+        /// Initializes a new <see cref="T:DEHPCommon.Events.UpdatePreviewBasedOnSelectionBaseEvent`2" />
         /// </summary>
+        /// <param name="things">The collection of <see cref="VariableRowViewModel" /> selection</param>
+        /// <param name="target">The target <see cref="T:System.Type" /></param>
         /// <param name="reset">a value indicating whether the listener should reset its tree</param>
-        public UpdateDstVariableTreeEvent(bool reset = false) : base(reset)
+        public UpdateHubPreviewBasedOnSelectionEvent(IEnumerable<VariableRowViewModel> things, IHubNetChangePreviewViewModel target, bool reset) : base(things, target, reset)
         {
         }
     }

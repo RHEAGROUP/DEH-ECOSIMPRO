@@ -59,6 +59,10 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             CDPMessageBus.Current.Listen<UpdateDstVariableTreeEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.UpdateTree(x.Reset));
+
+            CDPMessageBus.Current.Listen<UpdateDstVariableTreeEvent>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(x => this.UpdateTree(x.Reset));
         }
 
         /// <summary>

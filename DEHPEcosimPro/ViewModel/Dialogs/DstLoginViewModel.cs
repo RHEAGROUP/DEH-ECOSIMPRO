@@ -362,7 +362,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void ProcessExternalIdentifierMap()
         {
-            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap ??
+            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap?.Clone(true) ??
                                                        this.dstController.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
         }
     }

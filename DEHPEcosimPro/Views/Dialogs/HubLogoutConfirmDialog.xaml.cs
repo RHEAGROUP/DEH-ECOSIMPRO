@@ -1,44 +1,42 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UpdateDstVariableTreeEvent.cs" company="RHEA System S.A.">
-//    Copyright (c) 2020-2021 RHEA System S.A.
-// 
+// <copyright file="HubLogoutConfirmDialog.xaml.cs" company="RHEA System S.A.">
+//    Copyright (c) 2015-2020 RHEA System S.A.
+//
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
-// 
+//
 //    This file is part of DEHPEcosimPro
-// 
+//
 //    The DEHPEcosimPro is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
 //    License as published by the Free Software Foundation; either
 //    version 3 of the License, or (at your option) any later version.
-// 
+//
 //    The DEHPEcosimPro is distributed in the hope that it will be useful,
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //    Lesser General Public License for more details.
-// 
+//
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with this program; if not, write to the Free Software Foundation,
 //    Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Events
+namespace DEHPEcosimPro.Views.Dialogs
 {
-    using CDP4Dal;
-
-    using DEHPCommon.Events;
+    using DevExpress.Xpf.Core;
 
     /// <summary>
-    /// The <see cref="OpcVariableChangedEvent"/> represents an event for the <see cref="CDPMessageBus"/>
+    /// Interaction logic for HubLogoutConfirmDialog.xaml
     /// </summary>
-    public class UpdateDstVariableTreeEvent : UpdateTreeBaseEvent
+    public partial class HubLogoutConfirmDialog : DXDialogWindow
     {
         /// <summary>
-        /// Initializes a new <see cref="UpdateDstVariableTreeEvent" />
+        /// Initializes a new <see cref="HubLogoutConfirmDialog"/>
         /// </summary>
-        /// <param name="reset">a value indicating whether the listener should reset its tree</param>
-        public UpdateDstVariableTreeEvent(bool reset = false) : base(reset)
+        public HubLogoutConfirmDialog()
         {
+            this.InitializeComponent();
         }
     }
 }

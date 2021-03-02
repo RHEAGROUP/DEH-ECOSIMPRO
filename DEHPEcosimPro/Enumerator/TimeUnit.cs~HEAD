@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UpdateDstVariableTreeEvent.cs" company="RHEA System S.A.">
+// <copyright file="TimeUnit.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,23 +22,40 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Events
+namespace DEHPEcosimPro.Enumerator
 {
-    using CDP4Dal;
+    using System;
 
-    using DEHPCommon.Events;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     /// <summary>
-    /// The <see cref="OpcVariableChangedEvent"/> represents an event for the <see cref="CDPMessageBus"/>
+    /// Possible time units to use for discrete sampling of <see cref="TimeTaggedValueRowViewModel"/>
     /// </summary>
-    public class UpdateDstVariableTreeEvent : UpdateTreeBaseEvent
+    public enum TimeUnit
     {
         /// <summary>
-        /// Initializes a new <see cref="UpdateDstVariableTreeEvent" />
+        /// Represents the <see cref="DateTime.Millisecond"/>
         /// </summary>
-        /// <param name="reset">a value indicating whether the listener should reset its tree</param>
-        public UpdateDstVariableTreeEvent(bool reset = false) : base(reset)
-        {
-        }
+        MilliSecond,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Second"/>
+        /// </summary>
+        Second,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Minute"/>
+        /// </summary>
+        Minute,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Minute"/>
+        /// </summary>
+        Hour,
+
+        /// <summary>
+        /// Represents the <see cref="DateTime.Day"/>
+        /// </summary>
+        Day
     }
 }
