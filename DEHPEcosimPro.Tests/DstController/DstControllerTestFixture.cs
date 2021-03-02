@@ -349,7 +349,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 , Times.Exactly(1));
             
             this.hubController.Verify(
-                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(4));
+                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(2));
 
             this.hubController.Verify(
                 x => x.Refresh(), Times.Exactly(1));

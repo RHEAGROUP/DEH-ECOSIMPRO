@@ -310,7 +310,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel.SelectedThing.SelectedParameterType = this.parameterType;
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
-            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameter);
+            Assert.IsNotNull(this.viewModel.SelectedThing.SelectedParameter);
 
             this.viewModel.AvailableParameters.Add(new Parameter()
             {

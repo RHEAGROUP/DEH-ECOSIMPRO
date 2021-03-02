@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// <copyright file="DstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -262,7 +262,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Sets the <see cref="SelectedThing"/> <see cref="ParameterType"/> according to the selected <see cref="Parameter"/>
         /// </summary>
-        private void UpdateSelectedParameterType()
+        public void UpdateSelectedParameterType()
         {
             if (this.SelectedThing?.SelectedParameter is null)
             {
@@ -285,7 +285,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Sets the <see cref="SelectedThing"/> <see cref="Parameter"/> according to the selected <see cref="ParameterType"/>
         /// </summary>
-        private void UpdateSelectedParameter()
+        public void UpdateSelectedParameter()
         {
             if (this.SelectedThing?.SelectedParameterType is null)
             {
