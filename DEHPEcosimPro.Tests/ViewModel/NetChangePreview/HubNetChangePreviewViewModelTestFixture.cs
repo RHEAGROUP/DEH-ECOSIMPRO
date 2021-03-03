@@ -372,9 +372,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
 
             this.dstController.Setup(x => x.ParameterNodeIds).Returns(parametersNodeId);
             this.viewModel.ComputeValues();
-            CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels.Take(1), null, false));
-            CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels, null, false));
-            CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(new List<VariableRowViewModel>(), null, true));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels.Take(1), null, false)));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels, null, false)));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(new List<VariableRowViewModel>(), null, true)));
         }
     }
 }

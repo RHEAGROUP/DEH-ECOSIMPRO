@@ -379,7 +379,6 @@ namespace DEHPEcosimPro.DstController
                 .ToList())
             {
                 this.HubMapResult.Remove(mappedElement);
-                
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
             }
 

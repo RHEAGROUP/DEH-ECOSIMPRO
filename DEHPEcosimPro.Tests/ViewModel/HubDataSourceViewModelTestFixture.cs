@@ -152,6 +152,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.objectBrowser.Setup(x => x.CanMap).Returns(new Mock<IObservable<bool>>().Object);
             this.objectBrowser.Setup(x => x.MapCommand).Returns(ReactiveCommand.Create());
             this.objectBrowser.Setup(x => x.Things).Returns(new ReactiveList<BrowserViewModelBase>());
+            this.objectBrowser.Setup(x => x.SelectedThings).Returns(new ReactiveList<object>());
             
             this.publicationBrowser = new Mock<IPublicationBrowserViewModel>();
 

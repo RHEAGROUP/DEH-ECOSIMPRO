@@ -33,6 +33,8 @@ namespace DEHPEcosimPro.ViewModel
 
     using Autofac;
 
+    using CDP4Dal;
+
     using DEHPCommon;
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -44,6 +46,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views.Dialogs;
@@ -124,6 +127,17 @@ namespace DEHPEcosimPro.ViewModel
 
             this.RefreshCommand = ReactiveCommand.CreateAsyncTask(isConnectedObservable, async _ =>
                 await this.RefreshCommandExecute(), RxApp.MainThreadScheduler);
+            
+            this.ObjectBrowser.SelectedThings.CountChanged.Subscribe(_ => this.UpdateNetChangePreviewBasedOnSelection());
+        }
+
+        /// <summary>
+        /// Sends an update event to the Dst net change preview based on the current <see cref="IObjectBrowserViewModel.SelectedThings"/>
+        /// </summary>
+        private void UpdateNetChangePreviewBasedOnSelection()
+        {
+            CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(
+                this.ObjectBrowser.SelectedThings.OfType<ElementDefinitionRowViewModel>(), null, false));
         }
 
         /// <summary>
@@ -150,8 +164,9 @@ namespace DEHPEcosimPro.ViewModel
                     x.Thing.Clone(true);
                     return x;
                 }));
-            
+
             this.NavigationService.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(viewModel);
+            this.ObjectBrowser.SelectedThings.Clear();
         }
 
         /// <summary>

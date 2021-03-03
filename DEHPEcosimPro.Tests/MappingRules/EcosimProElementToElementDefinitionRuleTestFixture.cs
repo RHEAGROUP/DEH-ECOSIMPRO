@@ -40,6 +40,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -101,6 +102,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
 
             this.dstController = new Mock<IDstController>();
+            this.dstController.Setup(x => x.ExternalIdentifierMap).Returns(new ExternalIdentifierMap());
+            this.dstController.Setup(x => x.AddToExternalIdentifierMap(It.IsAny<Guid>(), It.IsAny<string>()));
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
@@ -167,7 +170,6 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameterValueSet = parameter.ValueSet.Last();
             Assert.AreEqual("0", parameterValueSet.Computed[0]);
             Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
-
         }
         
         [Test]
@@ -312,6 +314,136 @@ namespace DEHPEcosimPro.Tests.MappingRules
                         }
                     }
                 }
+            };
+        }
+
+        [Test]
+        public void VerifyUpdateValueSet()
+        {
+            var parameter0 = new Parameter()
+            {
+                ParameterType = this.dateTimeParameterType,
+
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter1 = new Parameter()
+            {
+                ParameterType = this.scalarParameterType,
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter2 = new Parameter()
+            {
+                ParameterType = GenerateTimeQuantityParamerType(),
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter3 = new Parameter()
+            {
+                ParameterType = new TextParameterType(),
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            _ = new ElementDefinition()
+            {
+                Parameter = { parameter0, parameter1, parameter2, parameter3 },
+                Name = "nonameElement"
+            };
+
+            var variableRowViewModel = this.variables.First();
+            variableRowViewModel.SelectedValues.AddRange(variableRowViewModel.Values);
+            this.rule.Transform(new List<VariableRowViewModel>());
+
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter0));
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter1));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.MilliSecond;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Second;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Minute;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Hour;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Day;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter3));
+            Assert.Throws<NullReferenceException>(() => this.rule.UpdateValueSet(null, null));
+        }
+
+        private static SampledFunctionParameterType GenerateTimeQuantityParamerType()
+        {
+            return new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Time", PossibleScale =
+                                {
+                                    new RatioScale() { Name = "millisecond" },
+                                    new RatioScale() { Name = "second" },
+                                    new RatioScale() { Name = "minute" },
+                                    new RatioScale() { Name = "hour" },
+                                    new RatioScale() { Name = "Day" }
+                                }
+                            }
+                        }
+                    },
+
+                DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(),null,null)
+                            {
+                                Name = "DependentQuantityKing"
+                            }
+                        }
+                    }
             };
         }
     }
