@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RowDetailsControl.xaml.cs" company="RHEA System S.A.">
+// <copyright file="UpdateHubPreviewBasedOnSelectionEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -22,21 +22,29 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.Views.Dialogs
+namespace DEHPEcosimPro.Events
 {
-    using System.Windows.Controls;
+    using System.Collections.Generic;
+
+    using DEHPCommon.Events;
+
+    using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     /// <summary>
-    /// Interaction logic for RowDetailsControl.xaml
+    /// Event for the <see cref="CDP4Dal.CDPMessageBus"/> that allows listener to be notified
+    /// The <see cref="UpdateHubPreviewBasedOnSelectionEvent"/> is for filtering the hub impact view based on a selection
     /// </summary>
-    public partial class RowDetailsControl : UserControl
+    public class UpdateHubPreviewBasedOnSelectionEvent : UpdatePreviewBasedOnSelectionBaseEvent<VariableRowViewModel, IHubNetChangePreviewViewModel>
     {
         /// <summary>
-        /// Initializes a new <see cref="RowDetailsControl"/>
+        /// Initializes a new <see cref="T:DEHPCommon.Events.UpdatePreviewBasedOnSelectionBaseEvent`2" />
         /// </summary>
-        public RowDetailsControl()
+        /// <param name="things">The collection of <see cref="VariableRowViewModel" /> selection</param>
+        /// <param name="target">The target <see cref="T:System.Type" /></param>
+        /// <param name="reset">a value indicating whether the listener should reset its tree</param>
+        public UpdateHubPreviewBasedOnSelectionEvent(IEnumerable<VariableRowViewModel> things, IHubNetChangePreviewViewModel target, bool reset) : base(things, target, reset)
         {
-            this.InitializeComponent();
         }
     }
 }

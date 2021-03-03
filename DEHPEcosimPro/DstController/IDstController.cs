@@ -87,9 +87,14 @@ namespace DEHPEcosimPro.DstController
         IList<ReferenceDescription> References { get; }
 
         /// <summary>
-        /// Gets the colection of mapped <see cref="ElementDefinition"/>s and <see cref="Parameter"/>s
+        /// Gets the colection of mapped <see cref="Parameter"/>s And <see cref="ParameterOverride"/>s through their container
         /// </summary>
-        ReactiveList<ElementDefinition> DstMapResult { get; }
+        ReactiveList<ElementBase> DstMapResult { get; }
+
+        /// <summary>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// </summary>
+        Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; }
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
@@ -100,12 +105,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
         /// </summary>
         ExternalIdentifierMap ExternalIdentifierMap { get; set; }
-
-        /// <summary>
-        /// Gets the collection of <see cref="IdCorrespondences"/>
-        /// </summary>
-        List<IdCorrespondence> IdCorrespondences { get; }
-
+        
         /// <summary>
         /// Connects to the provided endpoint
         /// </summary>
@@ -160,18 +160,19 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
+        /// <returns>A <see cref="Task"/></returns>
         void Map(List<VariableRowViewModel> dstVariables);
 
         /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        /// <returns>A <see cref="Task"/></returns>
         void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
 
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
         void TransferMappedThingsToDst();
 
         /// <summary>
@@ -195,11 +196,11 @@ namespace DEHPEcosimPro.DstController
         Task TransferMappedThingsToHub();
 
         /// <summary>
-        /// Updates the configured mapping
+        /// Updates the <see cref="IValueSet"/> of all <see cref="Parameter"/> and all <see cref="ParameterOverride"/>
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
-        void UpdateExternalIdentifierMap();
-
+        Task UpdateParametersValueSets();
+        
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
@@ -208,7 +209,7 @@ namespace DEHPEcosimPro.DstController
         ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="IdCorrespondences"/>
+        /// Adds one correspondance to the <see cref="IDstController.ExternalIdentifierMap"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>

@@ -25,12 +25,10 @@
 namespace DEHPEcosimPro.Tests.DstController
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Windows;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -52,16 +50,11 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.Mvvm;
-    using DevExpress.Mvvm.Native;
-
     using Moq;
 
     using NUnit.Framework;
 
     using Opc.Ua;
-
-    using ReactiveUI;
 
     using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
 
@@ -180,7 +173,6 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.AreEqual(MappingDirection.FromDstToHub, this.controller.MappingDirection);
             Assert.IsEmpty(this.controller.DstMapResult);
             Assert.IsEmpty(this.controller.HubMapResult);
-            Assert.IsEmpty(this.controller.IdCorrespondences);
             Assert.IsNull(this.controller.ExternalIdentifierMap);
             Assert.IsNotEmpty(this.controller.ThisToolName);
         }
@@ -306,6 +298,10 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyTransferToHub()
         {
+            var map = new ExternalIdentifierMap();
+
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out map));
+
             this.navigationService.Setup(
                 x => x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                 It.IsAny<CreateLogEntryDialogViewModel>())).Returns(true);
@@ -350,42 +346,13 @@ namespace DEHPEcosimPro.Tests.DstController
                 x => 
                     x.ShowDxDialog<CreateLogEntryDialog, CreateLogEntryDialogViewModel>(
                         It.IsAny<CreateLogEntryDialogViewModel>())
-                , Times.Exactly(4));
+                , Times.Exactly(1));
             
             this.hubController.Verify(
-                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(4));
+                x => x.Write(It.IsAny<ThingTransaction>()), Times.Exactly(2));
 
             this.hubController.Verify(
-                x => x.Refresh(), Times.Exactly(2));
-        }
-
-        [Test]
-        public void VerifyUpdateExternalIdentifierMap()
-        {
-            const string oldCorrespondenceExternalId = "old";
-
-            this.controller.ExternalIdentifierMap = new ExternalIdentifierMap()
-            {
-                Correspondence =
-                {
-                    new IdCorrespondence() { ExternalId = oldCorrespondenceExternalId },
-                    new IdCorrespondence() { ExternalId = "-1" }
-                },
-                Container = this.iteration
-            };
-
-            this.controller.IdCorrespondences.AddRange(new[]
-            {
-                new IdCorrespondence() { ExternalId = "0"}, new IdCorrespondence() { ExternalId = "1" },
-                new IdCorrespondence() { ExternalId = "-1" }
-            });
-
-            Assert.DoesNotThrow(() => this.controller.UpdateExternalIdentifierMap());
-            Assert.IsEmpty(this.controller.IdCorrespondences);
-
-            Assert.AreEqual(4, this.controller.ExternalIdentifierMap.Correspondence.Count());
-            Assert.IsNotNull(this.controller.ExternalIdentifierMap.Correspondence.SingleOrDefault(x => x.ExternalId == oldCorrespondenceExternalId));
-            Assert.IsNotNull(this.controller.ExternalIdentifierMap.Correspondence.SingleOrDefault(x => x.ExternalId == "-1"));
+                x => x.Refresh(), Times.Exactly(1));
         }
 
         [Test]
@@ -444,10 +411,10 @@ namespace DEHPEcosimPro.Tests.DstController
             this.controller.ExternalIdentifierMap = this.controller.CreateExternalIdentifierMap("test");
             var internalId = Guid.NewGuid();
             this.controller.AddToExternalIdentifierMap(internalId, string.Empty);
-            Assert.IsNotEmpty(this.controller.IdCorrespondences);
+            Assert.IsNotEmpty(this.controller.ExternalIdentifierMap.Correspondence);
             this.controller.AddToExternalIdentifierMap(internalId, string.Empty);
             this.controller.AddToExternalIdentifierMap(Guid.NewGuid(), string.Empty);
-            Assert.AreEqual(2, this.controller.IdCorrespondences.Count);
+            Assert.AreEqual(1, this.controller.ExternalIdentifierMap.Correspondence.Count);
         }
 
         [Test]

@@ -1,5 +1,5 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="DstDstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="DstMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -164,7 +164,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 variable.MappingConfigurations.AddRange(
                     this.DstController.ExternalIdentifierMap.Correspondence.Where(
                         x => x.ExternalId == variable.ElementName ||
-                             x.ExternalId == variable.ParameterName));
+                             x.ExternalId == variable.Name));
             }
         }
 
@@ -175,7 +175,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             foreach (var variableRowViewModel in this.Variables)
             {
-                variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ => this.CheckCanExecute());
+                variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ =>
+                {
+                    this.UpdateAvailableParameters();
+                    this.CheckCanExecute();
+                });
             }
 
             this.ContinueCommand = ReactiveCommand.Create(
@@ -239,13 +243,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.AvailableParameterTypes.Clear();
 
             this.AvailableElementDefinitions.AddRange(
-                this.HubController.OpenIteration.Element.Select(e => e.Clone(true)));
+                this.HubController.OpenIteration.Element
+                    .Select(e => e.Clone(true))
+                    .OrderBy(x => x.Name));
 
             this.AvailableParameterTypes.AddRange(
                 this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>().RequiredRdls
-                .SelectMany(x => x.ParameterType).Where(
-                    x => x is SampledFunctionParameterType parameterType 
-                         && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
+                .SelectMany(x => x.ParameterType).Where(this.IsSampledFunctionParameterTypeAndIsCompatible)
                 .OrderBy(x => x.Name));
 
             this.UpdateAvailableParameters();
@@ -265,13 +269,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
+            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
+                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
                 && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
             {
                 this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
             }
 
-            else if (this.SelectedThing.SelectedParameter is { })
+            else if (!(this.SelectedThing.SelectedParameter?.ParameterType is SampledFunctionParameterType))
             {
                 this.SelectedThing.SelectedParameterType = null;
             }
@@ -287,8 +292,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameterType is { } parameterType 
-                    && this.SelectedThing.SelectedParameter is { } parameter 
+            if (this.SelectedThing.SelectedParameter is { } parameter
+                && this.SelectedThing.SelectedParameterType is { } parameterType 
                     && parameter.ParameterType.Iid != parameterType.Iid)
             {
                 this.SelectedThing.SelectedParameter = null;
@@ -297,6 +302,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 x.ParameterType.Iid == this.SelectedThing.SelectedParameterType.Iid) is Parameter parameterOrOverride )
             {
                 this.SelectedThing.SelectedParameter = parameterOrOverride;
+            }
+
+            if (this.SelectedThing.SelectedParameter?.IsOptionDependent is true)
+            {
+                this.SelectedThing.SelectedOption = this.AvailableOptions.FirstOrDefault();
             }
         }
 
@@ -320,14 +330,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private void UpdateAvailableOptions()
         {
             this.AvailableOptions.AddRange(this.HubController.OpenIteration.Option.Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
-            
-            this.Variables.ForEach(x =>
-            {
-                if (x.SelectedOption is null)
-                {
-                    x.SelectedOption = this.AvailableOptions.Last();
-                }
-            });
         }
 
         /// <summary>
@@ -337,13 +339,38 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableParameters.Clear();
 
-            if (this.SelectedThing?.SelectedElementDefinition != null)
+            if (this.SelectedThing?.SelectedElementDefinition is { } element)
             {
-                this.AvailableParameters.AddRange(
-                    this.SelectedThing.SelectedElementDefinition.Parameter
-                        .Where(x => this.HubController.Session.PermissionService.CanWrite(x))
-                        .Where(x => this.AvailableParameters.FirstOrDefault(p => p.Iid == x.Iid) is null));
+                var parameters = element.Parameter.ToList();
+                
+                if(element.Iid != Guid.Empty)
+                {
+                    parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
+                }
+
+                if (this.SelectedThing.SelectedValues.Count > 1)
+                {
+                    this.AvailableParameters.AddRange(parameters.Where(
+                        p=> this.IsSampledFunctionParameterTypeAndIsCompatible(p.ParameterType)));
+                }
+                else
+                {
+                    this.AvailableParameters.AddRange(parameters.Where(x => !(x.ParameterType is SampledFunctionParameterType)
+                    || this.IsSampledFunctionParameterTypeAndIsCompatible(x.ParameterType)));
+                }
             }
+        }
+
+        /// <summary>
+        /// Verify that the <see cref="ParameterType"/> is <see cref="SampledFunctionParameterType"/>
+        /// and <see cref="SampledFunctionParameterTypeExtensions.HasCompatibleDependentAndIndependentParameterTypes"/>
+        /// </summary>
+        /// <param name="parameterType">The <see cref="ParameterType"/> to verify</param>
+        /// <returns>A value indicating whether the <paramref name="parameterType"/> complies</returns>
+        private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType)
+        {
+            return parameterType is SampledFunctionParameterType sampledFunctionParameterType
+                    && sampledFunctionParameterType.HasCompatibleDependentAndIndependentParameterTypes();
         }
 
         /// <summary>
@@ -353,14 +380,20 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableElementUsages.Clear();
 
-            if (this.selectedThing?.SelectedElementDefinition != null)
+            if (this.SelectedThing?.SelectedElementDefinition is { } elementDefinition && elementDefinition.Iid != Guid.Empty)
             {
-                this.AvailableElementUsages.AddRange(
-                    this.selectedThing.SelectedElementDefinition.ReferencingElementUsages()
-                        .Select(x => x.Clone(true)));
+                var elementUsages = this.AvailableElementDefinitions.SelectMany(d => d.ContainedElement)
+                    .Where(u => u.ElementDefinition.Iid == elementDefinition.Iid);
+
+                if (this.SelectedThing.SelectedOption is { } option)
+                {
+                    elementUsages = elementUsages.Where(x => !x.ExcludeOption.Contains(option));
+                }
+
+                this.AvailableElementUsages.AddRange(elementUsages.Select(x => x.Clone(true)));
             }
         }
-
+        
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements
         /// </summary>
@@ -379,25 +412,25 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
                     Action action = thing switch
                     {
-                        ElementDefinition elementDefinition => (() => variable.SelectedElementDefinition = 
-                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid)),
+                        ElementDefinition elementDefinition => () => variable.SelectedElementDefinition = 
+                            this.AvailableElementDefinitions.FirstOrDefault(x => x.Iid == thing.Iid),
 
-                        ElementUsage elementUsage => (() =>
+                        ElementUsage elementUsage => () =>
                         {
                             if (this.AvailableElementDefinitions.SelectMany(e => e.ContainedElement)
                                 .FirstOrDefault(x => x.Iid == thing.Iid) is {} usage)
                             {
                                 variable.SelectedElementUsages.Add(usage);
                             }
-                        }),
+                        },
 
-                        Parameter parameter => (() => variable.SelectedParameter = 
+                        Parameter parameter => () => variable.SelectedParameter = 
                             this.AvailableElementDefinitions.SelectMany(e => e.Parameter)
-                                .FirstOrDefault(p => p.Iid == thing.Iid)),
+                                .FirstOrDefault(p => p.Iid == thing.Iid),
 
-                        Option option => (() => variable.SelectedOption = option),
+                        Option option => () => variable.SelectedOption = option,
 
-                        ActualFiniteState state => (() => variable.SelectedActualFiniteState = state),
+                        ActualFiniteState state => () => variable.SelectedActualFiniteState = state,
 
                         _ => null
                     };
