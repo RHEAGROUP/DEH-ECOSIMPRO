@@ -34,6 +34,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using CDP4Common.EngineeringModelData;
 
+    using CDP4Dal;
+
     using DEHPCommon;
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -76,13 +78,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.AddSubscription(It.IsAny<ReferenceDescription>()));
             this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
-            
+            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+
             this.dstController.Setup(x => x.Variables).Returns(
                 new List<(ReferenceDescription Reference, DataValue Value)>()
                 {
                     (new ReferenceDescription()
                     {
-                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "el.DummyVariable0")
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText("", "el.DummyVariable0"),
                     }, new DataValue()),
                     (new ReferenceDescription()
                     {
@@ -149,6 +152,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         [Test]
         public void VerifyMapCommandExecute()
         {
+            CDPMessageBus.Current.ClearSubscriptions();
             Assert.IsFalse(this.viewModel.MapCommand.CanExecute(null));
             this.viewModel.SelectedThings.Clear();
             this.viewModel.SelectedThing = this.viewModel.Variables.First();

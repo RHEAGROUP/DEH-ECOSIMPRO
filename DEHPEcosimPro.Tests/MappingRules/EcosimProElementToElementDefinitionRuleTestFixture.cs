@@ -40,8 +40,11 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
+
+    using DevExpress.Xpf.NavBar;
 
     using Moq;
 
@@ -64,6 +67,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private Mock<IDstController> dstController;
         private SampledFunctionParameterType scalarParameterType;
         private SampledFunctionParameterType dateTimeParameterType;
+        private ActualFiniteStateList actualFiniteStates;
 
         [SetUp]
         public void Setup()
@@ -98,12 +102,22 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
 
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.IdCorrespondences).Returns(new List<IdCorrespondence>());
+            this.dstController.Setup(x => x.ExternalIdentifierMap).Returns(new ExternalIdentifierMap());
+            this.dstController.Setup(x => x.AddToExternalIdentifierMap(It.IsAny<Guid>(), It.IsAny<string>()));
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
             containerBuilder.RegisterInstance(this.dstController.Object).As<IDstController>();
             AppContainer.Container = containerBuilder.Build();
+
+            this.actualFiniteStates = new ActualFiniteStateList()
+            {
+                ActualState =
+                {
+                    new ActualFiniteState(),
+                    new ActualFiniteState()
+                }
+            };
 
             this.rule = new EcosimProElementToElementDefinitionRule();
             
@@ -112,7 +126,11 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.variables = new List<VariableRowViewModel>()
             {
                 new VariableRowViewModel((
-                    new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                    new ReferenceDescription() 
+                    { 
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()), 
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a")
+                    },
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
                 {
                     SelectedParameterType = this.scalarParameterType
@@ -127,7 +145,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
 
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.a") },
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.a") },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
@@ -136,7 +154,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.b") },
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.b") },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
@@ -145,9 +163,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
             });
 
             this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, DateTime.Now, DateTime.Now));
-
-            var elements = this.rule.Transform(this.variables).ToList();
-            Assert.AreEqual(3, elements.Count);
+            var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>().ToList();
+            Assert.AreEqual(2, elements.Count);
             var parameter = elements.Last().Parameter.First();
             Assert.AreEqual("TextXQuantity", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
@@ -219,24 +236,30 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.variables.Clear();
             
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.a") },
+                new ReferenceDescription() 
+                { 
+                    NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                    DisplayName = new LocalizedText(string.Empty, "Cap.a")
+                },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
                 SelectedValues = { timeTaggedValueRowViewModel },
+                SelectedOption = new Option(),
+                SelectedActualFiniteState = this.actualFiniteStates.ActualState.First(),
                 SelectedElementDefinition = elementDefinition,
                 SelectedElementUsages = { elementUsage },
+                SelectedParameter = parameter,
                 SelectedParameterType = parameter.ParameterType
             });
 
-            var elements = this.rule.Transform(this.variables);
+            var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>();
             var definition = elements.Last();
             var first = definition.ContainedElement.First();
             var parameterOverride = first.ParameterOverride.Last();
             Assert.AreEqual(1, first.ParameterOverride.Count);
             var set = parameterOverride.ValueSet.First();
             Assert.AreEqual($"{TimeSpan.Zero}", set.Computed.First());
-            Assert.AreEqual($"0.2", set.Computed[1]);
         }
 
         private void SetParameterTypes()
@@ -291,6 +314,136 @@ namespace DEHPEcosimPro.Tests.MappingRules
                         }
                     }
                 }
+            };
+        }
+
+        [Test]
+        public void VerifyUpdateValueSet()
+        {
+            var parameter0 = new Parameter()
+            {
+                ParameterType = this.dateTimeParameterType,
+
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter1 = new Parameter()
+            {
+                ParameterType = this.scalarParameterType,
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter2 = new Parameter()
+            {
+                ParameterType = GenerateTimeQuantityParamerType(),
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            var parameter3 = new Parameter()
+            {
+                ParameterType = new TextParameterType(),
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(),
+                        Formula = new ValueArray<string>(new[] { "-", "-" }),
+                        Manual = new ValueArray<string>(new[] { "-", "-" }),
+                        Reference = new ValueArray<string>(new[] { "-", "-" }),
+                        Published = new ValueArray<string>(new[] { "-", "-" })
+                    }
+                }
+            };
+
+            _ = new ElementDefinition()
+            {
+                Parameter = { parameter0, parameter1, parameter2, parameter3 },
+                Name = "nonameElement"
+            };
+
+            var variableRowViewModel = this.variables.First();
+            variableRowViewModel.SelectedValues.AddRange(variableRowViewModel.Values);
+            this.rule.Transform(new List<VariableRowViewModel>());
+
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter0));
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter1));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.MilliSecond;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Second;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Minute;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Hour;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            variableRowViewModel.SelectedTimeUnit = TimeUnit.Day;
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
+            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter3));
+            Assert.Throws<NullReferenceException>(() => this.rule.UpdateValueSet(null, null));
+        }
+
+        private static SampledFunctionParameterType GenerateTimeQuantityParamerType()
+        {
+            return new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Time", PossibleScale =
+                                {
+                                    new RatioScale() { Name = "millisecond" },
+                                    new RatioScale() { Name = "second" },
+                                    new RatioScale() { Name = "minute" },
+                                    new RatioScale() { Name = "hour" },
+                                    new RatioScale() { Name = "Day" }
+                                }
+                            }
+                        }
+                    },
+
+                DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(),null,null)
+                            {
+                                Name = "DependentQuantityKing"
+                            }
+                        }
+                    }
             };
         }
     }

@@ -5,6 +5,10 @@
     <RootNamespace>DEHPEcosimPro.Tests</RootNamespace>
 
     <IsPackable>false</IsPackable>
+
+    <Configurations>Debug;Release</Configurations>
+
+    <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

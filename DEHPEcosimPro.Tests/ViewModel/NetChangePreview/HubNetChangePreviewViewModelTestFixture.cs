@@ -38,19 +38,20 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
     using CDP4Dal;
     using CDP4Dal.Permission;
 
-    using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.NetChangePreview;
-
-    using DevExpress.Mvvm.POCO;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using Moq;
 
     using NUnit.Framework;
+
+    using Opc.Ua;
 
     using ReactiveUI;
 
@@ -71,6 +72,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         private ElementDefinition elementDefinition0;
         private ElementDefinition elementDefinition1;
         private ElementDefinition elementDefinition2;
+        private List<VariableRowViewModel> variableRowViewModels;
+        private Parameter parameter;
+        private ParameterOverride parameterOverride;
 
         [SetUp]
         public void Setup()
@@ -107,22 +111,21 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 }
             };
 
-            this.elementDefinition0 = new ElementDefinition(Guid.NewGuid(), null, null)
+            this.parameter = new Parameter(Guid.NewGuid(), null,null)
             {
-                Parameter =
+                ValueSet =
                 {
-                    new Parameter(Guid.NewGuid(), null,null)
+                    new ParameterValueSet(Guid.NewGuid(), null, null)
                     {
-                        ValueSet =
-                        {
-                            new ParameterValueSet(Guid.NewGuid(), null, null)
-                            {
-                                Manual = new ValueArray<string>(new []{"2"}), ValueSwitch = ParameterSwitchKind.MANUAL
-                            }
-                        },
-                        ParameterType = this.parameterType
+                        Manual = new ValueArray<string>(new []{"2"}), ValueSwitch = ParameterSwitchKind.MANUAL
                     }
                 },
+                ParameterType = this.parameterType
+            };
+
+            this.elementDefinition0 = new ElementDefinition(Guid.NewGuid(), null, null)
+            {
+                Parameter = { this.parameter },
                 Container = this.iteration
             };
 
@@ -146,12 +149,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 Container = this.iteration
             };
 
+            this.parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null) { Parameter = this.parameter };
+
             this.elementDefinition2 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
                 Container = this.iteration, ContainedElement =
                 {
-                    new ElementUsage(Guid.NewGuid(), null, null) { ElementDefinition = this.elementDefinition1 },
-                    new ElementUsage(Guid.NewGuid(), null, null) { ElementDefinition = this.elementDefinition1 },
+                    new ElementUsage(Guid.NewGuid(), null, null)
+                    {
+                        ElementDefinition = this.elementDefinition1,
+                        ParameterOverride = { this.parameterOverride}
+                    },
                 }
             };
 
@@ -182,7 +190,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                     {
                         { 
                             this.iteration, 
-                            new Tuple<DomainOfExpertise, Participant>(this.domain, participant)
+                            new Tuple<DomainOfExpertise, Participant>(this.domain, this.participant)
                         }
                     }));
 
@@ -190,9 +198,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.hubController.Setup(x => x.Reload()).Returns(Task.CompletedTask);
             
             this.dstController = new Mock<IDstController>();
-
+            
             this.dstController.Setup(x => x.DstMapResult)
-                .Returns(new ReactiveList<ElementDefinition>() 
+                .Returns(new ReactiveList<ElementBase>() 
                 {
                     new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                     {
@@ -248,18 +256,49 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                         },
                         Container = this.iteration
                     },
-                    new ElementDefinition(Guid.NewGuid(), null, null)
+                    new ElementUsage(this.elementDefinition2.ContainedElement.First().Iid, null, null)
                     {
-                        ContainedElement =
+                        Container = this.elementDefinition1,
+                        ElementDefinition = this.elementDefinition1,
+                        ParameterOverride =
                         {
-                            new ElementUsage(this.elementDefinition2.ContainedElement.First().Iid, null, null)
-                            {
-                                ElementDefinition = this.elementDefinition0
-                            }
-                        },
-                        Container = this.iteration
-                    },
+                            this.parameterOverride
+                        }
+                    }
                 });
+
+            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+
+            this.variableRowViewModels = new List<VariableRowViewModel>
+            {
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "el.DummyVariable0")
+                    }, new DataValue() { Value = .2 })),
+
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "res0.DummyVariable1")
+                    }, new DataValue())),
+
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable2")
+                    }, new DataValue())),
+
+                new VariableRowViewModel(
+                    (new ReferenceDescription()
+                    {
+                        NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                        DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable3")
+                    }, new DataValue()))
+            };
 
             this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
             this.treeSelectorService.Setup(x => x.ThingKinds).Returns(new List<Type>() { typeof(ElementDefinition) });
@@ -276,12 +315,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.AreEqual(1,this.viewModel.Things.Count);
             Assert.AreEqual(3,elements.Count);
             Assert.DoesNotThrow(() => this.viewModel.ComputeValues());
-            Assert.AreEqual(5, elements.Count);
+            Assert.AreEqual(4, elements.Count);
 
-            var parameterRowViewModels = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid).ContainedRows.OfType<ParameterRowViewModel>();
+            var parameterRowViewModels = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid)
+                .ContainedRows.OfType<ParameterRowViewModel>();
+
             Assert.AreEqual("42", parameterRowViewModels.First().Value);
-            var lastElementParameters = elements.First(x => x.Thing.Iid == this.elementDefinition1.Iid).ContainedRows.OfType<ParameterRowViewModel>();
-            Assert.AreEqual(2, lastElementParameters.Count());
+            
+            var lastElementParameters = elements.First(x => x.Thing.Iid == this.elementDefinition1.Iid)
+                .ContainedRows.OfType<ParameterRowViewModel>();
+            
+            Assert.AreEqual(1, lastElementParameters.Count());
 
             CDPMessageBus.Current.ClearSubscriptions();
         }
@@ -298,6 +342,39 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         {
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(false));
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(true));
+        }
+
+        [Test]
+        public void VerifyOnSessionReset()
+        {
+
+        }
+
+        [Test]
+        public void VerifyUpdateTreeBasedOnSelection()
+        {
+            var parametersNodeId = new Dictionary<ParameterOrOverrideBase, object>();
+
+            var parameters = this.dstController.Object.DstMapResult
+                .OfType<ElementDefinition>().SelectMany(x => x.Parameter)
+                .Cast<ParameterOrOverrideBase>();
+
+            var parameterOrOverride = this.dstController.Object.DstMapResult
+                .OfType<ElementUsage>().SelectMany(x => x.ParameterOverride)
+                .Cast<ParameterOrOverrideBase>();
+
+            var allParameters = parameters.Concat(parameterOrOverride).ToList();
+
+            for (var index = 0; index < allParameters.Count; index++)
+            {
+                parametersNodeId.Add(allParameters[index], this.variableRowViewModels[index].Reference.NodeId.Identifier);
+            }
+
+            this.dstController.Setup(x => x.ParameterNodeIds).Returns(parametersNodeId);
+            this.viewModel.ComputeValues();
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels.Take(1), null, false)));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels, null, false)));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(new List<VariableRowViewModel>(), null, true)));
         }
     }
 }

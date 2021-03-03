@@ -30,12 +30,18 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Types;
+
+    using CDP4Dal;
+    using CDP4Dal.Permission;
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.NetChangePreview;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -55,6 +61,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         private Mock<INavigationService> navigation;
         private Mock<IHubController> hubController;
         private Mock<IStatusBarControlViewModel> statusBar;
+        private Parameter parameter0;
+        private Parameter parameter1;
+        private Mock<ISession> session;
 
         [SetUp]
         public void Setup()
@@ -85,22 +94,28 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
             });
 
+            this.parameter0 = new Parameter() { ParameterType = new BooleanParameterType()};
+            this.parameter1 = new Parameter() { ParameterType = new TextParameterType()};
+
             this.dstController.Setup(x => x.HubMapResult).Returns(
                 new ReactiveList<MappedElementDefinitionRowViewModel>()
                 {
                     new MappedElementDefinitionRowViewModel()
                     {
-                        SelectedParameter = new Parameter(),
+                        SelectedParameter = this.parameter0,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = this.viewModel.Variables.First()
                     },
                     new MappedElementDefinitionRowViewModel()
                     {
-                        SelectedParameter = new Parameter(),
+                        SelectedParameter = this.parameter1,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = this.viewModel.Variables.Last()
                     }
                 });
+
+            this.session = new Mock<ISession>();
+            this.session.Setup(x => x.PermissionService).Returns(new Mock<IPermissionService>().Object);
         }
 
         [Test]
@@ -108,6 +123,21 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         {
             Assert.DoesNotThrow(() => this.viewModel.UpdateTree(true));
             Assert.DoesNotThrow(() => this.viewModel.UpdateTree(false));
+        }
+
+        [Test]
+        public void VerifyUpdateTreeBasedOnSelection()
+        {
+            this.viewModel.ComputeValues();
+            
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(new List<ElementDefinitionRowViewModel>(), null, false )));
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(new List<ElementDefinitionRowViewModel>(), null, true )));
+            
+            Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(new List<ElementDefinitionRowViewModel>()
+            {
+                new ElementDefinitionRowViewModel(
+                    new ElementDefinition() { Parameter = {this.parameter0} }, new DomainOfExpertise(), this.session.Object, null )
+            }, null, true )));
         }
     }
 }

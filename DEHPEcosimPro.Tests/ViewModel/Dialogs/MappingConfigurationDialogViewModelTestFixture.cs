@@ -76,7 +76,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     EngineeringModelSetup = new EngineeringModelSetup()
                     {
-                        RequiredRdl = { this.modelReferenceDataLibrary },
+                        RequiredRdl = { modelReferenceDataLibrary },
                         Container = new SiteReferenceDataLibrary()
                         {
                             Container = new SiteDirectory()
@@ -117,7 +117,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
-            this.parameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            this.parameterType = new SampledFunctionParameterType()
             {
                 Name = "TextXQuantity",
                 IndependentParameterType =
@@ -168,7 +168,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
-
             this.modelReferenceDataLibrary.ParameterType.Add(this.parameterType);
             this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
@@ -311,7 +310,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel.SelectedThing.SelectedParameterType = this.parameterType;
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
-            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameter);
+            Assert.IsNotNull(this.viewModel.SelectedThing.SelectedParameter);
 
             this.viewModel.AvailableParameters.Add(new Parameter()
             {

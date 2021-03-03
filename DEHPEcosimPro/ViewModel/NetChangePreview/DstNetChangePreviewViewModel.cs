@@ -25,19 +25,23 @@
 namespace DEHPEcosimPro.ViewModel.NetChangePreview
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
 
+    using CDP4Common.EngineeringModelData;
+
     using CDP4Dal;
 
-    using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using ReactiveUI;
 
@@ -46,6 +50,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     /// </summary>
     public class DstNetChangePreviewViewModel : DstVariablesControlViewModel, IDstNetChangePreviewViewModel
     {
+        /// <summary>
+        /// Gets or sets a value indicating that the tree in the case that
+        /// <see cref="DstController.DstMapResult"/> is not empty and the tree is not showing all changes
+        /// </summary>
+        public bool IsDirty { get; set; }
+
         /// <summary>
         /// Initializes a new <see cref="DstNetChangePreviewViewModel"/>
         /// </summary>
@@ -59,6 +69,59 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             CDPMessageBus.Current.Listen<UpdateDstVariableTreeEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.UpdateTree(x.Reset));
+
+            CDPMessageBus.Current.Listen<UpdateDstPreviewBasedOnSelectionEvent>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(x => this.UpdateTreeBasedOnSelectionHandler(x.Selection.ToList()));
+        }
+
+        /// <summary>
+        /// Updates the tree and filter changed things based on a selection
+        /// </summary>
+        /// <param name="selection">The collection of selected <see cref="ElementDefinitionRowViewModel"/> </param>
+        private void UpdateTreeBasedOnSelectionHandler(IReadOnlyList<ElementDefinitionRowViewModel> selection)
+        {
+            if (this.DstController.HubMapResult.Any())
+            {
+                this.IsBusy = true;
+
+                if (!selection.Any() && this.IsDirty)
+                {
+                    this.ComputeValuesWrapper();
+                }
+
+                else if (selection.Any())
+                {
+                    this.UpdateTreeBasedOnSelection(selection);
+                }
+
+                this.IsBusy = false;
+            }
+        }
+        
+        /// <summary>
+        /// Updates the trees with the selection 
+        /// </summary>
+        /// <param name="selection">The collection of selected <see cref="VariableRowViewModel"/> </param>
+        private void UpdateTreeBasedOnSelection(IEnumerable<ElementDefinitionRowViewModel> selection)
+        {
+            this.UpdateTree(true);
+            
+            var mappedElements = this.DstController.HubMapResult
+                .Where(x => 
+                    selection.Any(e => e.ContainedRows
+                        .OfType<IRowViewModelBase<ParameterOrOverrideBase>>()
+                        .Any(p => p.Thing.Iid == x.SelectedParameter.Iid)));
+
+            foreach (var mappedElement in mappedElements)
+            {
+                if (mappedElement is { })
+                {
+                    this.UpdateVariableRow(mappedElement);
+                }
+            }
+
+            this.IsDirty = true;
         }
 
         /// <summary>
@@ -73,10 +136,19 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             }
             else
             {
-                this.IsBusy = true;
-                this.ComputeValues();
-                this.IsBusy = false;
+                this.ComputeValuesWrapper();
             }
+        }
+
+        /// <summary>
+        /// Calls the <see cref="ComputeValues"/> with some household
+        /// </summary>
+        private void ComputeValuesWrapper()
+        {
+            this.IsBusy = true;
+            this.ComputeValues();
+            this.IsDirty = false;
+            this.IsBusy = false;
         }
 
         /// <summary>
@@ -98,17 +170,27 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             foreach (var mappedElement in this.DstController.HubMapResult)
             {
-                var variableChanged = this.Variables.FirstOrDefault(
-                    x => x.Reference.NodeId.Identifier == mappedElement.SelectedVariable.Reference.NodeId.Identifier);
-                
-                if (variableChanged is null)
-                {
-                    continue;
-                }
-
-                CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier));
-                variableChanged.ActualValue = mappedElement.SelectedValue.Value;
+                this.UpdateVariableRow(mappedElement);
             }
+        }
+
+        /// <summary>
+        /// Updates the the corresponding variable according mapped by the <paramref name="mappedElement"/>
+        /// </summary>
+        /// <param name="mappedElement">The source <see cref="MappedElementDefinitionRowViewModel"/></param>
+        private void UpdateVariableRow(MappedElementDefinitionRowViewModel mappedElement)
+        {
+            var variableChanged = this.Variables.FirstOrDefault(
+                x => x.Reference.NodeId.Identifier == mappedElement.SelectedVariable.Reference.NodeId.Identifier);
+
+            if (variableChanged is null)
+            {
+                return;
+            }
+
+            CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier));
+            variableChanged.ActualValue = mappedElement.SelectedValue.Value;
+            variableChanged.ShouldListenToChangeMessage = false;
         }
     }
 }

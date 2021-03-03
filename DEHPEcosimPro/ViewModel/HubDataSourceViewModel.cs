@@ -26,12 +26,14 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Linq;
+    using System.Reactive;
     using System.Reactive.Linq;
+    using System.Threading.Tasks;
     using System.Windows.Input;
 
     using Autofac;
 
-    using CDP4Common.EngineeringModelData;
+    using CDP4Dal;
 
     using DEHPCommon;
     using DEHPCommon.Enumerators;
@@ -44,6 +46,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views.Dialogs;
@@ -70,6 +73,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+
+        /// <summary>
+        /// Gets or sets the command to refresh the session
+        /// </summary>
+        public ReactiveCommand<Unit> RefreshCommand { get; set; }
 
         /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
@@ -109,12 +117,36 @@ namespace DEHPEcosimPro.ViewModel
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
             this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
 
-            this.WhenAny(x => x.hubController.OpenIteration,
+            var isConnectedObservable = this.WhenAny(x => x.hubController.OpenIteration,
                 x => x.hubController.IsSessionOpen,
                 (i, o) => 
                     i.Value != null && o.Value)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateConnectButtonText);
+                .ObserveOn(RxApp.MainThreadScheduler);
+            
+            isConnectedObservable.Subscribe(this.UpdateConnectButtonText);
+
+            this.RefreshCommand = ReactiveCommand.CreateAsyncTask(isConnectedObservable, async _ =>
+                await this.RefreshCommandExecute(), RxApp.MainThreadScheduler);
+            
+            this.ObjectBrowser.SelectedThings.CountChanged.Subscribe(_ => this.UpdateNetChangePreviewBasedOnSelection());
+        }
+
+        /// <summary>
+        /// Sends an update event to the Dst net change preview based on the current <see cref="IObjectBrowserViewModel.SelectedThings"/>
+        /// </summary>
+        private void UpdateNetChangePreviewBasedOnSelection()
+        {
+            CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(
+                this.ObjectBrowser.SelectedThings.OfType<ElementDefinitionRowViewModel>(), null, false));
+        }
+
+        /// <summary>
+        /// Executes the <see cref="RefreshCommand"/>
+        /// </summary>
+        /// <returns></returns>
+        private async Task RefreshCommandExecute()
+        {
+            await this.hubController.Refresh();
         }
 
         /// <summary>
@@ -132,8 +164,9 @@ namespace DEHPEcosimPro.ViewModel
                     x.Thing.Clone(true);
                     return x;
                 }));
-            
+
             this.NavigationService.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(viewModel);
+            this.ObjectBrowser.SelectedThings.Clear();
         }
 
         /// <summary>
@@ -143,8 +176,14 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (this.hubController.IsSessionOpen)
             {
-                this.ObjectBrowser.Things.Clear();
-                this.hubController.Close();
+                if ((this.dstController.DstMapResult.Any() && this.NavigationService.ShowDxDialog<HubLogoutConfirmDialog>() is true)
+                    || !this.dstController.DstMapResult.Any())
+                {
+                    this.dstController.HubMapResult.Clear();
+                    this.dstController.DstMapResult.Clear();
+                    this.ObjectBrowser.Things.Clear();
+                    this.hubController.Close();
+                }
             }
             else
             {
