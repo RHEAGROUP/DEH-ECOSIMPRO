@@ -237,8 +237,6 @@ namespace DEHPEcosimPro.MappingRules
                 
                 if (independantParameterType.IsTimeQuantityKind(variable.SelectedTimeUnit, out var scale))
                 {
-                    parameter.Scale = scale;
-
                     Func<TimeTaggedValueRowViewModel, string> independantValue = variable.SelectedTimeUnit switch
                     {
                         TimeUnit.MilliSecond => x => $"{x.TimeDelta.TotalMilliseconds}",
@@ -264,15 +262,6 @@ namespace DEHPEcosimPro.MappingRules
                         values.Add(FormattableString.Invariant($"{value.Value}"));
                     }
                 }
-                else if (independantParameterType.IsTimeType())
-                {
-                    foreach (var value in variable.SelectedValues)
-                    {
-                        values.Add($"{value.TimeDelta}");
-                        values.Add(FormattableString.Invariant($"{value.Value}"));
-                    }
-                }
-
                 else if (independantParameterType.IsTimeType())
                 {
                     foreach (var value in variable.SelectedValues)

@@ -66,6 +66,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private Mock<IDstController> dstController;
         private SampledFunctionParameterType scalarParameterType;
         private SampledFunctionParameterType dateTimeParameterType;
+        private ActualFiniteStateList actualFiniteStates;
 
         [SetUp]
         public void Setup()
@@ -105,6 +106,15 @@ namespace DEHPEcosimPro.Tests.MappingRules
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
             containerBuilder.RegisterInstance(this.dstController.Object).As<IDstController>();
             AppContainer.Container = containerBuilder.Build();
+
+            this.actualFiniteStates = new ActualFiniteStateList()
+            {
+                ActualState =
+                {
+                    new ActualFiniteState(),
+                    new ActualFiniteState()
+                }
+            };
 
             this.rule = new EcosimProElementToElementDefinitionRule();
             
@@ -224,13 +234,20 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.variables.Clear();
             
             this.variables.Add(new VariableRowViewModel((
-                new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Cap.a") },
+                new ReferenceDescription() 
+                { 
+                    NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                    DisplayName = new LocalizedText(string.Empty, "Cap.a")
+                },
                 new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
             {
                 Values = { timeTaggedValueRowViewModel },
                 SelectedValues = { timeTaggedValueRowViewModel },
+                SelectedOption = new Option(),
+                SelectedActualFiniteState = this.actualFiniteStates.ActualState.First(),
                 SelectedElementDefinition = elementDefinition,
                 SelectedElementUsages = { elementUsage },
+                SelectedParameter = parameter,
                 SelectedParameterType = parameter.ParameterType
             });
 
@@ -240,7 +257,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameterOverride = first.ParameterOverride.Last();
             Assert.AreEqual(1, first.ParameterOverride.Count);
             var set = parameterOverride.ValueSet.First();
-            Assert.AreEqual($"-", set.Computed.First());
+            Assert.AreEqual($"{TimeSpan.Zero}", set.Computed.First());
         }
 
         private void SetParameterTypes()

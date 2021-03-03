@@ -280,8 +280,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             foreach (var elementDefinitionRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>()
                 .SelectMany(x => x.ContainedRows.OfType<ElementDefinitionRowViewModel>()))
             {
-                result.AddRange(elementDefinitionRow.ContainedRows
-                    .OfType<ElementUsageRowViewModel>()
+                result.AddRange(elementDefinitionRow.ContainedRows.OfType<ElementUsageRowViewModel>()
                     .SelectMany(x => x.ContainedRows
                         .OfType<IRowViewModelBase<ParameterOrOverrideBase>>())
                     .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
@@ -358,7 +357,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 {
                     if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
                     {
-                        this.UpdateRow(parameterOverride, (ElementUsage)elementUsageRow.ContainerViewModel.Thing, elementUsageRow);
+                        this.UpdateRow(parameterOverride, elementUsageRow.Thing, elementUsageRow);
                     }
 
                     this.ThingsAtPreviousState.Add(parameterRow.ContainerViewModel.Thing.Clone(true));
@@ -383,12 +382,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 {
                     if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
                     {
-                        this.UpdateRow(parameter, (ElementDefinition)parameterRow.ContainerViewModel.Thing, elementDefinitionRow);
+                        this.UpdateRow(parameter, elementDefinitionRow.Thing, elementDefinitionRow);
                     }
 
                     else if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
                     {
-                        this.UpdateRow(parameter, (ElementUsage)parameterRow.ContainerViewModel.Thing, elementUsageRow);
+                        this.UpdateRow(parameter, elementUsageRow.Thing, elementUsageRow);
                     }
 
                     this.AddToThingsAtPreviousState(parameterRow.ContainerViewModel.Thing);
