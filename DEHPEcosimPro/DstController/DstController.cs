@@ -162,6 +162,11 @@ namespace DEHPEcosimPro.DstController
         public ReactiveList<ElementDefinition> DstMapResult { get; private set; } = new ReactiveList<ElementDefinition>();
 
         /// <summary>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// </summary>
+        public Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; } = new Dictionary<ParameterOrOverrideBase, object>();
+
+        /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
         public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();

@@ -92,6 +92,11 @@ namespace DEHPEcosimPro.DstController
         ReactiveList<ElementDefinition> DstMapResult { get; }
 
         /// <summary>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// </summary>
+        Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; }
+
+        /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
         ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; }
@@ -160,18 +165,19 @@ namespace DEHPEcosimPro.DstController
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
+        /// <returns>A <see cref="Task"/></returns>
         void Map(List<VariableRowViewModel> dstVariables);
 
         /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
+        /// <returns>A <see cref="Task"/></returns>
         void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
 
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        /// <returns>A <see cref="IEnumerable{T}"/> of <see cref="bool"/> indicating whether one thing has been correctly transfered</returns>
         void TransferMappedThingsToDst();
 
         /// <summary>
@@ -195,9 +201,14 @@ namespace DEHPEcosimPro.DstController
         Task TransferMappedThingsToHub();
 
         /// <summary>
-        /// Updates the configured mapping
+        /// Updates the <see cref="IValueSet"/> of all <see cref="Parameter"/> and all <see cref="ParameterOverride"/>
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
+        Task UpdateParametersValueSets();
+
+        /// <summary>
+        /// Updates the configured mapping 
+        /// </summary>
         void UpdateExternalIdentifierMap();
 
         /// <summary>
@@ -208,7 +219,7 @@ namespace DEHPEcosimPro.DstController
         ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="IdCorrespondences"/>
+        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
