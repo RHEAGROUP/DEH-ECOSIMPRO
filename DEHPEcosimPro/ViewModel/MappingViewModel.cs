@@ -25,10 +25,13 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
 
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.MetaInfo;
+    using CDP4Common.Types;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -36,7 +39,10 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-    
+
+    using DevExpress.Data.Helpers;
+    using DevExpress.Xpf.NavBar;
+
     using ReactiveUI;
 
     /// <summary>
@@ -68,59 +74,124 @@ namespace DEHPEcosimPro.ViewModel
         /// Initializes a new <see cref="MappingViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="hubController">The <see cref="IHubController"/></param>
+        /// <param name="hubController">The <see cref="IHubController"/>"/></param>
         /// <param name="dstVariablesControlViewModel">The <see cref="IDstVariablesControlViewModel"/></param>
         public MappingViewModel(IDstController dstController, IHubController hubController, IDstVariablesControlViewModel dstVariablesControlViewModel)
         {
             this.dstController = dstController;
             this.hubController = hubController;
+
             this.dstVariablesControlViewModel = dstVariablesControlViewModel;
 
             this.dstController.DstMapResult.ItemsAdded.Subscribe(this.UpdateMappedThings);
 
             this.dstController.DstMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ =>
                 this.MappingRows.RemoveAll(this.MappingRows
-                        .Where(x => x.Direction == MappingDirection.FromDstToHub)));
+                        .Where(x => x.Direction == MappingDirection.FromDstToHub).ToList()));
 
             this.dstController.HubMapResult.ItemsAdded.Subscribe(this.UpdateMappedThings);
             
-            this.dstController.DstMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ => 
+            this.dstController.HubMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ => 
                 this.MappingRows.RemoveAll(this.MappingRows
-                        .Where(x => x.Direction == MappingDirection.FromHubToDst)));
+                        .Where(x => x.Direction == MappingDirection.FromHubToDst).ToList()));
+
+            this.WhenAnyValue(x => x.dstController.MappingDirection)
+                .Subscribe(this.UpdateMappingRowsDirection);
         }
 
         /// <summary>
-        /// Updates the <see cref="MappingRows"/>
+        /// Updates the row according to the new <see cref="IDstController.MappingDirection"/>
         /// </summary>
-        /// <param name="element">The <see cref="ElementBase"/></param>
-        private void UpdateMappedThings(ElementDefinition element)
+        /// <param name="mappingDirection"></param>
+        public void UpdateMappingRowsDirection(MappingDirection mappingDirection)
         {
-            var parameters = this.dstController
-                .ParameterNodeIds.Where(x =>
-                    x.Key.GetContainerOfType<ElementDefinition>().Iid == element.Iid).ToList();
-
-            var originals = this.hubController.OpenIteration.Element
-                .SelectMany(x => x.Parameter)
-                .Where(x => parameters
-                    .Select(o => o.Key)
-                    .Any(p => p.Iid == x.Iid));
-
-            foreach (var parameter in originals)
+            foreach (var mappingRowViewModel in this.MappingRows)
             {
-                var nodeId = parameters.FirstOrDefault(x => x.Key.Iid == parameter.Iid).Value;
-                
-                this.MappingRows.Add(new MappingRowViewModel(parameter, 
-                    this.dstVariablesControlViewModel.Variables.FirstOrDefault(x => x.Reference.NodeId.Identifier == nodeId)));
+                mappingRowViewModel.UpdateDirection(mappingDirection);
             }
         }
-
+        
         /// <summary>
         /// Updates the <see cref="MappingRows"/>
         /// </summary>
         /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
         private void UpdateMappedThings(MappedElementDefinitionRowViewModel mappedElement)
         {
-            this.MappingRows.Add(new MappingRowViewModel(mappedElement));
+            this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, mappedElement));
+        }
+
+        /// <summary>
+        /// Updates the <see cref="MappingRows"/>
+        /// </summary>
+        /// <param name="element">The <see cref="ElementBase"/></param>
+        private void UpdateMappedThings(ElementBase element)
+        {
+            var parametersNodeId = element switch
+            {
+                ElementDefinition elementDefinition => this.GetParameters(elementDefinition),
+                ElementUsage elementUsage => this.GetParameters(elementUsage),
+                _ => new List<(ParameterOrOverrideBase parameter, object nodeId)>()
+            };
+
+            foreach (var parameter in parametersNodeId)
+            {
+                this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, parameter.parameter,
+                    this.dstVariablesControlViewModel.Variables.FirstOrDefault(x => x.Reference.NodeId.Identifier == parameter.nodeId)));
+            }
+        }
+
+        /// <summary>
+        /// Queries the parameters in the <see cref="IDstController.ParameterNodeIds"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
+        /// </summary>
+        /// <param name="element">The <see cref="ElementDefinition"/></param>
+        /// <returns>A List{(ParameterOrOverrideBase parameter, object nodeId)}</returns>
+        private List<(ParameterOrOverrideBase parameter, object nodeId)> GetParameters(ElementDefinition element)
+        {
+            var result = new List<(ParameterOrOverrideBase, object)>();
+
+            var modified  = this.dstController
+                        .ParameterNodeIds.Where(x =>
+                            x.Key.GetContainerOfType<ElementDefinition>().Iid == element.Iid).ToList();
+
+            var originals = this.hubController.OpenIteration.Element
+                .FirstOrDefault(x => x.Iid == element.Iid)?
+                .Parameter.Where(x => modified
+                    .Select(o => o.Key)
+                    .Any(p => p.Iid == x.Iid)) ?? modified.Select(x => x.Key);
+
+            foreach (var parameterOverride in originals)
+            {
+                result.Add((parameterOverride, modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid).Value));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Queries the parameters in the <see cref="IDstController.ParameterNodeIds"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
+        /// </summary>
+        /// <param name="element">The <see cref="ElementUsage"/></param>
+        /// <returns>A List{(ParameterOrOverrideBase parameter, object nodeId)}</returns>
+        private List<(ParameterOrOverrideBase parameter, object nodeId)> GetParameters(ElementUsage element)
+        {
+            var result = new List<(ParameterOrOverrideBase, object)>();
+
+            var modified = this.dstController
+                        .ParameterNodeIds.Where(x =>
+                            x.Key.GetContainerOfType<ElementUsage>().Iid == element.Iid).ToList();
+
+            var originals = this.hubController.OpenIteration.Element
+                .FirstOrDefault(x => x.Iid == element.ElementDefinition.Iid)?
+                .ReferencingElementUsages().FirstOrDefault(x => x.Iid == element.Iid)?.ParameterOverride
+                .Where(p => modified.Any(x => p.Iid == x.Key.Iid))
+                            ?? new List<ParameterOverride>();
+
+            foreach (var parameterOverride in originals)
+            {
+                result.Add((parameterOverride, modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid).Value));
+            }
+
+            return result;
         }
     }
 }

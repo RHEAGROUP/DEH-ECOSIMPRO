@@ -38,8 +38,14 @@ namespace DEHPEcosimPro.ViewModel.Rows
     /// </summary>
     public class MappingRowViewModel : ReactiveObject
     {
+        /// <summary>
+        /// Gets or sets the hub <see cref="MappedThing"/>
+        /// </summary>
         public MappedThing HubThing { get; set; }
-
+        
+        /// <summary>
+        /// Gets or sets the dst <see cref="MappedThing"/>
+        /// </summary>
         public MappedThing DstThing { get; set; }
 
         /// <summary>
@@ -57,24 +63,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="VisualDirection"/>
+        /// Backing field for <see cref="ArrowDirection"/>
         /// </summary>
-        private MappingDirection visualDirection;
+        private double arrowDirection;
 
         /// <summary>
         /// Gets or sets the value
         /// </summary>
-        public MappingDirection VisualDirection
+        public double ArrowDirection
         {
-            get => this.visualDirection;
-            set => this.RaiseAndSetIfChanged(ref this.visualDirection, value);
+            get => this.arrowDirection;
+            set => this.RaiseAndSetIfChanged(ref this.arrowDirection, value);
         }
 
         /// <summary>
         /// Initializes a new <see cref="MappingRowViewModel"/> from a <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>
+        /// <param name="currentMappingDirection">The current <see cref="MappingDirection"/></param>
         /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
-        public MappingRowViewModel(MappedElementDefinitionRowViewModel mappedElement)
+        public MappingRowViewModel(MappingDirection currentMappingDirection, MappedElementDefinitionRowViewModel mappedElement)
         {
             this.Direction = MappingDirection.FromHubToDst;
             
@@ -89,14 +96,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 Name = mappedElement.SelectedParameter.ModelCode(),
                 Value = mappedElement.SelectedValue.Representation
             };
+
+            this.UpdateDirection(currentMappingDirection);
         }
 
         /// <summary>
         /// Initializes a new <see cref="MappingRowViewModel"/> from a mapped <see cref="ParameterOrOverrideBase"/> and <see cref="VariableRowViewModel"/>
         /// </summary>
+        /// <param name="currentMappingDirection">The current <see cref="MappingDirection"/></param>
         /// <param name="parameter">The <see cref="ParameterOrOverrideBase"/></param>
         /// <param name="variable">The <see cref="VariableRowViewModel"/></param>
-        public MappingRowViewModel(ParameterBase parameter, VariableRowViewModel variable)
+        public MappingRowViewModel(MappingDirection currentMappingDirection, ParameterBase parameter, VariableRowViewModel variable)
         {
             this.Direction = MappingDirection.FromDstToHub;
             
@@ -125,6 +135,39 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 Name = parameter.ModelCode(),
                 Value = value
             };
+
+            this.UpdateDirection(currentMappingDirection);
+        }
+
+        /// <summary>
+        /// Updates the arrow angle factor <see cref="ArrowDirection"/>, and the <see cref="HubThing"/> and the <see cref="DstThing"/> <see cref="MappedThing.GridColumnIndex"/>
+        /// </summary>
+        /// <param name="actualMappingDirection">The actual <see cref="MappingDirection"/></param>
+        public void UpdateDirection(MappingDirection actualMappingDirection)
+        {
+            switch (this.Direction)
+            {
+                case MappingDirection.FromDstToHub when actualMappingDirection is MappingDirection.FromDstToHub:
+                    this.HubThing.GridColumnIndex = 2;
+                    this.DstThing.GridColumnIndex = 0;
+                    this.ArrowDirection = 0;
+                    break;
+                case MappingDirection.FromDstToHub when actualMappingDirection is MappingDirection.FromHubToDst:
+                    this.HubThing.GridColumnIndex = 0;
+                    this.DstThing.GridColumnIndex = 2;
+                    this.ArrowDirection = 180;
+                    break;
+                case MappingDirection.FromHubToDst when actualMappingDirection is MappingDirection.FromHubToDst:
+                    this.HubThing.GridColumnIndex = 0;
+                    this.DstThing.GridColumnIndex = 2;
+                    this.ArrowDirection = 0;
+                    break;
+                case MappingDirection.FromHubToDst when actualMappingDirection is MappingDirection.FromDstToHub:
+                    this.HubThing.GridColumnIndex = 2;
+                    this.DstThing.GridColumnIndex = 0;
+                    this.ArrowDirection = 180;
+                    break;
+            }
         }
     }
 }

@@ -24,12 +24,12 @@
 
 namespace DEHPEcosimPro.Views.Dialogs
 {
-    using System.Windows;
+    using DevExpress.Xpf.Core;
 
     /// <summary>
     /// Interaction logic for HubMappingConfigurationDialog.xaml
     /// </summary>
-    public partial class HubMappingConfigurationDialog : Window
+    public partial class HubMappingConfigurationDialog : DXDialogWindow
     {
         /// <summary>
         /// Initializes a new <see cref="HubMappingConfigurationDialog"/>

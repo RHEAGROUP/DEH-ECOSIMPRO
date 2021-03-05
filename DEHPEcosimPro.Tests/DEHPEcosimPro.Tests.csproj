@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Resources\OpcClient.Config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -1,15 +1,15 @@
-﻿<Window x:Class="DEHPEcosimPro.Views.Dialogs.DstLogin" 
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core" 
-        xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
-        xmlns:dxlc="http://schemas.devexpress.com/winfx/2008/xaml/layoutcontrol" 
-        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
-        Title="Connections"
-        mc:Ignorable="d" Height="600" d:DesignWidth="409" MinWidth="600"  Width="400">
+﻿<dx:DXDialogWindow x:Class="DEHPEcosimPro.Views.Dialogs.DstLogin" 
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core" 
+                   xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+                   xmlns:dxlc="http://schemas.devexpress.com/winfx/2008/xaml/layoutcontrol" 
+                   xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+                   Title="Connections"
+                   mc:Ignorable="d" Height="600" d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True">
     <dxmvvm:Interaction.Behaviors>
         <behaviors:CloseWindowBehavior/>
     </dxmvvm:Interaction.Behaviors>
@@ -137,4 +137,4 @@
             </Grid>
         </Grid>
     </dx:LoadingDecorator>
-</Window>
+</dx:DXDialogWindow>

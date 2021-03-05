@@ -5,7 +5,7 @@
                    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    mc:Ignorable="d"
-                   Title="Logout confirmation" Height="200" Width="250" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+                   Title="Logout confirmation" Height="200" Width="250" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Topmost="True">
     <Grid>
         <Image Source="{dx:DXImage 'SvgImages/XAF/State_Validation_Warning.svg'}" VerticalAlignment="Top" Height="50"></Image>
         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">

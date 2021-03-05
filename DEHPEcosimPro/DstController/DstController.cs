@@ -167,11 +167,6 @@ namespace DEHPEcosimPro.DstController
         public Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; } = new Dictionary<ParameterOrOverrideBase, object>();
 
         /// <summary>
-        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
-        /// </summary>
-        public Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; } = new Dictionary<ParameterOrOverrideBase, object>();
-
-        /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
         public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
@@ -295,8 +290,8 @@ namespace DEHPEcosimPro.DstController
         /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
         public IList<object> CallServerMethod(string methodBrowseName)
         {
-            var serverMethodsNode = this.References.SingleOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
-            var methodNode = this.Methods.SingleOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
+            var serverMethodsNode = this.References.FirstOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
+            var methodNode = this.Methods.FirstOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
 
             if (serverMethodsNode != null && methodNode != null)
             {
@@ -337,8 +332,8 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, object> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
-                this.DstMapResult.AddRange(elements);
                 this.UpdateParmeterNodeId(parameterNodeIds);
+                this.DstMapResult.AddRange(elements);
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
@@ -398,7 +393,7 @@ namespace DEHPEcosimPro.DstController
         public bool IsVariableWritable(ReferenceDescription reference)
         {
             var referenceNodeId = (NodeId) reference.NodeId;
-            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value);
+            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value, false);
         }
 
         /// <summary>

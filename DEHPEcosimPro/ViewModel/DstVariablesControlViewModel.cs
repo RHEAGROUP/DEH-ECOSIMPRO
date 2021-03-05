@@ -50,6 +50,8 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
 
+    using NLog;
+
     using Opc.Ua;
 
     using ReactiveUI;
@@ -59,6 +61,12 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class DstVariablesControlViewModel : ReactiveObject, IDstVariablesControlViewModel, IHaveContextMenuViewModel
     {
+
+        /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// The <see cref="IHubController"/>
         /// </summary>
@@ -178,8 +186,9 @@ namespace DEHPEcosimPro.ViewModel
                 (selected, selection, iteration, mappingDirection) =>
                     iteration.Value != null && (selected.Value != null || this.SelectedThings.Any()) && mappingDirection.Value is MappingDirection.FromDstToHub).ObserveOn(RxApp.MainThreadScheduler);
 
-            this.MapCommand = ReactiveCommand.Create(canMap, RxApp.MainThreadScheduler);
+            this.MapCommand = ReactiveCommand.Create(canMap);
             this.MapCommand.Subscribe(_ => this.MapCommandExecute());
+            this.MapCommand.ThrownExceptions.Subscribe(e => Logger.Error(e));
         }
 
         /// <summary>
@@ -187,21 +196,40 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void MapCommandExecute()
         {
-            var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
-            var timer = new Stopwatch();
-            timer.Start();
-
-            viewModel.Variables.AddRange(this.SelectedThings.Select(x =>
+            try
             {
-                x.SetChartValues();
-                return x;
-            }));
-            
-            timer.Stop();
-            this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
-            this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
-            this.SelectedThings.Clear();
-            this.statusBar.Append($"Mapping in progress");
+                Logger.Debug("Map command execute starting");
+                var viewModel = AppContainer.Container.Resolve<IDstMappingConfigurationDialogViewModel>();
+                viewModel.Initialize();
+                var timer = new Stopwatch();
+                timer.Start();
+
+                Logger.Debug("Start assigning SelectedThings to the dialog Variables");
+
+                viewModel.Variables.AddRange(this.SelectedThings.Select(x =>
+                {
+                    x.SetChartValues();
+                    return x;
+                }));
+
+                Logger.Debug("End assigning SelectedThings to the dialog Variables");
+
+                timer.Stop();
+                this.statusBar.Append($"Mapping configuration loaded in {timer.ElapsedMilliseconds} ms");
+
+                Logger.Debug("Calling NavigationService to open the DstMappingConfigurationDialog");
+                this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+                Logger.Debug("DstMappingConfigurationDialog closed");
+                this.SelectedThings.Clear();
+                this.statusBar.Append($"Mapping in progress");
+                Logger.Debug("Map command execute end");
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e);
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         /// <summary>

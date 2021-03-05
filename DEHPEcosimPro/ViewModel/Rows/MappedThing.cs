@@ -62,5 +62,19 @@ namespace DEHPEcosimPro.ViewModel.Rows
             get => this.value;
             set => this.RaiseAndSetIfChanged(ref this.value, value);
         }
+
+        /// <summary>
+        /// Backing field for <see cref="GridColumnIndex"/>
+        /// </summary>
+        private int gridColumnIndex;
+
+        /// <summary>
+        /// Gets or sets the grid column index
+        /// </summary>
+        public int GridColumnIndex
+        {
+            get => this.gridColumnIndex;
+            set => this.RaiseAndSetIfChanged(ref this.gridColumnIndex, value);
+        }
     }
 }

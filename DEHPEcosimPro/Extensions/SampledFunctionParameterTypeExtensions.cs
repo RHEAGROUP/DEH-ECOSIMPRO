@@ -66,14 +66,15 @@ namespace DEHPEcosimPro.Extensions
             independantParameterType = null;
             dependantParameterType = null;
 
-            if (parameterType.IndependentParameterType.SingleOrDefault()?.ParameterType is { } iParameterType
-                && parameterType.DependentParameterType.SingleOrDefault()?.ParameterType is { } dParameterType)
+            if (parameterType.IndependentParameterType.Count == 1 && parameterType.DependentParameterType.Count == 1
+                && parameterType.IndependentParameterType.FirstOrDefault()?.ParameterType is { } iParameterType
+                && parameterType.DependentParameterType.FirstOrDefault()?.ParameterType is { } dParameterType)
             {
                 independantParameterType = iParameterType;
                 dependantParameterType = dParameterType;
                 return true;
             }
-
+            
             return false;
         }
 
