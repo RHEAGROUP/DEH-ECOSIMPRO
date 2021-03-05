@@ -231,9 +231,11 @@ namespace DEHPEcosimPro.DstController
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
         /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
         /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
+        /// <param name="samplingInterval">The <see cref="int"/> sampling interval in millisecond</param>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null)
+        public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null, int samplingInterval = 1000)
         {
+            this.opcClientService.RefreshInterval = samplingInterval;
             await this.opcClientService.Connect(endpoint, autoAcceptConnection, credential);
         }
 

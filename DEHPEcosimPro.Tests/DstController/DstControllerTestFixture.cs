@@ -180,8 +180,9 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyConnect()
         {
-            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint"));
+            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint", true, null, 50));
             this.opcClient.Verify(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
+            this.opcClient.VerifySet(x => x.RefreshInterval = 50);
         }
 
         [Test]

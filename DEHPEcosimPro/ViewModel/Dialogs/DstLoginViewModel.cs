@@ -214,6 +214,20 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
+        /// Backing field for <see cref="SamplingInterval"/>
+        /// </summary>
+        private int samplingInterval = 1000;
+
+        /// <summary>
+        /// Gets or sets the sampling interval
+        /// </summary>
+        public int SamplingInterval
+        {
+            get => this.samplingInterval;
+            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
+        }
+
+        /// <summary>
         /// Gets or sets the <see cref="ReactiveList{T}"/> of available <see cref="ExternalIdentifierMap"/>
         /// </summary>
         public ReactiveList<ExternalIdentifierMap> AvailableExternalIdentifierMap { get; set; }
@@ -352,7 +366,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.statusBarControlView.Append("Loggin in...");
 
             var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
-            await this.dstController.Connect(this.Uri, true, credentials);
+            await this.dstController.Connect(this.Uri, true, credentials, this.SamplingInterval);
 
             this.LoginCommandIsDoneExecuting();
         }

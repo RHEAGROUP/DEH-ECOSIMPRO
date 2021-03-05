@@ -63,7 +63,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>())).Returns(Task.CompletedTask);
+            this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>(), 1000)).Returns(Task.CompletedTask);
 
             this.hubController = new Mock<IHubController>();
 
@@ -102,6 +102,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.ExternalIdentifierMapNewName);
             Assert.IsNull(this.viewModel.SelectedExternalIdentifierMap);
             Assert.AreEqual(3, this.viewModel.AvailableExternalIdentifierMap.Count);
+            Assert.AreEqual(1000, this.viewModel.SamplingInterval);
         }
 
         [Test]
@@ -137,11 +138,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.DoesNotThrowAsync(async () => await this.viewModel.LoginCommand.ExecuteAsyncTask(null));
 
             this.dstController.Verify(
-                x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
+                x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>(), 1000), Times.Once);
 
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(3));
 
-            this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()))
+            this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>(), 1000))
                 .Returns(Task.FromException(new TaskCanceledException()));
 
             Assert.ThrowsAsync<TaskCanceledException>(async () => await this.viewModel.LoginCommand.ExecuteAsyncTask(null));
