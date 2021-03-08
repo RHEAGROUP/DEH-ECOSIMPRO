@@ -53,6 +53,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private MainWindowViewModel viewModel;
         private Mock<ITransferControlViewModel> transferControlViewModel;
         private Mock<IDstNetChangePreviewViewModel> dstNetChangePreviewViewModel;
+        private Mock<IMappingViewModel> mappingViewModel;
 
         [SetUp]
         public void Setup()
@@ -64,10 +65,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstNetChangePreviewViewModel = new Mock<IDstNetChangePreviewViewModel>();
             this.transferControlViewModel = new Mock<ITransferControlViewModel>();
             this.dstController = new Mock<IDstController>();
+            this.mappingViewModel = new Mock<IMappingViewModel>();
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
                 this.statusBarViewModel.Object, this.hubNetChangePreviewViewModel.Object, this.dstNetChangePreviewViewModel.Object,
-                this.dstController.Object, this.transferControlViewModel.Object);
+                this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object);
         }
 
         [Test]

@@ -61,19 +61,43 @@ namespace DEHPEcosimPro
     public partial class App
     {
         /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+        
+        /// <summary>
         /// Initializes a new <see cref="App"/>
         /// </summary>
         /// <param name="containerBuilder">An optional <see cref="Container"/></param>
         public App(ContainerBuilder containerBuilder = null)
         {
+            this.LogAppStart();
             this.Exit += this.OnExit;
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainUnhandledException;
-            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter"};
+            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter", Logo = new Uri("pack://application:,,,/Resources/cdplogo3d_48x48.png") };
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
             RegisterTypes(containerBuilder);
             RegisterViewModels(containerBuilder);
             AppContainer.BuildContainer(containerBuilder);
+        }
+
+        private void LogAppStart()
+        {
+            this.logger.Info("-----------------------------------------------------------------------------------------");
+            this.logger.Info($"Starting EcosimPro Adapter {Assembly.GetExecutingAssembly().GetName().Version}");
+            this.logger.Info("-----------------------------------------------------------------------------------------");
+        }
+
+        /// <summary>
+        /// Handles dispatcher unhandled exception
+        /// </summary>
+        /// <param name="sender">The <see cref="object"/> sender</param>
+        /// <param name="e">The <see cref="UnhandledExceptionEventArgs"/></param>
+        public void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            this.logger.Error(e.Exception);
+            e.Handled = true;
         }
 
         /// <summary>
@@ -85,7 +109,7 @@ namespace DEHPEcosimPro
         {
             var errorMessage = $"{sender} has thrown {e.ExceptionObject.GetType()} \n\r {(e.ExceptionObject as Exception)?.Message}";
             MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            LogManager.GetCurrentClassLogger().Error(e.ExceptionObject);
+            this.logger.Error(e.ExceptionObject);
         }
 
         /// <summary>
@@ -145,6 +169,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<EcosimProTransferControlViewModel>().As<ITransferControlViewModel>().SingleInstance();
             containerBuilder.RegisterType<HubNetChangePreviewViewModel>().As<IHubNetChangePreviewViewModel>().SingleInstance();
             containerBuilder.RegisterType<DstNetChangePreviewViewModel>().As<IDstNetChangePreviewViewModel>().SingleInstance();
+            containerBuilder.RegisterType<MappingViewModel>().As<IMappingViewModel>().SingleInstance();
         }
     }
 }

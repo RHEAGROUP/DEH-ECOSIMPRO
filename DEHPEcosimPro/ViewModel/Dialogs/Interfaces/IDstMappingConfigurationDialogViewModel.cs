@@ -24,14 +24,10 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
-    using System.Reactive.Linq;
-    using System.Windows.Input;
-
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
-    using DEHPCommon.UserInterfaces.Behaviors;
-
+    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using ReactiveUI;
@@ -80,7 +76,27 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
         ReactiveList<VariableRowViewModel> Variables { get; }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
+        /// </summary>
+        bool CanContinue { get; set; }
+        
+        /// <summary>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
+        /// </summary>
+        ReactiveList<TimeUnit> TimeSteps { get; }
 
+        /// <summary>
+        /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
+        /// </summary>
+        ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
+
+        /// <summary>
+        /// Initializes this view model properties
+        /// </summary>
+        void Initialize();
+        
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements
         /// </summary>

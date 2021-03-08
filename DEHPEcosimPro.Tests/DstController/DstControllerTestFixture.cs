@@ -145,7 +145,7 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime)).Returns(new DataValue(new DateTime(2021, 1, 3)));
             
             this.opcClient.Setup(
-                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(true);
+                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), It.IsAny<bool>())).Returns(true);
 
             this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(new List<ReferenceDescription>()
             {
@@ -180,8 +180,9 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyConnect()
         {
-            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint"));
+            Assert.DoesNotThrowAsync(async () => await this.controller.Connect("endpoint", true, null, 50));
             this.opcClient.Verify(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>()), Times.Once);
+            this.opcClient.VerifySet(x => x.RefreshInterval = 50);
         }
 
         [Test]
@@ -291,7 +292,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.DoesNotThrow(() => this.controller.TransferMappedThingsToDst());
 
             this.opcClient.Verify(
-                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>()), 
+                x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), true), 
                 Times.Exactly(2));
         }
 
@@ -427,13 +428,13 @@ namespace DEHPEcosimPro.Tests.DstController
         [Test]
         public void VerifyIsVariableWritable()
         {
-            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(true);
+            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), false)).Returns(true);
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(42)));
             var referenceDescription = new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Mos.a") };
             Assert.IsTrue(this.controller.IsVariableWritable(referenceDescription));
-            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>())).Returns(false);
+            this.opcClient.Setup(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), false)).Returns(false);
             Assert.IsFalse(this.controller.IsVariableWritable(referenceDescription));
-            this.opcClient.Verify(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), false), Times.Exactly(2));
             this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(3));
         }
 

@@ -41,9 +41,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Mvvm.Native;
-
+    
     using Opc.Ua;
 
     using ReactiveUI;
@@ -136,6 +134,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, 
             IStatusBarControlViewModel statusBar) :
                 base(hubController, dstController, statusBar)
+        {
+        }
+
+        /// <summary>
+        /// Initializes this view model properties
+        /// </summary>
+        public void Initialize()
         {
             this.UpdateProperties();
 

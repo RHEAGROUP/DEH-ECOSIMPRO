@@ -304,14 +304,19 @@ namespace DEHPEcosimPro.Services.OpcConnector
         /// <typeparam name="T">The data type</typeparam>
         /// <param name="nodeId">The <see cref="NodeId"/> of the node to update</param>
         /// <param name="value">The value to write</param>
+        /// <param name="withLog">A value indicating whether the result of
+        /// the write operation should be append to the status bar</param>
         /// <returns>A value indicating whether the write operation succeed</returns>
-        public bool WriteNode<T>(NodeId nodeId, T value)
+        public bool WriteNode<T>(NodeId nodeId, T value, bool withLog = true)
         {
             var statusCode = this.sessionHandler.WriteNode<T>(nodeId, value);
 
-            this.statusBarControl.Append(statusCode.Code == 0 
-                ? $"The value ({value}) has been successfuly written." 
-                : $"Failed to write value ({value}) to the target node. {statusCode}");
+            if (withLog)
+            {
+                this.statusBarControl.Append(statusCode.Code == 0
+                    ? $"The value ({value}) has been successfuly written."
+                    : $"Failed to write value ({value}) to the target node. {statusCode}");
+            }
 
             return statusCode.Code == 0;
         }

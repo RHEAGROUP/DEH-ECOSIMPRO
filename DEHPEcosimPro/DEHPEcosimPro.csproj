@@ -13,10 +13,17 @@
     <FileVersion>1.2.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <StartupObject>DEHPEcosimPro.App</StartupObject>
+    <ApplicationIcon>cdplogo_48x48.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="C:\Users\nsmiechowski\.nuget\packages\nlog.config\4.6.8\contentFiles\any\any\NLog.config" />
+    <None Remove="Resources\cdplogo3d_48x48.png" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.183" />
+    <PackageReference Include="DEHPCommon" Version="1.0.188" />
+    <PackageReference Include="NLog" Version="4.6.8" />
+    <PackageReference Include="NLog.Schema" Version="4.6.8" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />
     <PackageReference Include="DevExpress.Wpf.Reporting" Version="20.1.8" />
     <PackageReference Include="reactiveui" Version="6.5.0" />
@@ -34,6 +41,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\cdplogo3d_48x48.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
@@ -44,6 +55,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\OpcClient.Config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

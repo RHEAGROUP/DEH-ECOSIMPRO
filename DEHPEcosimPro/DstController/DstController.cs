@@ -231,9 +231,11 @@ namespace DEHPEcosimPro.DstController
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
         /// <param name="autoAcceptConnection">An assert whether the certificate should be auto accepted if valid</param>
         /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
+        /// <param name="samplingInterval">The <see cref="int"/> sampling interval in millisecond</param>
         /// <returns>A <see cref="Task"/></returns>
-        public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null)
+        public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null, int samplingInterval = 1000)
         {
+            this.opcClientService.RefreshInterval = samplingInterval;
             await this.opcClientService.Connect(endpoint, autoAcceptConnection, credential);
         }
 
@@ -290,8 +292,8 @@ namespace DEHPEcosimPro.DstController
         /// <returns>The <see cref="IList{T}"/> of output argument values, or null if the no method was found with the provided BrowseName</returns>
         public IList<object> CallServerMethod(string methodBrowseName)
         {
-            var serverMethodsNode = this.References.SingleOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
-            var methodNode = this.Methods.SingleOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
+            var serverMethodsNode = this.References.FirstOrDefault(r => r.BrowseName.Name == "server_methods")?.NodeId;
+            var methodNode = this.Methods.FirstOrDefault(m => m.BrowseName.Name == methodBrowseName)?.NodeId;
 
             if (serverMethodsNode != null && methodNode != null)
             {
@@ -332,8 +334,8 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, object> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
-                this.DstMapResult.AddRange(elements);
                 this.UpdateParmeterNodeId(parameterNodeIds);
+                this.DstMapResult.AddRange(elements);
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
@@ -393,7 +395,7 @@ namespace DEHPEcosimPro.DstController
         public bool IsVariableWritable(ReferenceDescription reference)
         {
             var referenceNodeId = (NodeId) reference.NodeId;
-            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value);
+            return this.opcClientService.WriteNode(referenceNodeId, this.opcClientService.ReadNode(referenceNodeId).Value, false);
         }
 
         /// <summary>

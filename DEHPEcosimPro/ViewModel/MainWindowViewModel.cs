@@ -25,20 +25,13 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
-    using System.Reactive.Linq;
-    using System.Windows;
     using System.Windows.Input;
-    using System.Windows.Threading;
 
-    using DEHPCommon.Enumerators;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
-    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
-
-    using DevExpress.CodeParser;
 
     using ReactiveUI;
 
@@ -66,6 +59,11 @@ namespace DEHPEcosimPro.ViewModel
         /// Gets the <see cref="ITransferControlViewModel"/>
         /// </summary>
         public ITransferControlViewModel TransferControlViewModel { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IMappingViewModel"/>
+        /// </summary>
+        public IMappingViewModel MappingViewModel { get; }
 
         /// <summary>
         /// Gets the view model that represents the net change preview panel
@@ -118,10 +116,12 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
             IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
-            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, ITransferControlViewModel transferControlViewModel)
+            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, 
+            ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel)
         {
             this.dstController = dstController;
             this.TransferControlViewModel = transferControlViewModel;
+            this.MappingViewModel = mappingViewModel;
             this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;
             this.DstNetChangePreviewViewModel = dstNetChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;

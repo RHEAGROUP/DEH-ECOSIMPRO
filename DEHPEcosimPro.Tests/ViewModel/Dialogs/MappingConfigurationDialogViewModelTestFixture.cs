@@ -174,6 +174,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel = new DstMappingConfigurationDialogViewModel(
             this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+            this.viewModel.Initialize();
 
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
 

@@ -99,8 +99,10 @@ namespace DEHPEcosimPro.Services.OpcConnector.Interfaces
         /// <typeparam name="T">The data type</typeparam>
         /// <param name="nodeId">The <see cref="NodeId"/> of the node to update</param>
         /// <param name="value">The value to write</param>
+        /// <param name="withLog">A value indicating whether the result of
+        /// the write operation should be append to the status bar</param>
         /// <returns>A value indicating whether the write operation succeed</returns>
-        bool WriteNode<T>(NodeId nodeId, T value);
+        bool WriteNode<T>(NodeId nodeId, T value, bool withLog = true);
 
         /// <summary>
         /// The <see cref="OpcClientService.CertificateValidator"/> validates
