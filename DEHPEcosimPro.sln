@@ -1,0 +1,39 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30523.141
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DEHPEcosimPro", "DEHPEcosimPro\DEHPEcosimPro.csproj", "{D7C07390-53D3-4D6F-9A51-6F45308DE0D1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DEHPEcosimPro.Tests", "DEHPEcosimPro.Tests\DEHPEcosimPro.Tests.csproj", "{EBBDE128-4306-4B42-B8EA-A5FCDBDA5C9B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{092DC5EA-60FE-493C-94A2-C61546366476}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+		DEHPEcosimPro-tests.nunit = DEHPEcosimPro-tests.nunit
+		DEHPEcosimPro.sln.DotSettings = DEHPEcosimPro.sln.DotSettings
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D7C07390-53D3-4D6F-9A51-6F45308DE0D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7C07390-53D3-4D6F-9A51-6F45308DE0D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7C07390-53D3-4D6F-9A51-6F45308DE0D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7C07390-53D3-4D6F-9A51-6F45308DE0D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBBDE128-4306-4B42-B8EA-A5FCDBDA5C9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBBDE128-4306-4B42-B8EA-A5FCDBDA5C9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBBDE128-4306-4B42-B8EA-A5FCDBDA5C9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBBDE128-4306-4B42-B8EA-A5FCDBDA5C9B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {61425774-7FD5-44E2-BB29-025E9D690B22}
+	EndGlobalSection
+EndGlobal
