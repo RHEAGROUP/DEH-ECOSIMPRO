@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.ViewModel
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.Events;
+    using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
@@ -55,6 +56,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IStatusBarControlViewModel"/>
         /// </summary>
         private readonly IStatusBarControlViewModel statusBar;
+
+        /// <summary>
+        /// The <see cref="IExchangeHistoryService"/>
+        /// </summary>
+        private readonly IExchangeHistoryService exchangeHistoryService;
 
         /// <summary>
         /// Backing field for <see cref="AreThereAnyTransferInProgress"/>
@@ -89,10 +95,12 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        public EcosimProTransferControlViewModel(IDstController dstController, IStatusBarControlViewModel statusBar)
+        /// <param name="exchangeHistoryService">The <see cref="IExchangeHistoryService"/></param>
+        public EcosimProTransferControlViewModel(IDstController dstController, IStatusBarControlViewModel statusBar, IExchangeHistoryService exchangeHistoryService)
         {
             this.dstController = dstController;
             this.statusBar = statusBar;
+            this.exchangeHistoryService = exchangeHistoryService;
 
             CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
                 .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
@@ -112,7 +120,11 @@ namespace DEHPEcosimPro.ViewModel
 
             this.TransferCommand.ThrownExceptions
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(e => this.statusBar.Append($"{e.Message}", StatusBarMessageSeverity.Error));
+                .Subscribe(e =>
+                {
+                    this.statusBar.Append($"{e.Message}", StatusBarMessageSeverity.Error);
+                    this.exchangeHistoryService.ClearPending();
+                });
             
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
 
@@ -137,7 +149,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.dstController.DstMapResult.Clear();
             this.dstController.HubMapResult.Clear();
-            this.dstController.ParameterNodeIds.Clear();
+            this.dstController.ParameterVariable.Clear();
             await Task.Delay(1);
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
@@ -158,6 +170,7 @@ namespace DEHPEcosimPro.ViewModel
             this.statusBar.Append($"Transfers in progress");
             await this.dstController.TransferMappedThingsToHub();
             this.dstController.TransferMappedThingsToDst();
+            await this.exchangeHistoryService.Write();
             timer.Stop();
             this.statusBar.Append($"Transfers completed in {timer.ElapsedMilliseconds} ms");
             this.IsIndeterminate = false;

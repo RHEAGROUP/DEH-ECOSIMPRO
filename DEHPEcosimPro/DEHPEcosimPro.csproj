@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.188" />
+    <PackageReference Include="DEHPCommon" Version="1.0.195" />
     <PackageReference Include="NLog" Version="4.6.8" />
     <PackageReference Include="NLog.Schema" Version="4.6.8" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />

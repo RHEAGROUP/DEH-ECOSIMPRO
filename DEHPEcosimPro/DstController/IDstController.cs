@@ -92,9 +92,9 @@ namespace DEHPEcosimPro.DstController
         ReactiveList<ElementBase> DstMapResult { get; }
 
         /// <summary>
-        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="VariableRowViewModel"/>
         /// </summary>
-        Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; }
+        Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; }
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>

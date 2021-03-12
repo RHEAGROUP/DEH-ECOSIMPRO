@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using CDP4Dal;
 
     using DEHPCommon.Events;
+    using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
@@ -52,6 +53,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
         private Mock<IDstController> dstController;
         private Mock<IStatusBarControlViewModel> statusBar;
+        private Mock<IExchangeHistoryService> exchangeHistoryService;
 
         [SetUp]
         public void Setup()
@@ -60,14 +62,16 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
 
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
             this.dstController.Setup(x => x.DstMapResult)
                 .Returns(new ReactiveList<ElementBase>());
 
             this.dstController.Setup(x => x.HubMapResult)
                 .Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
             
-            this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object);
+            this.exchangeHistoryService = new Mock<IExchangeHistoryService>();
+
+            this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object, this.exchangeHistoryService.Object);
         }
 
         [Test]
@@ -91,6 +95,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
             
             Assert.DoesNotThrowAsync(() => this.viewModel.TransferCommand.ExecuteAsyncTask(null));
             this.dstController.Verify(x => x.TransferMappedThingsToHub(), Times.Once);
+
+            this.exchangeHistoryService.Verify(x => x.Write(), Times.Once);
         }
 
         [Test]

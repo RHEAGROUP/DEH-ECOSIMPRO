@@ -54,7 +54,7 @@ namespace DEHPEcosimPro.MappingRules
     /// The <see cref="EcosimProElementToElementDefinitionRule"/> is a <see cref="IMappingRule"/> for the <see cref="MappingEngine"/>
     /// That takes a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> as input and outputs a E-TM-10-25 <see cref="ElementDefinition"/>
     /// </summary>
-    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases)>
+    public class EcosimProElementToElementDefinitionRule : MappingRule<List<VariableRowViewModel>, (Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterVariable, List<ElementBase> elementBases)>
     {
         /// <summary>
         /// The current class logger
@@ -79,14 +79,14 @@ namespace DEHPEcosimPro.MappingRules
         /// <summary>
         /// Holds a <see cref="Dictionary{TKey,TValue}"/> of <see cref="ParameterOrOverrideBase"/> and <see cref="NodeId.Identifier"/>
         /// </summary>
-        private readonly Dictionary<ParameterOrOverrideBase, object> parameterNodeIdIdentifier = new Dictionary<ParameterOrOverrideBase, object>();
+        private readonly Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIdIdentifier = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
 
         /// <summary>
         /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementBase"/>
         /// </summary>
         /// <param name="input">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> to transform</param>
         /// <returns>A collection of (<see cref="NodeId"/>, <see cref="ElementBase"/>)</returns>
-        public override (Dictionary<ParameterOrOverrideBase, object> parameterNodIds, List<ElementBase> elementBases) Transform(List<VariableRowViewModel> input)
+        public override (Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterVariable, List<ElementBase> elementBases) Transform(List<VariableRowViewModel> input)
         {
             try
             {
@@ -162,7 +162,7 @@ namespace DEHPEcosimPro.MappingRules
                         .FirstOrDefault(x => x.Parameter.Iid == parameter.Iid) is {} parameterOverride)
                 {
                     this.UpdateValueSet(variable, parameterOverride);
-                    this.parameterNodeIdIdentifier[parameterOverride] = variable.Reference.NodeId.Identifier;
+                    this.parameterNodeIdIdentifier[parameterOverride] = variable;
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace DEHPEcosimPro.MappingRules
 
             this.UpdateValueSet(variable, variable.SelectedParameter);
 
-            this.parameterNodeIdIdentifier[variable.SelectedParameter] = variable.Reference.NodeId.Identifier;
+            this.parameterNodeIdIdentifier[variable.SelectedParameter] = variable;
         }
 
         /// <summary>

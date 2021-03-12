@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using System.Threading;
     using System.Threading.Tasks;
 
+    using CDP4Common;
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
@@ -41,6 +42,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views;
@@ -78,6 +80,7 @@ namespace DEHPEcosimPro.Tests.DstController
         private Iteration iteration;
         private Assembler assembler;
         private Mock<INavigationService> navigationService;
+        private Mock<IExchangeHistoryService> exchangeHistoryService;
 
         [SetUp]
         public void Setup()
@@ -156,9 +159,12 @@ namespace DEHPEcosimPro.Tests.DstController
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
             this.statusBarViewModel.Setup(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()));
 
+            this.exchangeHistoryService = new Mock<IExchangeHistoryService>();
+            this.exchangeHistoryService.Setup(x => x.Write()).Returns(Task.CompletedTask);
+
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object, 
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
-                this.navigationService.Object);
+                this.navigationService.Object, this.exchangeHistoryService.Object);
         }
 
         [Test]
@@ -268,12 +274,17 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
+            var parameter0 = new Parameter() {ParameterType = new SimpleQuantityKind() {Name = "test"}};
+            var parameter1 = new Parameter() {ParameterType = new SimpleQuantityKind() {Name = "test"}};
+
+            _ = new ElementDefinition() { Parameter = { parameter0, parameter1 } };
+
             this.controller.HubMapResult.AddRange(
                 new List<MappedElementDefinitionRowViewModel>()
                 {
                     new MappedElementDefinitionRowViewModel()
                     {
-                        SelectedParameter = new Parameter(),
+                        SelectedParameter = parameter0,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = new VariableRowViewModel((
                             new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
@@ -281,7 +292,7 @@ namespace DEHPEcosimPro.Tests.DstController
                     },
                     new MappedElementDefinitionRowViewModel()
                     {
-                        SelectedParameter = new Parameter(),
+                        SelectedParameter = parameter1,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = new VariableRowViewModel((
                             new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
@@ -294,6 +305,8 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Verify(
                 x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), true), 
                 Times.Exactly(2));
+
+            this.exchangeHistoryService.Verify(x => x.Append(It.IsAny<string>()), Times.Exactly(2));
         }
 
         [Test]
@@ -317,8 +330,29 @@ namespace DEHPEcosimPro.Tests.DstController
             
             Assert.DoesNotThrowAsync(async () => await this.controller.TransferMappedThingsToHub());
 
-            this.controller.DstMapResult.Add(new ElementDefinition());
-            
+            var parameter = new Parameter()
+            {
+                ParameterType = new SimpleQuantityKind(),
+                ValueSet =
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new [] {"654321"}),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
+                }
+            };
+
+            this.controller.DstMapResult.Add(new ElementDefinition()
+            {
+                Parameter = 
+                { 
+                    parameter
+                }
+            });
+
+            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
+
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
             this.navigationService.Setup(
@@ -354,6 +388,12 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.hubController.Verify(
                 x => x.Refresh(), Times.Exactly(1));
+            
+            this.exchangeHistoryService.Verify(x => 
+                x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(2));
+
+            this.exchangeHistoryService.Verify(x => 
+                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Once);
         }
 
         [Test]
