@@ -63,6 +63,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
 
             this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
+            
             this.dstController.Setup(x => x.DstMapResult)
                 .Returns(new ReactiveList<ElementBase>());
 
@@ -120,6 +121,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.DoesNotThrow(() => this.viewModel.CancelCommand.ExecuteAsyncTask(null));
             Assert.IsEmpty(this.dstController.Object.HubMapResult);
             Assert.IsEmpty(this.dstController.Object.DstMapResult);
-        }
+            Assert.IsEmpty(this.dstController.Object.ParameterVariable);
+        }   
     }
 }

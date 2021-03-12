@@ -394,6 +394,7 @@ namespace DEHPEcosimPro.DstController
             {
                 this.HubMapResult.Remove(mappedElement);
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
+                
                 this.exchangeHistory.Append(
                     $"Value [{mappedElement.SelectedValue.Representation}] from {mappedElement.SelectedParameter.ModelCode()} has been transfered to {mappedElement.SelectedVariable.Name}");
             }
@@ -482,7 +483,6 @@ namespace DEHPEcosimPro.DstController
 
                 this.DstMapResult.Clear();
                 this.ParameterVariable.Clear();
-                await Task.Delay(TimeSpan.FromSeconds(2));
 
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }
