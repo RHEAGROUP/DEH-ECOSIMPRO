@@ -237,10 +237,30 @@ namespace DEHPEcosimPro.Tests.DstController
 
             Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
 
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns(
+                    (new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
+                        {
+                            {
+                                new Parameter(), new VariableRowViewModel((
+                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                            }
+                        },
+                        new List<ElementBase>() {}));
+
+
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
+
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns(new byte());
+            
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
+
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();
             Assert.Throws<InvalidOperationException>(() => this.controller.Map(default(List<VariableRowViewModel>)));
 
-            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(2));
+            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(4));
         }
 
         [Test]
@@ -352,7 +372,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.DstMapResult.Add(new ElementDefinition()
+            this.controller.DstMapResult.Add(new ElementDefinition(Guid.NewGuid(), null, null)
             {
                 Parameter = 
                 { 

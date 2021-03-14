@@ -32,6 +32,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using CDP4Dal;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.Events;
     using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
@@ -95,7 +96,13 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsTrue(this.viewModel.TransferCommand.CanExecute(null));
             
             Assert.DoesNotThrowAsync(() => this.viewModel.TransferCommand.ExecuteAsyncTask(null));
-            this.dstController.Verify(x => x.TransferMappedThingsToHub(), Times.Once);
+            
+            this.dstController.Setup(x => x.TransferMappedThingsToHub())
+                .Throws<InvalidOperationException>();
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => this.viewModel.TransferCommand.ExecuteAsyncTask(null));
+            this.dstController.Verify(x => x.TransferMappedThingsToHub(), Times.Exactly(2));
+            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Once);
 
             this.exchangeHistoryService.Verify(x => x.Write(), Times.Once);
         }
