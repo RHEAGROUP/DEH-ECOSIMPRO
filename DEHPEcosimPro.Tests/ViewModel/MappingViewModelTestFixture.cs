@@ -157,9 +157,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.HubMapResult).Returns(this.hubMapResult);
 
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>()
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
                 {
-                    { this.parameter0, this.variableRowViewModels.FirstOrDefault()?.Reference.NodeId.Identifier }
+                    { this.parameter0, this.variableRowViewModels.FirstOrDefault()}
                 });
 
             this.dstVariableViewModel = new Mock<IDstVariablesControlViewModel>();
@@ -201,9 +201,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
                 }
             };
             
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>()
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
             {
-                { newParameter, this.variableRowViewModels.FirstOrDefault()?.Reference.NodeId.Identifier }
+                { newParameter, this.variableRowViewModels.FirstOrDefault() }
             });
 
             this.dstMapResult.Add(newElement);
@@ -217,9 +217,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstMapResult.Add(clone);
             Assert.AreEqual(3, this.viewModel.MappingRows.Count);
 
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>()
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
             {
-                { this.elementUsage.ParameterOverride.First(), this.variableRowViewModels.FirstOrDefault()?.Reference.NodeId.Identifier }
+                { this.elementUsage.ParameterOverride.First(), this.variableRowViewModels.FirstOrDefault() }
             });
 
             this.dstMapResult.Add(this.elementUsage);

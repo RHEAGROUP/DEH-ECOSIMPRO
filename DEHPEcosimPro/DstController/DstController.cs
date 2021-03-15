@@ -29,6 +29,7 @@ namespace DEHPEcosimPro.DstController
     using System.Linq;
     using System.Threading.Tasks;
 
+    using CDP4Common;
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.Types;
@@ -40,6 +41,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
+    using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views;
@@ -49,6 +51,8 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
+
+    using DevExpress.Xpf.Charts;
 
     using NLog;
 
@@ -102,6 +106,11 @@ namespace DEHPEcosimPro.DstController
         /// The <see cref="INavigationService"/>
         /// </summary>
         private readonly INavigationService navigation;
+
+        /// <summary>
+        /// The <see cref="IExchangeHistoryService"/>
+        /// </summary>
+        private readonly IExchangeHistoryService exchangeHistory;
 
         /// <summary>
         /// Backing field for the <see cref="MappingDirection"/>
@@ -162,9 +171,9 @@ namespace DEHPEcosimPro.DstController
         public ReactiveList<ElementBase> DstMapResult { get; private set; } = new ReactiveList<ElementBase>();
 
         /// <summary>
-        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="NodeId.Identifier"/>
+        /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="VariableRowViewModel"/>
         /// </summary>
-        public Dictionary<ParameterOrOverrideBase, object> ParameterNodeIds { get; } = new Dictionary<ParameterOrOverrideBase, object>();
+        public Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; } = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
@@ -185,9 +194,11 @@ namespace DEHPEcosimPro.DstController
         /// <param name="mappingEngine">The <see cref="IMappingEngine"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        /// <param name="exchangeHistory">The <see cref="IExchangeHistoryService"/></param>
         public DstController(IOpcClientService opcClientService, IHubController hubController,
             IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine,
-            IStatusBarControlViewModel statusBar, INavigationService navigationService)
+            IStatusBarControlViewModel statusBar, INavigationService navigationService,
+            IExchangeHistoryService exchangeHistory)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
@@ -195,6 +206,7 @@ namespace DEHPEcosimPro.DstController
             this.mappingEngine = mappingEngine;
             this.statusBar = statusBar;
             this.navigation = navigationService;
+            this.exchangeHistory = exchangeHistory;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -332,7 +344,7 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public void Map(List<VariableRowViewModel> dstVariables)
         {
-            if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, object> parameterNodeIds, List<ElementBase> elements) && elements.Any())
+            if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
                 this.UpdateParmeterNodeId(parameterNodeIds);
                 this.DstMapResult.AddRange(elements);
@@ -342,17 +354,17 @@ namespace DEHPEcosimPro.DstController
         }
         
         /// <summary>
-        /// Updates <see cref="ParameterNodeIds"/> by adding or replacing values
+        /// Updates <see cref="ParameterVariable"/> by adding or replacing values
         /// </summary>
         /// <param name="parameterNodeIds">The  </param>
-        private void UpdateParmeterNodeId(Dictionary<ParameterOrOverrideBase, object> parameterNodeIds)
+        private void UpdateParmeterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
         {
             foreach (var keyValue in parameterNodeIds)
             {
-                this.ParameterNodeIds[keyValue.Key] = keyValue.Value;
+                this.ParameterVariable[keyValue.Key] = keyValue.Value;
             }
         }
-
+        
         /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
@@ -382,11 +394,14 @@ namespace DEHPEcosimPro.DstController
             {
                 this.HubMapResult.Remove(mappedElement);
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
+                
+                this.exchangeHistory.Append(
+                    $"Value [{mappedElement.SelectedValue.Representation}] from {mappedElement.SelectedParameter.ModelCode()} has been transfered to {mappedElement.SelectedVariable.Name}");
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
-
+        
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
         /// </summary>
@@ -467,7 +482,7 @@ namespace DEHPEcosimPro.DstController
                 this.ExternalIdentifierMap = map.Clone(true);
 
                 this.DstMapResult.Clear();
-                this.ParameterNodeIds.Clear();
+                this.ParameterVariable.Clear();
 
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }
@@ -519,7 +534,7 @@ namespace DEHPEcosimPro.DstController
                 for (var index = 0; index < parameter.ValueSet.Count; index++)
                 {
                     var clone = newParameterCloned.ValueSet[index].Clone(false);
-                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    this.UpdateValueSet(clone, parameter.ValueSet[index]);
                     transaction.CreateOrUpdate(clone);
                 }
 
@@ -542,7 +557,7 @@ namespace DEHPEcosimPro.DstController
                 for (var index = 0; index < parameter.ValueSet.Count; index++)
                 {
                     var clone = newParameterClone.ValueSet[index];
-                    UpdateValueSet(clone, parameter.ValueSet[index]);
+                    this.UpdateValueSet(clone, parameter.ValueSet[index]);
                     transaction.CreateOrUpdate(clone);
                 }
 
@@ -555,8 +570,10 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <param name="clone">The clone to update</param>
         /// <param name="valueSet">The <see cref="IValueSet"/> of reference</param>
-        private static void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
+        private void UpdateValueSet(ParameterValueSetBase clone, IValueSet valueSet)
         {
+            this.exchangeHistory.Append(clone, valueSet);
+            
             clone.Computed = valueSet.Computed;
             clone.ValueSwitch = valueSet.ValueSwitch;
         }
@@ -579,10 +596,12 @@ namespace DEHPEcosimPro.DstController
                 thing.Iid = clone.Iid;
                 transaction.Create(clone);
                 containerClone.Add((TThing) clone);
+                this.exchangeHistory.Append(clone, ChangeKind.Create);
             }
             else
             {
                 transaction.CreateOrUpdate(clone);
+                this.exchangeHistory.Append(clone, ChangeKind.Update);
             }
 
             return (TThing) clone;

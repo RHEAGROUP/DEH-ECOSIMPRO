@@ -34,6 +34,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
     using DEHPEcosimPro.DstController;
 
+    using NLog;
+
     using ReactiveUI;
 
     /// <summary>
@@ -42,6 +44,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     /// </summary>
     public abstract class MappingConfigurationDialogViewModel : ReactiveObject, ICloseWindowViewModel
     {
+        /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// The <see cref="IHubController"/>
         /// </summary>
@@ -107,9 +114,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 mapCommand?.Invoke();
                 this.CloseWindowBehavior?.Close();
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                MessageBox.Show($"{e.Message}");
+                this.logger.Error(exception);
             }
             finally
             {

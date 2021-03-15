@@ -304,7 +304,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.SelectedThing.SelectedParameter = null;
             }
             else if(this.AvailableParameters.FirstOrDefault(x => 
-                x.ParameterType.Iid == this.SelectedThing.SelectedParameterType.Iid) is Parameter parameterOrOverride )
+                x.ParameterType.Iid == this.SelectedThing.SelectedParameterType?.Iid) is Parameter parameterOrOverride )
             {
                 this.SelectedThing.SelectedParameter = parameterOrOverride;
             }

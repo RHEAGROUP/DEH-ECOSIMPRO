@@ -130,55 +130,55 @@ namespace DEHPEcosimPro.ViewModel
             {
                 ElementDefinition elementDefinition => this.GetParameters(elementDefinition),
                 ElementUsage elementUsage => this.GetParameters(elementUsage),
-                _ => new List<(ParameterOrOverrideBase parameter, object nodeId)>()
+                _ => new List<(ParameterOrOverrideBase parameter, VariableRowViewModel variable)>()
             };
 
             foreach (var parameter in parametersNodeId)
             {
-                this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, parameter.parameter,
-                    this.dstVariablesControlViewModel.Variables.FirstOrDefault(x => x.Reference.NodeId.Identifier == parameter.nodeId)));
+                this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, parameter));
             }
         }
 
         /// <summary>
-        /// Queries the parameters in the <see cref="IDstController.ParameterNodeIds"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
+        /// Queries the parameters in the <see cref="IDstController.ParameterVariable"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
         /// </summary>
         /// <param name="element">The <see cref="ElementDefinition"/></param>
-        /// <returns>A List{(ParameterOrOverrideBase parameter, object nodeId)}</returns>
-        private List<(ParameterOrOverrideBase parameter, object nodeId)> GetParameters(ElementDefinition element)
+        /// <returns>A List{(ParameterOrOverrideBase parameter, object variable)}</returns>
+        private List<(ParameterOrOverrideBase parameter, VariableRowViewModel variable)> GetParameters(ElementDefinition element)
         {
-            var result = new List<(ParameterOrOverrideBase, object)>();
-
             var modified  = this.dstController
-                        .ParameterNodeIds.Where(x =>
-                            x.Key.GetContainerOfType<ElementDefinition>().Iid == element.Iid).ToList();
+                        .ParameterVariable.Where(x =>
+                            x.Key.Container?.Iid == element.Iid).ToList();
 
             var originals = this.hubController.OpenIteration.Element
                 .FirstOrDefault(x => x.Iid == element.Iid)?
                 .Parameter.Where(x => modified
                     .Select(o => o.Key)
-                    .Any(p => p.Iid == x.Iid)) ?? modified.Select(x => x.Key);
+                    .Any(p => p.Iid == x.Iid)).ToList() 
+                            ?? modified.Select(x => x.Key).OfType<Parameter>().ToList();
 
-            foreach (var parameterOverride in originals)
-            {
-                result.Add((parameterOverride, modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid).Value));
-            }
+            var result = 
+                originals.Select(parameterOverride => (parameterOverride as ParameterOrOverrideBase, 
+                    modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid).Value)).ToList();
+
+            result.AddRange(modified.Where(x => originals.All(o => o.Iid != x.Key.Iid))
+                .Select(x => (x.Key, x.Value)));
 
             return result;
         }
 
         /// <summary>
-        /// Queries the parameters in the <see cref="IDstController.ParameterNodeIds"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
+        /// Queries the parameters in the <see cref="IDstController.ParameterVariable"/> with their associated <see cref="Opc.Ua.NodeId"/> and a collection of their original references
         /// </summary>
         /// <param name="element">The <see cref="ElementUsage"/></param>
-        /// <returns>A List{(ParameterOrOverrideBase parameter, object nodeId)}</returns>
-        private List<(ParameterOrOverrideBase parameter, object nodeId)> GetParameters(ElementUsage element)
+        /// <returns>A List{(ParameterOrOverrideBase parameter, object variable)}</returns>
+        private List<(ParameterOrOverrideBase parameter, VariableRowViewModel variable)> GetParameters(ElementUsage element)
         {
-            var result = new List<(ParameterOrOverrideBase, object)>();
+            var result = new List<(ParameterOrOverrideBase, VariableRowViewModel)>();
 
             var modified = this.dstController
-                        .ParameterNodeIds.Where(x =>
-                            x.Key.GetContainerOfType<ElementUsage>().Iid == element.Iid).ToList();
+                        .ParameterVariable.Where(x =>
+                            x.Key.Container.Iid == element.Iid).ToList();
 
             var originals = this.hubController.OpenIteration.Element
                 .FirstOrDefault(x => x.Iid == element.ElementDefinition.Iid)?
