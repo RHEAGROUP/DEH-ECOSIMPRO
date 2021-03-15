@@ -51,9 +51,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Xpf.Charts;
-
+    
     using NLog;
 
     using Opc.Ua;
@@ -71,7 +69,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets the current class logger
         /// </summary>
         private readonly Logger logger = LogManager.GetCurrentClassLogger(); 
-
+        
         /// <summary>
         /// The <see cref="IOpcClientService"/> that handles the OPC connection with EcosimPro
         /// </summary>
@@ -186,6 +184,11 @@ namespace DEHPEcosimPro.DstController
         public ExternalIdentifierMap ExternalIdentifierMap { get; set; }
 
         /// <summary>
+        /// Gets the OPC Time <see cref="NodeId"/>
+        /// </summary>
+        public NodeId TimeNodeId { get; private set; }
+
+        /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
@@ -226,11 +229,14 @@ namespace DEHPEcosimPro.DstController
                             this.Methods.Add(reference);
                         }
                     }
+
+                    this.TimeNodeId = (NodeId)this.Variables.FirstOrDefault(x => x.Reference.BrowseName.Name == "TIME").Reference.NodeId;
                 }
                 else
                 {
                     this.Variables.Clear();
                     this.Methods.Clear();
+                    this.TimeNodeId = null;
                 }
 
                 this.IsSessionOpen = isOpcSessionOpen;
@@ -413,6 +419,17 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Writes the <see cref="double"/> <paramref name="value"/> to the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> on which to write the <paramref name="value"/></param>
+        /// <param name="value">The <see cref="double"/> value</param>
+        /// <returns>An assert</returns>
+        public bool WriteToDst(NodeId nodeId, double value)
+        {
+            return this.opcClientService.WriteNode(nodeId, value, true);
+        }
+
+        /// <summary>
         /// Reads a node and gets its states information
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
@@ -421,6 +438,41 @@ namespace DEHPEcosimPro.DstController
         {
             var referenceNodeId = (NodeId) reference.NodeId;
             return this.opcClientService.ReadNode(referenceNodeId);
+        }
+
+        /// <summary>
+        /// Reads all values for <see cref="Variables"/> based on <paramref name="time"/>
+        /// </summary>
+        /// <param name="time">The current time</param>
+        public void ReadAllNode(double time)
+        {
+            foreach (var (reference, _) in this.Variables)
+            {
+                var value = this.opcClientService.ReadNode((NodeId) reference.NodeId);
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(reference, value, time));
+            }
+        }
+
+        /// <summary>
+        /// Resets all <see cref="VariableRowViewModel"/> by deleting the collected values
+        /// </summary>
+        public void ResetVariables()
+        {
+            foreach (var (reference, _) in this.Variables)
+            {
+                var value = this.opcClientService.ReadNode((NodeId)reference.NodeId);
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(reference, value, 0, true));
+            }
+        }
+
+        /// <summary>
+        /// Sets the next experiment step in the OPC server and retrives new values for <see cref="Variables"/>
+        /// </summary>
+        public void GetNextExperimentStep()
+        {
+            this.CallServerMethod("method_integ_cint");
+            var time = Math.Round(Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value), 2, MidpointRounding.AwayFromZero);
+            this.ReadAllNode(time);
         }
 
         /// <summary>

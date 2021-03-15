@@ -52,6 +52,16 @@ namespace DEHPEcosimPro.Events
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
+        /// Gets or sets the CINT Time associated with the value
+        /// </summary>
+        public double Time { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating if the listener should be reset
+        /// </summary>
+        public bool Reset { get; set; }
+
+        /// <summary>
         /// Initializes a new <see cref="OpcVariableChangedEvent"/>
         /// </summary>
         /// <param name="monitoredItem">The monitored via subscription variable</param>
@@ -66,8 +76,16 @@ namespace DEHPEcosimPro.Events
         /// <summary>
         /// Initializes a new <see cref="OpcVariableChangedEvent"/>
         /// </summary>
-        public OpcVariableChangedEvent()
+        /// <param name="reference">The <see cref="ReferenceDescription"/></param>
+        /// <param name="value">The <see cref="DataValue"/></param>
+        /// <param name="time">The <see cref="double"/> time value</param>
+        /// <param name="reset">A value indicating if the listener should reset</param>
+        public OpcVariableChangedEvent(ReferenceDescription reference, DataValue value, double time, bool reset = false)
         {
+            this.Id = reference.NodeId.Identifier;
+            this.Value = value.Value;
+            this.Time = time;
+            this.Reset = reset;
         }
     }
 }

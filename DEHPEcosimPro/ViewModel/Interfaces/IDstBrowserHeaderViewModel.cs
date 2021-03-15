@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Interfaces
 {
     using System;
+    using System.Reactive;
 
     using ReactiveUI;
 
@@ -34,14 +35,44 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     public interface IDstBrowserHeaderViewModel
     {
         /// <summary>
+        /// Gets or sets a value indicating whether the TimeStep and the StepTime are editable
+        /// </summary>
+        bool AreTimeStepAnStepTimeEditable { get; set; }
+
+        /// <summary>
+        /// Gets or sets the experiment TIME
+        /// </summary>
+        double ExperimentTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the experiment button text
+        /// </summary>
+        string ExperimentButtonText { get; set; }
+
+        /// <summary>
+        /// Gets or sets the experiment progress value
+        /// </summary>
+        double ExperimentProgress { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the experiment is running
+        /// </summary>
+        bool IsExperimentRunning { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CINT of the experiment
+        /// </summary>
+        double SelectedStepping { get; set; }
+
+        /// <summary>
+        /// Gets or sets the TSTOP of the experiment
+        /// </summary>
+        double SelectedStopStep { get; set; }
+
+        /// <summary>
         /// Gets or sets the URI of the connected data source
         /// </summary>
         string ServerAddress { get; set; }
-
-        /// <summary>
-        /// Gets or sets the time, in milliseconds, between which data is recorded
-        /// </summary>
-        int SamplingInterval { get; set; }
 
         /// <summary>
         /// Gets or sets the total number of variables in the open session
@@ -49,12 +80,12 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         int VariablesCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the date/time from which the server is up
+        /// Gets or sets the date and time, in UTC, from which the server has been up and running
         /// </summary>
         DateTime? ServerStartTime { get; set; }
 
         /// <summary>
-        /// Gets or sets the current date/time of the server
+        /// Gets or sets the current date/time, in UTC, of the server
         /// </summary>
         DateTime? CurrentServerTime { get; set; }
 
@@ -67,5 +98,10 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
         /// </summary>
         ReactiveCommand<object> CallResetMethodCommand { get; set; }
+
+        /// <summary>
+        /// Updates the view model's properties
+        /// </summary>
+        void UpdateProperties();
     }
 }
