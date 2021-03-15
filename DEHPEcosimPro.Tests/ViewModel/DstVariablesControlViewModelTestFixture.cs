@@ -78,7 +78,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.AddSubscription(It.IsAny<ReferenceDescription>()));
             this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
 
             this.dstController.Setup(x => x.Variables).Returns(
                 new List<(ReferenceDescription Reference, DataValue Value)>()

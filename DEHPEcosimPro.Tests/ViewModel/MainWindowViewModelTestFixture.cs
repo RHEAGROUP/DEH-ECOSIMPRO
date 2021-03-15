@@ -28,9 +28,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using DEHPCommon;
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
+    using DEHPCommon.UserInterfaces.Views.ExchangeHistory;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
@@ -54,6 +56,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<ITransferControlViewModel> transferControlViewModel;
         private Mock<IDstNetChangePreviewViewModel> dstNetChangePreviewViewModel;
         private Mock<IMappingViewModel> mappingViewModel;
+        private Mock<INavigationService> navigationService;
 
         [SetUp]
         public void Setup()
@@ -66,10 +69,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.transferControlViewModel = new Mock<ITransferControlViewModel>();
             this.dstController = new Mock<IDstController>();
             this.mappingViewModel = new Mock<IMappingViewModel>();
+            this.navigationService = new Mock<INavigationService>();
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
                 this.statusBarViewModel.Object, this.hubNetChangePreviewViewModel.Object, this.dstNetChangePreviewViewModel.Object,
-                this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object);
+                this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object, this.navigationService.Object);
         }
 
         [Test]
@@ -82,6 +86,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsNull(this.viewModel.SwitchPanelBehavior);
             Assert.IsNotNull(this.viewModel.ChangeMappingDirection);
             Assert.IsNotNull(this.viewModel.TransferControlViewModel);
+            Assert.IsNotNull(this.viewModel.OpenExchangeHistory);
         }
 
         [Test]
@@ -97,6 +102,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.viewModel.ChangeMappingDirection.Execute(null);
             Assert.AreEqual(MappingDirection.FromDstToHub, this.dstController.Object.MappingDirection);
+        }
+
+        [Test]
+        public void VerifyOpenHistoryOfTransfer()
+        {
+            Assert.IsTrue(this.viewModel.OpenExchangeHistory.CanExecute(null));
+            Assert.DoesNotThrow(() => this.viewModel.OpenExchangeHistory.Execute(null));
+            this.navigationService.Verify(x => x.ShowDialog<ExchangeHistory>(), Times.Once);
         }
     }
 }

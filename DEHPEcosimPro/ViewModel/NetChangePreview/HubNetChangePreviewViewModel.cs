@@ -126,14 +126,14 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             this.RestoreThings();
 
-            var parametersToRemove = this.dstController.ParameterNodeIds
+            var parametersToRemove = this.dstController.ParameterVariable
                 .Where(p => !selection.Any(v => p.Value.Equals(v.Reference.NodeId.Identifier)))
                 .Select(x => x.Key)
                 .ToList();
 
             foreach (var variable in selection)
             {
-                var parameters = this.dstController.ParameterNodeIds
+                var parameters = this.dstController.ParameterVariable
                     .Where(v => v.Value.Equals(variable.Reference.NodeId.Identifier))
                     .Select(x => x.Key);
                 

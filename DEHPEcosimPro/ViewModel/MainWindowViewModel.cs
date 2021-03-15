@@ -27,8 +27,10 @@ namespace DEHPEcosimPro.ViewModel
     using System;
     using System.Windows.Input;
 
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.Views.ExchangeHistory;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
@@ -44,6 +46,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
+
+        /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigationService;
 
         /// <summary>
         /// Backing field for <see cref="MappingDirection"/>
@@ -96,6 +103,11 @@ namespace DEHPEcosimPro.ViewModel
         public ReactiveCommand<object> ChangeMappingDirection { get; private set; }
 
         /// <summary>
+        /// Gets or sets the <see cref="ICommand"/> that will open the ExchangeHistory window
+        /// </summary>
+        public ReactiveCommand<object> OpenExchangeHistory { get; private set; }
+
+        /// <summary>
         /// Gets or sets the <see cref="MappingDirection"/> for proper binding
         /// </summary>
         public int MappingDirection
@@ -114,12 +126,16 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="dstNetChangePreviewViewModel">The <see cref="IDstNetChangePreviewViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
+        /// <param name="mappingViewModel">The <see cref="IMappingViewModel"/></param>
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
             IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
             IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, 
-            ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel)
+            ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel,
+            INavigationService navigationService)
         {
             this.dstController = dstController;
+            this.navigationService = navigationService;
             this.TransferControlViewModel = transferControlViewModel;
             this.MappingViewModel = mappingViewModel;
             this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;
@@ -137,8 +153,10 @@ namespace DEHPEcosimPro.ViewModel
         private void InitializeCommands()
         {
             this.ChangeMappingDirection = ReactiveCommand.Create();
-            
             this.ChangeMappingDirection.Subscribe(_ => this.ChangeMappingDirectionExecute());
+
+            this.OpenExchangeHistory = ReactiveCommand.Create();
+            this.OpenExchangeHistory.Subscribe(_ => this.navigationService.ShowDialog<ExchangeHistory>());
         }
 
         /// <summary>
@@ -147,6 +165,7 @@ namespace DEHPEcosimPro.ViewModel
         private void ChangeMappingDirectionExecute()
         {
             this.SwitchPanelBehavior?.Switch();
+            
             this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection 
                                                   ?? DEHPCommon.Enumerators.MappingDirection.FromDstToHub;
 

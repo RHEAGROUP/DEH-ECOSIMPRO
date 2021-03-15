@@ -267,7 +267,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                     }
                 });
 
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(new Dictionary<ParameterOrOverrideBase, object>());
+            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
 
             this.variableRowViewModels = new List<VariableRowViewModel>
             {
@@ -353,7 +353,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         [Test]
         public void VerifyUpdateTreeBasedOnSelection()
         {
-            var parametersNodeId = new Dictionary<ParameterOrOverrideBase, object>();
+            var parametersNodeId = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
 
             var parameters = this.dstController.Object.DstMapResult
                 .OfType<ElementDefinition>().SelectMany(x => x.Parameter)
@@ -367,10 +367,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
 
             for (var index = 0; index < allParameters.Count; index++)
             {
-                parametersNodeId.Add(allParameters[index], this.variableRowViewModels[index].Reference.NodeId.Identifier);
+                parametersNodeId.Add(allParameters[index], this.variableRowViewModels[index]);
             }
 
-            this.dstController.Setup(x => x.ParameterNodeIds).Returns(parametersNodeId);
+            this.dstController.Setup(x => x.ParameterVariable).Returns(parametersNodeId);
             this.viewModel.ComputeValues();
             Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels.Take(1), null, false)));
             Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels, null, false)));

@@ -104,10 +104,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// Initializes a new <see cref="MappingRowViewModel"/> from a mapped <see cref="ParameterOrOverrideBase"/> and <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="currentMappingDirection">The current <see cref="MappingDirection"/></param>
-        /// <param name="parameter">The <see cref="ParameterOrOverrideBase"/></param>
-        /// <param name="variable">The <see cref="VariableRowViewModel"/></param>
-        public MappingRowViewModel(MappingDirection currentMappingDirection, ParameterBase parameter, VariableRowViewModel variable)
+        /// <param name="parameterVariable">The (<see cref="ParameterOrOverrideBase"/>, <see cref="VariableRowViewModel"/>)</param>
+        public MappingRowViewModel(MappingDirection currentMappingDirection, (ParameterBase parameter, VariableRowViewModel variable) parameterVariable)
         {
+            var (parameter, variable) = parameterVariable;
+
             this.Direction = MappingDirection.FromDstToHub;
             
             this.DstThing = new MappedThing() 
