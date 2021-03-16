@@ -436,7 +436,7 @@ namespace DEHPEcosimPro.DstController
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
-
+        
         /// <summary>
         /// Updates the <see cref="transferedHubMapResult"/>
         /// </summary>
@@ -581,7 +581,6 @@ namespace DEHPEcosimPro.DstController
 
                 this.DstMapResult.Clear();
                 this.ParameterVariable.Clear();
-                await Task.Delay(TimeSpan.FromSeconds(2));
 
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }

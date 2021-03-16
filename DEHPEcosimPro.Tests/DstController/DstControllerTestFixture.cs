@@ -223,13 +223,42 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue());
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
-                .Returns(new List<ElementDefinition>());
+                .Returns(
+                    (new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>() 
+                        { 
+                            {
+                                new Parameter(), new VariableRowViewModel((
+                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                            }
+                        }, 
+                        new List<ElementBase>() { new ElementDefinition() }));
             
             this.controller.ExternalIdentifierMap = new ExternalIdentifierMap()
             {
                 Container = this.iteration
             };
 
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
+
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns(
+                    (new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
+                        {
+                            {
+                                new Parameter(), new VariableRowViewModel((
+                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                            }
+                        },
+                        new List<ElementBase>() {}));
+
+
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
+
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns(new byte());
+            
             Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
 
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();

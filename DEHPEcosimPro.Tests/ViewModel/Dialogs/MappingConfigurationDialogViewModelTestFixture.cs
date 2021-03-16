@@ -319,6 +319,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
             Assert.AreSame(this.viewModel.SelectedThing.SelectedParameterType, this.viewModel.SelectedThing.SelectedParameter.ParameterType);
+
+            this.viewModel.SelectedThing.SelectedParameter = null;
+            this.viewModel.SelectedThing.SelectedParameterType = null;
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
+            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameter);
+
         }
     }
 }

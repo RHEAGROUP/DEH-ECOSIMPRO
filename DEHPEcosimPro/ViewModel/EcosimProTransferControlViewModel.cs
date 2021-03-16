@@ -123,7 +123,6 @@ namespace DEHPEcosimPro.ViewModel
                 .Subscribe(e =>
                 {
                     this.statusBar.Append($"{e.Message}", StatusBarMessageSeverity.Error);
-                    this.exchangeHistoryService.ClearPending();
                 });
             
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
@@ -150,6 +149,7 @@ namespace DEHPEcosimPro.ViewModel
             this.dstController.DstMapResult.Clear();
             this.dstController.HubMapResult.Clear();
             this.dstController.ParameterVariable.Clear();
+            this.exchangeHistoryService.ClearPending();
             await Task.Delay(1);
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
             CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
