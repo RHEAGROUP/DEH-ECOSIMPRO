@@ -220,7 +220,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 }));
 
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
-            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ => this.SelectedThing?.ApplyTimeStep());
+
+            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
+                this.UpdateHubFields(() => this.SelectedThing?.ApplyTimeStep()));
         }
 
         /// <summary>

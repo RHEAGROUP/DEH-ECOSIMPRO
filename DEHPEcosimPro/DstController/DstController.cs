@@ -26,6 +26,7 @@ namespace DEHPEcosimPro.DstController
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -114,6 +115,11 @@ namespace DEHPEcosimPro.DstController
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
+
+        /// <summary>
+        /// The collection of (<see cref="NodeId"/> nodeId, <see cref="string"/> value) to be retransfered
+        /// </summary>
+        private readonly List<(NodeId NodeId, string Value)> transferedHubMapResult = new List<(NodeId NodeId, string Value)>();
 
         /// <summary>
         /// Gets this running tool name
@@ -230,7 +236,7 @@ namespace DEHPEcosimPro.DstController
                         }
                     }
 
-                    this.TimeNodeId = (NodeId)this.Variables.FirstOrDefault(x => x.Reference.BrowseName.Name == "TIME").Reference.NodeId;
+                    this.TimeNodeId = (NodeId)this.References.FirstOrDefault(x => x.BrowseName.Name == "TIME")?.NodeId;
                 }
                 else
                 {
@@ -339,6 +345,7 @@ namespace DEHPEcosimPro.DstController
         {
             this.Methods.Clear();
             this.Variables.Clear();
+            this.transferedHubMapResult.Clear();
             this.opcClientService.CloseSession();
             this.IsSessionOpen = false;
         }
@@ -352,7 +359,7 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
-                this.UpdateParmeterNodeId(parameterNodeIds);
+                this.UpdateParameterNodeId(parameterNodeIds);
                 this.DstMapResult.AddRange(elements);
             }
 
@@ -363,7 +370,7 @@ namespace DEHPEcosimPro.DstController
         /// Updates <see cref="ParameterVariable"/> by adding or replacing values
         /// </summary>
         /// <param name="parameterNodeIds">The  </param>
-        private void UpdateParmeterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
+        private void UpdateParameterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
         {
             foreach (var keyValue in parameterNodeIds)
             {
@@ -387,6 +394,24 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Transfers again all already transfered value to the dst in case of OPC server reset
+        /// </summary>
+        public void ReTransferMappedThingsToDst()
+        {
+            foreach (var (nodeId, value) in this.transferedHubMapResult)
+            {
+                this.opcClientService.WriteNode(nodeId,
+                    double.Parse(value, CultureInfo.InvariantCulture), false);
+
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent()
+                {
+                    Id = nodeId.Identifier,
+                    Value = value
+                });
+            }
+        }
+
+        /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
         public void TransferMappedThingsToDst()
@@ -395,18 +420,40 @@ namespace DEHPEcosimPro.DstController
                 .Where(
                     mappedElement => this.opcClientService.WriteNode(
                         (NodeId) mappedElement.SelectedVariable.Reference.NodeId,
-                        double.Parse(mappedElement.SelectedValue.Value)))
+                        double.Parse(mappedElement.SelectedValue.Value, CultureInfo.InvariantCulture)))
                 .ToList())
             {
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(mappedElement));
+
+                this.UpdateTransferedHubMapResult(mappedElement);
+
                 this.HubMapResult.Remove(mappedElement);
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
+
                 this.exchangeHistory.Append(
                     $"Value [{mappedElement.SelectedValue.Representation}] from {mappedElement.SelectedParameter.ModelCode()} has been transfered to {mappedElement.SelectedVariable.Name}");
             }
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
-        
+
+        /// <summary>
+        /// Updates the <see cref="transferedHubMapResult"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
+        private void UpdateTransferedHubMapResult(MappedElementDefinitionRowViewModel mappedElement)
+        {
+            var value = mappedElement.SelectedValue.Value;
+            var referenceNodeId = (NodeId)mappedElement.SelectedVariable.Reference.NodeId;
+
+            if (this.transferedHubMapResult.FirstOrDefault(x => x.NodeId.Identifier == referenceNodeId.Identifier) is { } alreadyTransfered)
+            {
+                this.transferedHubMapResult.Remove(alreadyTransfered);
+            }
+
+            this.transferedHubMapResult.Add((referenceNodeId, value));
+        }
+
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
         /// </summary>

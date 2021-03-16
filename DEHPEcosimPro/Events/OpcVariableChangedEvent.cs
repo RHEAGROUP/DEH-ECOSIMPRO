@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.Events
 
     using CDP4Dal;
 
+    using DEHPEcosimPro.ViewModel.Rows;
+
     using Opc.Ua;
     using Opc.Ua.Client;
 
@@ -86,6 +88,23 @@ namespace DEHPEcosimPro.Events
             this.Value = value.Value;
             this.Time = time;
             this.Reset = reset;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="OpcVariableChangedEvent"/> based on a <see cref="MappedElementDefinitionRowViewModel"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
+        public OpcVariableChangedEvent(MappedElementDefinitionRowViewModel mappedElement)
+        {
+            this.Id = mappedElement.SelectedVariable.Reference.NodeId.Identifier;
+            this.Value = mappedElement.SelectedValue.Value;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="OpcVariableChangedEvent"/>
+        /// </summary>
+        public OpcVariableChangedEvent()
+        {
         }
     }
 }

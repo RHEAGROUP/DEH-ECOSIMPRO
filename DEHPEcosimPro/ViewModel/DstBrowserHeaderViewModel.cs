@@ -30,17 +30,20 @@ namespace DEHPEcosimPro.ViewModel
     using System.Reactive.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Windows;
 
     using CDP4Dal;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using NLog;
 
     using Opc.Ua;
 
@@ -51,6 +54,11 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class DstBrowserHeaderViewModel : ReactiveObject, IDstBrowserHeaderViewModel
     {
+        /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// The <see cref="NodeId"/> of the ServerStatus.CurrentTime node in an OPC session
         /// </summary>
@@ -65,6 +73,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IStatusBarControlViewModel"/> instance
         /// </summary>
         private readonly IStatusBarControlViewModel statusBarControlViewModel;
+
+        /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigationService;
 
         /// <summary>
         /// Backing field for <see cref="ServerAddress"/>
@@ -151,10 +164,13 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
-        public DstBrowserHeaderViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlViewModel)
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        public DstBrowserHeaderViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlViewModel,
+        INavigationService navigationService)
         {
             this.dstController = dstController;
             this.statusBarControlViewModel = statusBarControlViewModel;
+            this.navigationService = navigationService;
 
             this.WhenAnyValue(x => x.dstController.IsSessionOpen)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -344,6 +360,9 @@ namespace DEHPEcosimPro.ViewModel
             else
             {
                 this.ExperimentButtonText = "Run";
+                this.ExperimentProgress = 0;
+                this.IsExperimentRunning = false;
+                this.cancelToken = null;
                 this.ServerAddress = string.Empty;
                 this.VariablesCount = 0;
                 this.ServerStartTime = null;
@@ -365,24 +384,25 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Runs the experiment
         /// </summary>
-        private void RunExperiment()
+        public void RunExperiment()
         {
             if (this.IsExperimentRunning)
             {
                 this.cancelToken?.Cancel();
                 return;
             }
+
             else if (Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
             {
-                var result = MessageBox.Show("Reset the experiment, clear the collected values \n\rand run once more the experiment?",
-                    "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+                var result = this.navigationService
+                    .ShowDxDialog<ExperimentResetAndReRunConfirmDialog>();
 
-                if (result == MessageBoxResult.No)
+                if (result != true)
                 {
                     return;
                 }
 
-                this.Reset();
+                this.Reset(false);
             }
 
             if(this.dstController.WriteToDst(this.stopStepNodeId, this.SelectedStopStep) 
@@ -399,7 +419,14 @@ namespace DEHPEcosimPro.ViewModel
                     {
                         this.CallNextCint();
                     }
-                }, this.cancelToken.Token);
+                }, this.cancelToken.Token).ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            this.statusBarControlViewModel.Append(t.Exception?.Message, StatusBarMessageSeverity.Error);
+                            this.logger.Error(t.Exception);
+                        }
+                    });
             }
         }
 
@@ -439,14 +466,16 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Executes the <see cref="CallResetMethodCommand"/> by calling the OPC reset method and reports its execution state to the represented status bar
         /// </summary>
-        private void Reset()
+        /// <param name="showWarn">A value indicating whether a warning should be displayed allowing the user to cancel</param>
+        public void Reset(bool showWarn = true)
         {
             try
             {
-                var result = MessageBox.Show($"By reseting the OPC experiment, all collected values will be lost.", "Reset",
-                    MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.OK);
+                var result = showWarn 
+                    ? this.navigationService.ShowDxDialog<ExperimentResetWarningDialog>()
+                    : true;
 
-                if (result == MessageBoxResult.Cancel)
+                if (result != true)
                 {
                     return;
                 }
@@ -457,6 +486,7 @@ namespace DEHPEcosimPro.ViewModel
                 {
                     this.statusBarControlViewModel.Append($"Reset executed successfully.");
                     this.dstController.ResetVariables();
+                    this.dstController.ReTransferMappedThingsToDst();
                     this.ExperimentButtonText = "Run";
                 }
                 else

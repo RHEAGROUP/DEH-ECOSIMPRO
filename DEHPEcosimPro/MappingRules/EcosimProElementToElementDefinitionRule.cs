@@ -259,7 +259,7 @@ namespace DEHPEcosimPro.MappingRules
             {
                 foreach (var value in variable.SelectedValues)
                 {
-                    values.Add($"{value.TimeStep}");
+                    values.Add(FormattableString.Invariant($"{value.TimeStep}"));
                     values.Add(FormattableString.Invariant($"{value.Value}"));
                 }
             }

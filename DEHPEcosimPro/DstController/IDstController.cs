@@ -119,7 +119,7 @@ namespace DEHPEcosimPro.DstController
         /// <param name="credential">The <see cref="IUserIdentity"/> default = null in case server does not require authentication</param>
         /// <param name="samplingInterval">The <see cref="int"/> sampling interval in millisecond</param>
         /// <returns>A <see cref="Task"/></returns>
-        Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null, int samplingInterval = 500);
+        Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null, int samplingInterval = 1000);
 
         /// <summary>
         /// Reads and returns the server start time, in UTC, of the currently open session
@@ -175,6 +175,11 @@ namespace DEHPEcosimPro.DstController
         /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
         /// <returns>A <see cref="Task"/></returns>
         void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
+
+        /// <summary>
+        /// Transfers again all already transfered value to the dst in case of OPC server reset
+        /// </summary>
+        void ReTransferMappedThingsToDst();
 
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
