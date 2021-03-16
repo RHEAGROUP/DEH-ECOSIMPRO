@@ -222,7 +222,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.viewModel.CallRunMethodCommand.Execute(null);
 
-            await Task.Delay(100);
+            await Task.Delay(1000);
 
             this.dstController.Verify(x => x.GetNextExperimentStep(), Times.Exactly(6));
             this.dstController.Setup(x => x.GetNextExperimentStep()).Throws<InvalidOperationException>();

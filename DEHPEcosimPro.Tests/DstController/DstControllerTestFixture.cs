@@ -228,7 +228,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         { 
                             {
                                 new Parameter(), new VariableRowViewModel((
-                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new ReferenceDescription()
+                                    {
+                                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                        NodeId = new NodeId(Guid.NewGuid())
+                                    },
                                     new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                             }
                         }, 
@@ -247,7 +251,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         {
                             {
                                 new Parameter(), new VariableRowViewModel((
-                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new ReferenceDescription()
+                                    {
+                                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                        NodeId = new NodeId(Guid.NewGuid())
+                                    },
                                     new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                             }
                         },
@@ -283,7 +291,7 @@ namespace DEHPEcosimPro.Tests.DstController
 
             Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
             
-            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(3));
+            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(5));
         }
 
         [Test]
