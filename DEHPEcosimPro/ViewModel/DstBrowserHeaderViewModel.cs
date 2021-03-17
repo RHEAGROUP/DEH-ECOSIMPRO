@@ -87,6 +87,61 @@ namespace DEHPEcosimPro.ViewModel
         private DateTime? currentServerTime;
 
         /// <summary>
+        /// Backing field for <see cref="SelectedStopStep"/> 
+        /// </summary>
+        private double selectedStopStep = 5;
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedStepping"/> 
+        /// </summary>
+        private double selectedStepping = .01;
+
+        /// <summary>
+        /// Backing field for <see cref="IsExperimentRunning"/> 
+        /// </summary>
+        private bool isExperimentRunning;
+
+        /// <summary>
+        /// Backing field for <see cref="ExperimentProgress"/> 
+        /// </summary>
+        private double experimentProgress;
+
+        /// <summary>
+        /// Backing field for <see cref="ExperimentButtonText"/> 
+        /// </summary>
+        private string experimentButtonText = "Run the experiment";
+
+        /// <summary>
+        /// The <see cref="NodeId"/> of CINT
+        /// </summary>
+        private NodeId steppingNodeId;
+
+        /// <summary>
+        /// The <see cref="NodeId"/> of TSTOP
+        /// </summary>
+        private NodeId stopStepNodeId;
+
+        /// <summary>
+        /// Backing field for <see cref="ExperimentTime"/>
+        /// </summary>
+        private double experimentTime;
+        
+        /// <summary>
+        /// The <see cref="Stopwatch"/>
+        /// </summary>
+        private Stopwatch stopWatch;
+
+        /// <summary>
+        /// Backing field for <see cref="AreTimeStepAnStepTimeEditable"/>
+        /// </summary>
+        private bool areTimeStepAnStepTimeEditable;
+
+        /// <summary>
+        /// Bqcking field for <see cref="CanRunExperiment"/>
+        /// </summary>
+        private bool canRunExperiment;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="DstBrowserHeaderViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
@@ -113,7 +168,12 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
-        /// Gets or sets the URI of the connected data source
+        /// Gets the token that stops the experiment
+        /// </summary>
+        public CancellationTokenSource CancelToken { get; set; }
+
+        /// <summary>
+        /// A value indicating whether the <see cref="CallRunMethodCommand"/> can execute
         /// </summary>
         public string ServerAddress
         {
@@ -184,6 +244,10 @@ namespace DEHPEcosimPro.ViewModel
             }
             else
             {
+                this.ExperimentButtonText = "Run";
+                this.ExperimentProgress = 0;
+                this.IsExperimentRunning = false;
+                this.CancelToken = null;
                 this.ServerAddress = string.Empty;
                 this.SamplingInterval = 0;
                 this.VariablesCount = 0;
@@ -202,9 +266,90 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (string.IsNullOrEmpty(methodBrowseName))
             {
+                this.CancelToken?.Cancel();
                 return;
             }
 
+            else if (Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
+            {
+                var result = this.navigationService
+                    .ShowDxDialog<ExperimentResetAndReRunConfirmDialog>();
+
+                if (result != true)
+                {
+                    return;
+                }
+
+                this.Reset(false);
+            }
+
+            if(this.dstController.WriteToDst(this.stopStepNodeId, this.SelectedStopStep) 
+               && this.dstController.WriteToDst(this.steppingNodeId, this.SelectedStepping))
+            {
+                this.IsExperimentRunning = true;
+                this.stopWatch = new Stopwatch();
+                this.stopWatch.Start();
+                this.CancelToken = new CancellationTokenSource();
+
+                Task.Run(this.RunExperimentTask, this.CancelToken.Token).ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            this.logger.Error(t.Exception);
+                        }
+                    });
+            }
+        }
+
+        /// <summary>
+        /// Loops through all steps starting at <see cref="ExperimentTime"/> and calls <see cref="CallNextCint"/>
+        /// </summary>
+        public void RunExperimentTask()
+        {
+            for (var step = this.ExperimentTime; step <= this.selectedStopStep / this.selectedStepping; step++)
+            {
+                this.CallNextCint();
+            }
+        }
+
+        /// <summary>
+        /// Action on each timer call back
+        /// </summary>
+        private void CallNextCint()
+        {
+            if (this.CancelToken.IsCancellationRequested || Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
+            {
+                this.EndRun();
+            }
+            else
+            {
+                this.ExperimentButtonText = $"Running ({this.ExperimentProgress}%) Press to pause";
+                this.dstController.GetNextExperimentStep();
+            }
+        }
+
+        /// <summary>
+        /// Resets experiment variables
+        /// </summary>
+        private void EndRun()
+        {
+            this.ExperimentButtonText = this.ExperimentTime < this.SelectedStopStep ? $"Paused ({ this.ExperimentProgress}%) Press to Continue" : "Run";
+            this.IsExperimentRunning = false;
+
+            if (this.stopWatch is {})
+            {
+                this.stopWatch.Stop();
+                this.statusBarControlViewModel.Append($"Experiment has run in {this.stopWatch.ElapsedMilliseconds} ms");
+                this.stopWatch = null;
+            }
+        }
+
+        /// <summary>
+        /// Executes the <see cref="CallResetMethodCommand"/> by calling the OPC reset method and reports its execution state to the represented status bar
+        /// </summary>
+        /// <param name="showWarn">A value indicating whether a warning should be displayed allowing the user to cancel</param>
+        public void Reset(bool showWarn = true)
+        {
             try
             {
                 var callMethodResult = this.dstController.CallServerMethod(methodBrowseName);
