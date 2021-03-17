@@ -102,7 +102,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.ExternalIdentifierMapNewName);
             Assert.IsNull(this.viewModel.SelectedExternalIdentifierMap);
             Assert.AreEqual(3, this.viewModel.AvailableExternalIdentifierMap.Count);
-            Assert.AreEqual(1000, this.viewModel.SamplingInterval);
         }
 
         [Test]

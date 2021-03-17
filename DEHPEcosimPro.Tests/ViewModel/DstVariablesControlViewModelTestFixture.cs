@@ -140,8 +140,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
         {
             Assert.AreEqual(3, this.viewModel.Variables.Count);
 
-            this.dstController.Verify(x => x.AddSubscription(It.IsAny<ReferenceDescription>()), Times.Exactly(3));
-            
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.UpdateProperties();
 

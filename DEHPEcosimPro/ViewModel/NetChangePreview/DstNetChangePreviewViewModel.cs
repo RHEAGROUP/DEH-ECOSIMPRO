@@ -159,6 +159,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             foreach (var variable in this.Variables)
             {
                 variable.ShouldListenToChangeMessage = true;
+                variable.ActualValue = this.DstController.ReadNode(variable.Reference);
                 CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variable.Reference.NodeId.Identifier, false));
             }
         }

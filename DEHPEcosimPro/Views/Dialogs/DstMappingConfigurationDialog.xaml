@@ -73,7 +73,7 @@
                                 </dxc:XYDiagram2D.AxisY>
                                 <dxc:XYDiagram2D.SeriesItemTemplate>
                                     <DataTemplate>
-                                        <dxc:LineSeries2D AnimationAutoStartMode="PlayOnce" ArgumentDataMember="TimeDelta" ArgumentScaleType="TimeSpan" DataSource="{Binding Values}" DisplayName="{Binding Name}" ValueDataMember="Value" ValueScaleType="Numerical" />
+                                        <dxc:LineSeries2D AnimationAutoStartMode="PlayOnce" ArgumentDataMember="TimeStep" ArgumentScaleType="Numerical" DataSource="{Binding Values}" DisplayName="{Binding Name}" ValueDataMember="Value" ValueScaleType="Numerical" />
                                     </DataTemplate>
                                 </dxc:XYDiagram2D.SeriesItemTemplate>
                             </dxc:XYDiagram2D>
@@ -87,8 +87,7 @@
                         <Grid Margin="1" HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="6*" />
                                 <ColumnDefinition Width="2*" />
                             </Grid.ColumnDefinitions>
                             <Label Content="Timestep: " />
@@ -96,8 +95,8 @@
                                                   EditValue="{Binding SelectedThing.SelectedTimeStep, UpdateSourceTrigger=PropertyChanged}"
                                                   EditValueType="{x:Type system:Double}" ToolTip="Defines the time step"
                                                   MinValue="0" ValidateOnEnterKeyPressed="False" ValidateOnTextInput="False" />
-                            <dxe:ComboBoxEdit ToolTip="The selected time unit" Grid.Column="2" Margin="2" AutoComplete="True" ItemsSource="{Binding TimeSteps}" SelectedItem="{Binding SelectedThing.SelectedTimeUnit}" />
-                            <Button ToolTip="Applies the defined step and time unit" Grid.Column="3" Margin="2,2,0,2" HorizontalAlignment="Stretch" Command="{Binding ApplyTimeStepOnSelectionCommand}">Apply</Button>
+                            
+                            <Button ToolTip="Applies the defined step and time unit" Grid.Column="2" Margin="2,2,0,2" HorizontalAlignment="Stretch" Command="{Binding ApplyTimeStepOnSelectionCommand}">Apply</Button>
                         </Grid>
                         <dxg:GridControl ToolTip="Select some values" MaxHeight="210" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
                                                  EnableSmartColumnsGeneration="False"
@@ -110,11 +109,7 @@
                                                        RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="true" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
                             </dxg:GridControl.View>
                             <dxg:GridControl.Columns>
-                                <dxg:GridColumn FieldName="TimeDelta" Header="Time Delta">
-                                    <dxg:GridColumn.EditSettings>
-                                        <dxe:DateEditSettings Mask="HH:mm:ss.fffffff" MaskUseAsDisplayFormat="True" />
-                                    </dxg:GridColumn.EditSettings>
-                                </dxg:GridColumn>
+                                <dxg:GridColumn FieldName="TimeStep" />
                                 <dxg:GridColumn FieldName="Value" />
                             </dxg:GridControl.Columns>
                         </dxg:GridControl>

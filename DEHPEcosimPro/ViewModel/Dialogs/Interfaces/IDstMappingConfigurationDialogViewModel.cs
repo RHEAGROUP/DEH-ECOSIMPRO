@@ -81,11 +81,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
         /// </summary>
         bool CanContinue { get; set; }
-        
-        /// <summary>
-        /// Gets the collection of <see cref="VariableRowViewModel"/>
-        /// </summary>
-        ReactiveList<TimeUnit> TimeSteps { get; }
 
         /// <summary>
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>

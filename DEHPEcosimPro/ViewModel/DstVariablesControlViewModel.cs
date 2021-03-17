@@ -240,7 +240,6 @@ namespace DEHPEcosimPro.ViewModel
             if (this.DstController.IsSessionOpen)
             {
                 this.Variables.AddRange(this.DstController.Variables.Select(r => new VariableRowViewModel(r)));
-                this.AddSubscriptions();
             }
             else
             {
@@ -248,18 +247,7 @@ namespace DEHPEcosimPro.ViewModel
                 this.DstController.ClearSubscriptions();
             }
         }
-
-        /// <summary>
-        /// Adds all the subscription
-        /// </summary>
-        private void AddSubscriptions()
-        {
-            foreach (var variable in this.Variables)
-            {
-                this.DstController.AddSubscription(variable.Reference);
-            }
-        }
-
+        
         /// <summary>
         /// Populate the context menu for this browser
         /// </summary>

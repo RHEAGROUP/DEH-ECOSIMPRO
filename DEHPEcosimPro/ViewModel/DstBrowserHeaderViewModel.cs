@@ -25,17 +25,25 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Diagnostics;
+    using System.Linq;
     using System.Reactive.Linq;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     using CDP4Dal;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.Views;
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using NLog;
 
     using Opc.Ua;
 
@@ -46,6 +54,11 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class DstBrowserHeaderViewModel : ReactiveObject, IDstBrowserHeaderViewModel
     {
+        /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// The <see cref="NodeId"/> of the ServerStatus.CurrentTime node in an OPC session
         /// </summary>
@@ -62,14 +75,14 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IStatusBarControlViewModel statusBarControlViewModel;
 
         /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigationService;
+
+        /// <summary>
         /// Backing field for <see cref="ServerAddress"/>
         /// </summary>
         private string serverAddress;
-
-        /// <summary>
-        /// Backing field for <see cref="SamplingInterval"/>
-        /// </summary>
-        private int samplingInterval;
 
         /// <summary>
         /// Backing field for <see cref="VariablesCount"/>
@@ -146,10 +159,13 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarControlViewModel">The <see cref="IStatusBarControlViewModel"/></param>
-        public DstBrowserHeaderViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlViewModel)
+        /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        public DstBrowserHeaderViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlViewModel,
+        INavigationService navigationService)
         {
             this.dstController = dstController;
             this.statusBarControlViewModel = statusBarControlViewModel;
+            this.navigationService = navigationService;
 
             this.WhenAnyValue(x => x.dstController.IsSessionOpen)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -158,13 +174,24 @@ namespace DEHPEcosimPro.ViewModel
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>().Where(x => Equals(x.Id, this.currentServerTimeNodeId.Identifier))
                 .Subscribe(e => this.CurrentServerTime = (DateTime)e.Value);
 
-            var canCallServerMethods = this.WhenAnyValue(vm => vm.dstController.IsSessionOpen);
+            this.WhenAnyValue(x => x.SelectedStepping, x => x.SelectedStopStep)
+                .Subscribe(_ => this.UpdateCanRunExperiment());
 
-            this.CallRunMethodCommand = ReactiveCommand.Create(canCallServerMethods);
-            this.CallRunMethodCommand.Subscribe(_ => this.CallServerMethod("method_run"));
+            this.CallRunMethodCommand = ReactiveCommand.Create(
+                this.WhenAnyValue(x => x.CanRunExperiment));
+            
+            this.CallRunMethodCommand.Subscribe(_ => this.RunExperiment());
 
-            this.CallResetMethodCommand = ReactiveCommand.Create(canCallServerMethods);
-            this.CallResetMethodCommand.Subscribe(_ => this.CallServerMethod("method_reset"));
+            this.CallResetMethodCommand = ReactiveCommand.Create(
+                this.WhenAnyValue(vm => vm.dstController.IsSessionOpen));
+            
+            this.CallResetMethodCommand.Subscribe(_ => this.Reset());
+
+            this.WhenAny(x => x.ExperimentTime, 
+                x => x.dstController.IsSessionOpen,
+                    (time, isConnected)
+                                => Math.Abs(time.Value) <= 0 && isConnected.Value)
+                .Subscribe(x => this.AreTimeStepAnStepTimeEditable = x);
         }
 
         /// <summary>
@@ -175,19 +202,90 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// A value indicating whether the <see cref="CallRunMethodCommand"/> can execute
         /// </summary>
+        public bool CanRunExperiment
+        {
+            get => this.canRunExperiment;
+            set => this.RaiseAndSetIfChanged(ref this.canRunExperiment, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the TimeStep and the StepTime are editable
+        /// </summary>
+        public bool AreTimeStepAnStepTimeEditable
+        {
+            get => this.areTimeStepAnStepTimeEditable;
+            set => this.RaiseAndSetIfChanged(ref this.areTimeStepAnStepTimeEditable, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the experiment TIME
+        /// </summary>
+        public double ExperimentTime
+        {
+            get => this.experimentTime;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref this.experimentTime, value);
+
+                if (this.IsExperimentRunning)
+                {
+                    this.ExperimentProgress = Math.Round((value / this.SelectedStopStep) * 100, 2);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the experiment button text
+        /// </summary>
+        public string ExperimentButtonText
+        {
+            get => this.experimentButtonText;
+            set => this.RaiseAndSetIfChanged(ref this.experimentButtonText, value);
+        }
+        
+        /// <summary>
+        /// Gets or sets the experiment progress value
+        /// </summary>
+        public double ExperimentProgress
+        {
+            get => this.experimentProgress;
+            set => this.RaiseAndSetIfChanged(ref this.experimentProgress, value);
+        }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether the experiment is running
+        /// </summary>
+        public bool IsExperimentRunning
+        {
+            get => this.isExperimentRunning;
+            set => this.RaiseAndSetIfChanged(ref this.isExperimentRunning, value);
+        }
+
+        /// <summary>
+        /// Gets or sets the CINT of the experiment
+        /// </summary>
+        public double SelectedStepping
+        {
+            get => this.selectedStepping;
+            set => this.RaiseAndSetIfChanged(ref this.selectedStepping, value);
+        }
+        
+        /// <summary>
+        /// Gets or sets the TSTOP of the experiment
+        /// </summary>
+        public double SelectedStopStep
+        {
+            get => this.selectedStopStep;
+            set => this.RaiseAndSetIfChanged(ref this.selectedStopStep, value);
+        }
+        
+        /// <summary>
+        /// Gets or sets the URI of the connected data source
+        /// </summary>
         public string ServerAddress
         {
             get => this.serverAddress;
             set => this.RaiseAndSetIfChanged(ref this.serverAddress, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the time, in milliseconds, between which data is recorded
-        /// </summary>
-        public int SamplingInterval
-        {
-            get => this.samplingInterval;
-            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
         }
 
         /// <summary>
@@ -226,21 +324,38 @@ namespace DEHPEcosimPro.ViewModel
         /// <see cref="ReactiveCommand{T}"/> for calling the 'Reset' server method
         /// </summary>
         public ReactiveCommand<object> CallResetMethodCommand { get; set; }
+        
+        /// <summary>
+        /// Gets the <see cref="NodeId"/>s of CINT and TSTOP
+        /// </summary>
+        private void GetTstopCintNodeId()
+        {
+            this.stopStepNodeId = (NodeId)this.dstController.References
+                .FirstOrDefault(x => x.BrowseName.Name == "TSTOP")?.NodeId;
+
+            this.steppingNodeId = (NodeId)this.dstController.References
+                .FirstOrDefault(x => x.BrowseName.Name == "CINT")?.NodeId;
+
+            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
+                .Where(x => x.Id == this.dstController.TimeNodeId.Identifier)
+                .Subscribe(x => this.ExperimentTime = Convert.ToDouble(x.Value));
+        }
 
         /// <summary>
         /// Updates the view model's properties
         /// </summary>
         public void UpdateProperties()
         {
+            this.UpdateCanRunExperiment();
+
             if (this.dstController.IsSessionOpen)
             {
                 this.ServerAddress = this.dstController.ServerAddress;
-                this.SamplingInterval = this.dstController.RefreshInterval;
                 this.VariablesCount = this.dstController.Variables.Count;
                 this.ServerStartTime = this.dstController.GetServerStartTime();
                 this.CurrentServerTime = this.dstController.GetCurrentServerTime();
-
                 this.dstController.AddSubscription(this.currentServerTimeNodeId);
+                this.GetTstopCintNodeId();
             }
             else
             {
@@ -249,22 +364,29 @@ namespace DEHPEcosimPro.ViewModel
                 this.IsExperimentRunning = false;
                 this.CancelToken = null;
                 this.ServerAddress = string.Empty;
-                this.SamplingInterval = 0;
                 this.VariablesCount = 0;
                 this.ServerStartTime = null;
                 this.CurrentServerTime = null;
-
                 this.dstController.ClearSubscriptions();
             }
         }
 
         /// <summary>
-        /// Calls a server method and reports its execution state to the represented status bar
+        /// Updates the <see cref="canRunExperiment"/>
         /// </summary>
-        /// <param name="methodBrowseName">The BrowseName of the server method</param>
-        private void CallServerMethod(string methodBrowseName)
+        private void UpdateCanRunExperiment()
         {
-            if (string.IsNullOrEmpty(methodBrowseName))
+            this.CanRunExperiment = this.dstController.IsSessionOpen
+                                    && this.SelectedStepping > 0
+                                    && this.SelectedStopStep > 0;
+        }
+
+        /// <summary>
+        /// Runs the experiment
+        /// </summary>
+        public void RunExperiment()
+        {
+            if (this.IsExperimentRunning)
             {
                 this.CancelToken?.Cancel();
                 return;
@@ -352,20 +474,32 @@ namespace DEHPEcosimPro.ViewModel
         {
             try
             {
-                var callMethodResult = this.dstController.CallServerMethod(methodBrowseName);
+                var result = showWarn 
+                    ? this.navigationService.ShowDxDialog<ExperimentResetWarningDialog>()
+                    : true;
+
+                if (result != true)
+                {
+                    return;
+                }
+                
+                var callMethodResult = this.dstController.CallServerMethod("method_reset");
 
                 if (callMethodResult != null)
                 {
-                    this.statusBarControlViewModel.Append($"{string.Join(", ", callMethodResult)} executed successfully.");
+                    this.statusBarControlViewModel.Append($"Reset executed successfully.");
+                    this.dstController.ResetVariables();
+                    this.dstController.ReTransferMappedThingsToDst();
+                    this.ExperimentButtonText = "Run";
                 }
                 else
                 {
-                    this.statusBarControlViewModel.Append($"No method was found with the BrowseName '{methodBrowseName}'", StatusBarMessageSeverity.Error);
+                    this.statusBarControlViewModel.Append("No method was found with the name 'method_reset'", StatusBarMessageSeverity.Error);
                 }
             }
             catch (Exception exception)
             {
-                this.statusBarControlViewModel.Append($"Executing method {methodBrowseName} failed: {exception.Message}", StatusBarMessageSeverity.Error);
+                this.statusBarControlViewModel.Append($"Executing method Reset failed: {exception.Message}", StatusBarMessageSeverity.Error);
             }
         }
     }

@@ -97,6 +97,9 @@ namespace DEHPEcosimPro.ViewModel
             this.WhenAnyValue(x => x.dstController.IsSessionOpen)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.UpdateConnectButtonText);
+
+            this.WhenAnyValue(x => x.DstBrowserHeader.IsExperimentRunning)
+                .Subscribe(x => this.DstVariablesViewModel.IsBusy = x);
         }
 
         /// <summary>

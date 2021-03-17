@@ -132,7 +132,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.ActualState = container.ActualState;
             this.Scale = scale;
 
-            this.Representation = $"{(this.Option is null ? string.Empty : $" Option: {this.Option.Name}")}" +
+            this.Representation = $"{(this.Option is null ? string.Empty : $" Option: {this.Option.Name}")} " +
                                   $"{(this.ActualState is null ? string.Empty : $" State: {this.ActualState.Name} ")}" +
                                   $"{this.Value} [{(this.Scale is null ? "-" : this.Scale.ShortName)}]";
         }
