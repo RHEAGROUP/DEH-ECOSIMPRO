@@ -138,11 +138,6 @@ namespace DEHPEcosimPro.ViewModel
         /// Backing field for <see cref="ExperimentTime"/>
         /// </summary>
         private double experimentTime;
-
-        /// <summary>
-        /// The token to stop the experiment
-        /// </summary>
-        private CancellationTokenSource cancelToken;
         
         /// <summary>
         /// The <see cref="Stopwatch"/>
@@ -198,6 +193,11 @@ namespace DEHPEcosimPro.ViewModel
                                 => Math.Abs(time.Value) <= 0 && isConnected.Value)
                 .Subscribe(x => this.AreTimeStepAnStepTimeEditable = x);
         }
+
+        /// <summary>
+        /// Gets the token that stops the experiment
+        /// </summary>
+        public CancellationTokenSource CancelToken { get; set; }
 
         /// <summary>
         /// A value indicating whether the <see cref="CallRunMethodCommand"/> can execute
@@ -362,7 +362,7 @@ namespace DEHPEcosimPro.ViewModel
                 this.ExperimentButtonText = "Run";
                 this.ExperimentProgress = 0;
                 this.IsExperimentRunning = false;
-                this.cancelToken = null;
+                this.CancelToken = null;
                 this.ServerAddress = string.Empty;
                 this.VariablesCount = 0;
                 this.ServerStartTime = null;
@@ -388,7 +388,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             if (this.IsExperimentRunning)
             {
-                this.cancelToken?.Cancel();
+                this.CancelToken?.Cancel();
                 return;
             }
 
@@ -411,22 +411,26 @@ namespace DEHPEcosimPro.ViewModel
                 this.IsExperimentRunning = true;
                 this.stopWatch = new Stopwatch();
                 this.stopWatch.Start();
-                this.cancelToken = new CancellationTokenSource();
+                this.CancelToken = new CancellationTokenSource();
 
-                Task.Run(() =>
-                {
-                    for (var step = this.ExperimentTime; step <= this.selectedStopStep / this.selectedStepping; step++)
-                    {
-                        this.CallNextCint();
-                    }
-                }, this.cancelToken.Token).ContinueWith(t =>
+                Task.Run(this.RunExperimentTask, this.CancelToken.Token).ContinueWith(t =>
                     {
                         if (t.IsFaulted)
                         {
-                            this.statusBarControlViewModel.Append(t.Exception?.Message, StatusBarMessageSeverity.Error);
                             this.logger.Error(t.Exception);
                         }
                     });
+            }
+        }
+
+        /// <summary>
+        /// Loops through all steps starting at <see cref="ExperimentTime"/> and calls <see cref="CallNextCint"/>
+        /// </summary>
+        public void RunExperimentTask()
+        {
+            for (var step = this.ExperimentTime; step <= this.selectedStopStep / this.selectedStepping; step++)
+            {
+                this.CallNextCint();
             }
         }
 
@@ -435,7 +439,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void CallNextCint()
         {
-            if (this.cancelToken.IsCancellationRequested || Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
+            if (this.CancelToken.IsCancellationRequested || Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
             {
                 this.EndRun();
             }
@@ -453,7 +457,6 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.ExperimentButtonText = this.ExperimentTime < this.SelectedStopStep ? $"Paused ({ this.ExperimentProgress}%) Press to Continue" : "Run";
             this.IsExperimentRunning = false;
-            this.cancelToken = null;
 
             if (this.stopWatch is {})
             {

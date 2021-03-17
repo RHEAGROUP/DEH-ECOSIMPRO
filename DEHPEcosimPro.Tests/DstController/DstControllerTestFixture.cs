@@ -419,15 +419,43 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.DstMapResult.Add(new ElementDefinition()
+            var elementDefinition = new ElementDefinition()
             {
                 Parameter = 
                 { 
                     parameter
                 }
+            };
+
+            this.controller.DstMapResult.Add(elementDefinition);
+
+            var parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null)
+            {
+                Parameter = parameter,
+                ValueSet =
+                {
+                    new ParameterOverrideValueSet()
+                    {
+                        Computed = new ValueArray<string>(new [] {"654321"}),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
+                }
+            };
+
+            this.controller.DstMapResult.Add(new ElementUsage()
+            {
+                ElementDefinition = elementDefinition,
+                ParameterOverride = 
+                {
+                    parameterOverride
+                }
             });
 
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
+            this.hubController.Setup(x => 
+                x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
+
+            this.hubController.Setup(x => 
+                x.GetThingById(parameterOverride.Iid, It.IsAny<Iteration>(), out parameterOverride));
 
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
@@ -466,10 +494,10 @@ namespace DEHPEcosimPro.Tests.DstController
                 x => x.Refresh(), Times.Exactly(1));
             
             this.exchangeHistoryService.Verify(x => 
-                x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(2));
+                x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(3));
 
             this.exchangeHistoryService.Verify(x => 
-                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Once);
+                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Exactly(2));
         }
 
         [Test]
@@ -652,6 +680,17 @@ namespace DEHPEcosimPro.Tests.DstController
                 Times.Once);
 
             this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public void VerifyWriteToDst()
+        {
+            var nodeId = new NodeId(Guid.Empty);
+
+            this.controller.WriteToDst(nodeId, 42);
+            
+            this.opcClient.Verify(x => 
+                x.WriteNode(nodeId, 42d, true), Times.Once);
         }
     }
 }
