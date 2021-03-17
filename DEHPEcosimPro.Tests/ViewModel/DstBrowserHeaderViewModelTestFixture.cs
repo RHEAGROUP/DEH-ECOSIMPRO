@@ -27,22 +27,26 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System;
     using System.Collections.Generic;
     using System.Reactive.Concurrency;
+    using System.Threading;
 
     using CDP4Dal;
 
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel;
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using DevExpress.Xpf.Core;
 
     using Moq;
 
     using NUnit.Framework;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
 
     using ReactiveUI;
 
@@ -52,12 +56,21 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private DstBrowserHeaderViewModel viewModel;
         private Mock<IDstController> dstController;
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
+        private Mock<INavigationService> navigationService;
 
         [SetUp]
         public void Setup()
         {
+            RxApp.MainThreadScheduler = Scheduler.CurrentThread;
+
             this.dstController = new Mock<IDstController>();
-            this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
+            this.statusBarViewModel = new Mock<IStatusBarControlViewModel>(); 
+
+            this.statusBarViewModel.Setup(x =>
+                x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error));
+
+            this.statusBarViewModel.Setup(x =>
+                x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info));
 
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
 
@@ -80,22 +93,42 @@ namespace DEHPEcosimPro.Tests.ViewModel
                     }, new DataValue()),
                 });
 
+            this.dstController.Setup(x => x.References)
+                .Returns(new List<ReferenceDescription>()
+                {
+                    new ReferenceDescription() {BrowseName = new QualifiedName("TSTOP")},
+                    new ReferenceDescription() {BrowseName = new QualifiedName("CINT")}
+                });
+
+            this.dstController.Setup(x => x.WriteToDst(It.IsAny<NodeId>(), It.IsAny<double>())).Returns(true);
+
             this.dstController.Setup(x => x.ServerAddress).Returns("dummyAddress");
             this.dstController.Setup(x => x.RefreshInterval).Returns(500);
             this.dstController.Setup(x => x.GetServerStartTime()).Returns(new DateTime(2021, 1, 1));
             this.dstController.Setup(x => x.GetCurrentServerTime()).Returns(new DateTime(2021, 1, 3));
+            this.dstController.Setup(x => x.TimeNodeId).Returns(new NodeId(Guid.NewGuid()));
+            this.dstController.Setup(x => x.GetNextExperimentStep());
 
-            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object);
+            this.navigationService = new Mock<INavigationService>();
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(true);
+
+            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object, this.navigationService.Object);
         }
 
         [Test]
         public void VerifyProperties()
         {
             Assert.IsEmpty(this.viewModel.ServerAddress);
-            Assert.Zero(this.viewModel.SamplingInterval);
+            Assert.AreEqual(0.01, this.viewModel.SelectedStepping);
+            Assert.AreEqual(5, this.viewModel.SelectedStopStep);
             Assert.Zero(this.viewModel.VariablesCount);
             Assert.IsNull(this.viewModel.ServerStartTime);
             Assert.IsNull(this.viewModel.CurrentServerTime);
+            Assert.IsFalse(this.viewModel.IsExperimentRunning);
+            Assert.IsFalse(this.viewModel.AreTimeStepAnStepTimeEditable);
+            Assert.IsFalse(this.viewModel.CanRunExperiment);
+            Assert.IsNotNull(this.viewModel.CallResetMethodCommand);
+            Assert.IsNotNull(this.viewModel.CallRunMethodCommand);
         }
 
         [Test]
@@ -107,7 +140,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.viewModel.UpdateProperties();
 
             Assert.AreEqual("dummyAddress", this.viewModel.ServerAddress);
-            Assert.AreEqual(500, this.viewModel.SamplingInterval);
             Assert.AreEqual(3, this.viewModel.VariablesCount);
             Assert.AreEqual(new DateTime(2021, 1, 1), this.viewModel.ServerStartTime);
             Assert.AreEqual(new DateTime(2021, 1, 3), this.viewModel.CurrentServerTime);
@@ -116,7 +148,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.UpdateProperties();
-
             this.dstController.Verify(x => x.ClearSubscriptions(), Times.Exactly(2));
         }
 
@@ -125,35 +156,84 @@ namespace DEHPEcosimPro.Tests.ViewModel
         {
             var currentServerTimeNodeId = new NodeId(Variables.Server_ServerStatus_CurrentTime);
 
-            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent { Id = currentServerTimeNodeId.Identifier, Value = DateTime.Today });
+            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent() { Id = currentServerTimeNodeId.Identifier, Value = DateTime.Today });
 
             Assert.AreEqual(DateTime.Today, this.viewModel.CurrentServerTime);
+        }
+
+
+        [Test]
+        public void VerifyRunEperimentCanExecute()
+        {
+            Assert.IsFalse(this.viewModel.CallRunMethodCommand.CanExecute(null));
+            this.dstController.Setup(c => c.IsSessionOpen).Returns(true);
+            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object, this.navigationService.Object);
+            Assert.IsTrue(this.viewModel.CallRunMethodCommand.CanExecute(null));
+            this.viewModel.SelectedStepping = 0;
+            Assert.IsFalse(this.viewModel.CallRunMethodCommand.CanExecute(null));
+            this.viewModel.SelectedStepping = 0.1;
+            this.viewModel.SelectedStopStep = 0;
+            Assert.IsFalse(this.viewModel.CallRunMethodCommand.CanExecute(null));
         }
 
         [Test]
         public void VerifyCallRunMethodCommand()
         {
-            Assert.IsFalse(this.viewModel.CallRunMethodCommand.CanExecute(null));
-
-            this.dstController.Setup(c => c.IsSessionOpen).Returns(true);
-            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object);
-
-            Assert.IsTrue(this.viewModel.CallRunMethodCommand.CanExecute(null));
-
-            this.viewModel.CallRunMethodCommand.Execute(null);
-            this.dstController.Verify(x => x.CallServerMethod("method_run"), Times.Once);
-
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("No method was found")), StatusBarMessageSeverity.Error), Times.Once);
-
-            this.dstController.Setup(x => x.CallServerMethod("method_run")).Returns(new List<object>());
+            this.viewModel.SelectedStepping = 0.1;
+            this.viewModel.SelectedStopStep = 0;
+            
             this.viewModel.CallRunMethodCommand.Execute(null);
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("executed")), StatusBarMessageSeverity.Info), Times.Once);
-
-            this.dstController.Setup(x => x.CallServerMethod("method_run")).Throws(new Exception("dummy-exception"));
+            this.viewModel.IsExperimentRunning = true;
             this.viewModel.CallRunMethodCommand.Execute(null);
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("dummy-exception")), StatusBarMessageSeverity.Error), Times.Once);
+            this.viewModel.IsExperimentRunning = false;
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 10;
+
+            this.navigationService.Setup(x =>
+                x.ShowDxDialog<ExperimentResetAndReRunConfirmDialog>()).Returns(true);
+
+            this.viewModel.CallRunMethodCommand.Execute(null);
+
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 10;
+            
+            this.navigationService.Setup(x =>
+                x.ShowDxDialog<ExperimentResetAndReRunConfirmDialog>()).Returns(false);
+            
+            this.viewModel.CallRunMethodCommand.Execute(null);
+
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 10;
+            
+            this.navigationService.Setup(x =>
+                x.ShowDxDialog<ExperimentResetAndReRunConfirmDialog>()).Returns(default(bool?));
+            
+            this.viewModel.CallRunMethodCommand.Execute(null);
+
+            this.viewModel.IsExperimentRunning = false;
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 15;
+            this.viewModel.SelectedStepping = 1;
+
+            Assert.DoesNotThrow(() => this.viewModel.CallRunMethodCommand.Execute(null));
+            this.dstController.Setup(x => x.GetNextExperimentStep()).Throws<InvalidOperationException>();
+            Assert.DoesNotThrow(() => this.viewModel.CallRunMethodCommand.Execute(null));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error));
+        }
+
+        [Test]
+        public void VerifyRunExperimentTask()
+        {
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 15;
+            this.viewModel.SelectedStepping = 1;
+            this.viewModel.CancelToken = new CancellationTokenSource();
+
+            Assert.DoesNotThrow(() => this.viewModel.RunExperimentTask());
+
+            this.dstController.Verify(x => x.GetNextExperimentStep(), Times.Exactly(6));
         }
 
         [Test]
@@ -162,24 +242,36 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsFalse(this.viewModel.CallResetMethodCommand.CanExecute(null));
 
             this.dstController.Setup(c => c.IsSessionOpen).Returns(true);
-            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object);
+            this.viewModel = new DstBrowserHeaderViewModel(this.dstController.Object, this.statusBarViewModel.Object, this.navigationService.Object);
 
             Assert.IsTrue(this.viewModel.CallResetMethodCommand.CanExecute(null));
-
-            this.viewModel.CallResetMethodCommand.Execute(null);
-            this.dstController.Verify(x => x.CallServerMethod("method_reset"), Times.Once);
-
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("No method was found")), StatusBarMessageSeverity.Error), Times.Once);
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(true);
+            this.dstController.Setup(x => x.CallServerMethod("method_reset")).Returns(default(IList<object>));
+            this.viewModel.Reset();
 
             this.dstController.Setup(x => x.CallServerMethod("method_reset")).Returns(new List<object>());
-            this.viewModel.CallResetMethodCommand.Execute(null);
+            this.viewModel.Reset();
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("executed")), StatusBarMessageSeverity.Info), Times.Once);
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(false);
+            this.viewModel.Reset();
 
-            this.dstController.Setup(x => x.CallServerMethod("method_reset")).Throws(new Exception("dummy-exception"));
-            this.viewModel.CallResetMethodCommand.Execute(null);
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(new bool?());
+            this.viewModel.Reset();
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("dummy-exception")), StatusBarMessageSeverity.Error), Times.Once);
+            this.viewModel.Reset(false);
+
+            this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Throws<InvalidOperationException>();
+            Assert.DoesNotThrow(() => this.viewModel.Reset());
+            
+            this.statusBarViewModel.Verify(x => 
+                x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Exactly(2));
+
+            this.statusBarViewModel.Verify(x => 
+                x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Info), Times.Exactly(2));
+
+            this.dstController.Verify(x => x.ResetVariables(), Times.Exactly(2));
+            this.dstController.Verify(x => x.ReTransferMappedThingsToDst(), Times.Exactly(2));
+            this.dstController.Verify(x => x.CallServerMethod("method_reset"), Times.Exactly(3));
         }
     }
 }

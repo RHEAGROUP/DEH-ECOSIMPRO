@@ -214,20 +214,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Backing field for <see cref="SamplingInterval"/>
-        /// </summary>
-        private int samplingInterval = 1000;
-
-        /// <summary>
-        /// Gets or sets the sampling interval
-        /// </summary>
-        public int SamplingInterval
-        {
-            get => this.samplingInterval;
-            set => this.RaiseAndSetIfChanged(ref this.samplingInterval, value);
-        }
-
-        /// <summary>
         /// Gets or sets the <see cref="ReactiveList{T}"/> of available <see cref="ExternalIdentifierMap"/>
         /// </summary>
         public ReactiveList<ExternalIdentifierMap> AvailableExternalIdentifierMap { get; set; }
@@ -298,12 +284,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 });
 
             this.LoginCommand.ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.LoginCommandIsDoneExecuting());
+                .Subscribe(_ => this.LoginCommandExecute());
 
             this.WhenAnyValue(x => x.CreateNewMappingConfigurationChecked).Subscribe(_ => this.UpdateExternalIdentifierSelectors());
         }
 
-        private void LoginCommandIsDoneExecuting()
+        /// <summary>
+        /// Executes the <see cref="LoginCommand"/>
+        /// </summary>
+        private void LoginCommandExecute()
         {
             this.IsBusy = false;
             this.LoginSuccessful = this.dstController.IsSessionOpen;
@@ -366,9 +355,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.statusBarControlView.Append("Loggin in...");
 
             var credentials = this.RequiresAuthentication ? new UserIdentity(this.UserName, this.Password) : null;
-            await this.dstController.Connect(this.Uri, true, credentials, this.SamplingInterval);
+            await this.dstController.Connect(this.Uri, true, credentials);
 
-            this.LoginCommandIsDoneExecuting();
+            this.LoginCommandExecute();
         }
 
         /// <summary>

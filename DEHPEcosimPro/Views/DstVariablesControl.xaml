@@ -81,7 +81,6 @@
                 <dxg:TreeListControl.Columns>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />
                     <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" />
-                    <dxg:TreeListColumn AllowEditing="False" FieldName="LastNotificationTime" Header="Last Time Updated" />
                     <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
