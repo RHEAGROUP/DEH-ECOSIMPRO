@@ -254,40 +254,12 @@ namespace DEHPEcosimPro.MappingRules
         private void AssignNewValues(VariableRowViewModel variable, ParameterValueSetBase valueSet, ParameterType independantParameterType)
         {
             var values = new List<string>();
-
-            if (independantParameterType.IsTimeQuantityKind(variable.SelectedTimeUnit, out var scale))
-            {
-                Func<TimeTaggedValueRowViewModel, string> independantValue = variable.SelectedTimeUnit switch
-                {
-                    TimeUnit.MilliSecond => x => $"{x.TimeDelta.TotalMilliseconds}",
-                    TimeUnit.Second => x => $"{x.TimeDelta.TotalSeconds}",
-                    TimeUnit.Minute => x => $"{x.TimeDelta.TotalMinutes}",
-                    TimeUnit.Hour => x => $"{x.TimeDelta.TotalHours}",
-                    TimeUnit.Day => x => $"{x.TimeDelta.TotalDays}",
-                    _ => throw new ArgumentOutOfRangeException($"{nameof(variable.SelectedTimeUnit)}",
-                        $"The selected time unit is not part or the enumeration {nameof(TimeUnit)}")
-                };
-
-                foreach (var value in variable.SelectedValues)
-                {
-                    values.Add($"{independantValue(value)}");
-                    values.Add(FormattableString.Invariant($"{value.Value}"));
-                }
-            }
-
-            else if (independantParameterType.IsQuantityKindOrText())
+            
+            if (independantParameterType.IsQuantityKindOrText())
             {
                 foreach (var value in variable.SelectedValues)
                 {
-                    values.Add($"{variable.SelectedValues.IndexOf(value)}");
-                    values.Add(FormattableString.Invariant($"{value.Value}"));
-                }
-            }
-            else if (independantParameterType.IsTimeType())
-            {
-                foreach (var value in variable.SelectedValues)
-                {
-                    values.Add($"{value.TimeDelta}");
+                    values.Add(FormattableString.Invariant($"{value.TimeStep}"));
                     values.Add(FormattableString.Invariant($"{value.Value}"));
                 }
             }

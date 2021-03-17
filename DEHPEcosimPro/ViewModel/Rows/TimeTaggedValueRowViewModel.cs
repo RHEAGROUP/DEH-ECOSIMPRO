@@ -48,44 +48,28 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="TimeStamp"/>
+        /// Backing field for <see cref="TimeStep"/>
         /// </summary>
-        private DateTime timeStamp;
+        private double timeStep;
 
         /// <summary>
         /// Gets the value of the represented reference
         /// </summary>
-        public DateTime TimeStamp
+        public double TimeStep
         {
-            get => this.timeStamp;
-            set => this.RaiseAndSetIfChanged(ref this.timeStamp, value);
-        }
-
-        /// <summary>
-        /// Backing field for <see cref="TimeDelta"/>
-        /// </summary>
-        private TimeSpan timeDelta;
-
-        /// <summary>
-        /// Gets the value of the represented reference
-        /// </summary>
-        public TimeSpan TimeDelta
-        {
-            get => this.timeDelta;
-            set => this.RaiseAndSetIfChanged(ref this.timeDelta, value);
+            get => this.timeStep;
+            set => this.RaiseAndSetIfChanged(ref this.timeStep, value);
         }
 
         /// <summary>
         /// Initializes a new <see cref="TimeTaggedValueRowViewModel"/>
         /// </summary>
         /// <param name="value">The <see cref="object"/> value</param>
-        /// <param name="serverTimestamp">The <see cref="DateTime"/> timeStamp</param>
-        /// <param name="timestampOfReference">The <see cref="TimeDelta"/></param>
-        public TimeTaggedValueRowViewModel(object value, DateTime serverTimestamp, DateTime timestampOfReference = default)
+        /// <param name="timeStep">The <see cref="double"/> timeStep</param>
+        public TimeTaggedValueRowViewModel(object value, double timeStep)
         {
             this.Value = value;
-            this.TimeStamp = serverTimestamp;
-            this.TimeDelta = timestampOfReference == default ? default : serverTimestamp - timestampOfReference;
+            this.TimeStep = timeStep;
         }
     }
 }

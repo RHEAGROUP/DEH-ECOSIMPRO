@@ -64,7 +64,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
 
             this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
-            
             this.dstController.Setup(x => x.DstMapResult)
                 .Returns(new ReactiveList<ElementBase>());
 

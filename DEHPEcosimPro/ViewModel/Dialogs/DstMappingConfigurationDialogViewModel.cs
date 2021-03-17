@@ -115,12 +115,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
         
         /// <summary>
-        /// Gets the collection of <see cref="VariableRowViewModel"/>
-        /// </summary>
-        public ReactiveList<TimeUnit> TimeSteps { get; } = 
-            new ReactiveList<TimeUnit>(Enum.GetValues(typeof(TimeUnit)).Cast<TimeUnit>());
-        
-        /// <summary>
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
         /// </summary>
         public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
@@ -226,7 +220,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 }));
 
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
-            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ => this.SelectedThing?.ApplyTimeStep());
+
+            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
+                this.UpdateHubFields(() => this.SelectedThing?.ApplyTimeStep()));
         }
 
         /// <summary>

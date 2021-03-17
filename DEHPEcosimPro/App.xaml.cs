@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using System.Windows;
     using System.Windows.Threading;
@@ -58,6 +59,7 @@ namespace DEHPEcosimPro
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public partial class App
     {
         /// <summary>
@@ -74,7 +76,7 @@ namespace DEHPEcosimPro
             this.LogAppStart();
             this.Exit += this.OnExit;
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainUnhandledException;
-            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter", Logo = new Uri("pack://application:,,,/Resources/cdplogo3d_48x48.png") };
+            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter", Logo = new Uri("pack://application:,,,/Resources/logo.png") };
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
             RegisterTypes(containerBuilder);

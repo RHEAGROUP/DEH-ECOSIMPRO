@@ -26,6 +26,7 @@ namespace DEHPEcosimPro.DstController
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -51,9 +52,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Xpf.Charts;
-
+    
     using NLog;
 
     using Opc.Ua;
@@ -71,7 +70,7 @@ namespace DEHPEcosimPro.DstController
         /// Gets the current class logger
         /// </summary>
         private readonly Logger logger = LogManager.GetCurrentClassLogger(); 
-
+        
         /// <summary>
         /// The <see cref="IOpcClientService"/> that handles the OPC connection with EcosimPro
         /// </summary>
@@ -116,6 +115,11 @@ namespace DEHPEcosimPro.DstController
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
+
+        /// <summary>
+        /// The collection of (<see cref="NodeId"/> nodeId, <see cref="string"/> value) to be retransfered
+        /// </summary>
+        private readonly List<(NodeId NodeId, string Value)> transferedHubMapResult = new List<(NodeId NodeId, string Value)>();
 
         /// <summary>
         /// Gets this running tool name
@@ -186,6 +190,11 @@ namespace DEHPEcosimPro.DstController
         public ExternalIdentifierMap ExternalIdentifierMap { get; set; }
 
         /// <summary>
+        /// Gets the OPC Time <see cref="NodeId"/>
+        /// </summary>
+        public NodeId TimeNodeId { get; private set; }
+
+        /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
         /// <param name="opcClientService">The <see cref="IOpcClientService"/></param>
@@ -226,11 +235,14 @@ namespace DEHPEcosimPro.DstController
                             this.Methods.Add(reference);
                         }
                     }
+
+                    this.TimeNodeId = (NodeId)this.References.FirstOrDefault(x => x.BrowseName.Name == "TIME")?.NodeId;
                 }
                 else
                 {
                     this.Variables.Clear();
                     this.Methods.Clear();
+                    this.TimeNodeId = null;
                 }
 
                 this.IsSessionOpen = isOpcSessionOpen;
@@ -333,6 +345,7 @@ namespace DEHPEcosimPro.DstController
         {
             this.Methods.Clear();
             this.Variables.Clear();
+            this.transferedHubMapResult.Clear();
             this.opcClientService.CloseSession();
             this.IsSessionOpen = false;
         }
@@ -346,7 +359,7 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.mappingEngine.Map(dstVariables) is (Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds, List<ElementBase> elements) && elements.Any())
             {
-                this.UpdateParmeterNodeId(parameterNodeIds);
+                this.UpdateParameterNodeId(parameterNodeIds);
                 this.DstMapResult.AddRange(elements);
             }
 
@@ -357,7 +370,7 @@ namespace DEHPEcosimPro.DstController
         /// Updates <see cref="ParameterVariable"/> by adding or replacing values
         /// </summary>
         /// <param name="parameterNodeIds">The  </param>
-        private void UpdateParmeterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
+        private void UpdateParameterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
         {
             foreach (var keyValue in parameterNodeIds)
             {
@@ -381,6 +394,24 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Transfers again all already transfered value to the dst in case of OPC server reset
+        /// </summary>
+        public void ReTransferMappedThingsToDst()
+        {
+            foreach (var (nodeId, value) in this.transferedHubMapResult)
+            {
+                this.opcClientService.WriteNode(nodeId,
+                    double.Parse(value, CultureInfo.InvariantCulture), false);
+
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent()
+                {
+                    Id = nodeId.Identifier,
+                    Value = value
+                });
+            }
+        }
+
+        /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
         public void TransferMappedThingsToDst()
@@ -389,12 +420,16 @@ namespace DEHPEcosimPro.DstController
                 .Where(
                     mappedElement => this.opcClientService.WriteNode(
                         (NodeId) mappedElement.SelectedVariable.Reference.NodeId,
-                        double.Parse(mappedElement.SelectedValue.Value)))
+                        double.Parse(mappedElement.SelectedValue.Value, CultureInfo.InvariantCulture)))
                 .ToList())
             {
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(mappedElement));
+
+                this.UpdateTransferedHubMapResult(mappedElement);
+
                 this.HubMapResult.Remove(mappedElement);
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
-                
+
                 this.exchangeHistory.Append(
                     $"Value [{mappedElement.SelectedValue.Representation}] from {mappedElement.SelectedParameter.ModelCode()} has been transfered to {mappedElement.SelectedVariable.Name}");
             }
@@ -402,6 +437,23 @@ namespace DEHPEcosimPro.DstController
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
         
+        /// <summary>
+        /// Updates the <see cref="transferedHubMapResult"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
+        private void UpdateTransferedHubMapResult(MappedElementDefinitionRowViewModel mappedElement)
+        {
+            var value = mappedElement.SelectedValue.Value;
+            var referenceNodeId = (NodeId)mappedElement.SelectedVariable.Reference.NodeId;
+
+            if (this.transferedHubMapResult.FirstOrDefault(x => x.NodeId.Identifier == referenceNodeId.Identifier) is { } alreadyTransfered)
+            {
+                this.transferedHubMapResult.Remove(alreadyTransfered);
+            }
+
+            this.transferedHubMapResult.Add((referenceNodeId, value));
+        }
+
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
         /// </summary>
@@ -414,6 +466,17 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Writes the <see cref="double"/> <paramref name="value"/> to the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> on which to write the <paramref name="value"/></param>
+        /// <param name="value">The <see cref="double"/> value</param>
+        /// <returns>An assert</returns>
+        public bool WriteToDst(NodeId nodeId, double value)
+        {
+            return this.opcClientService.WriteNode(nodeId, value, true);
+        }
+
+        /// <summary>
         /// Reads a node and gets its states information
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
@@ -422,6 +485,41 @@ namespace DEHPEcosimPro.DstController
         {
             var referenceNodeId = (NodeId) reference.NodeId;
             return this.opcClientService.ReadNode(referenceNodeId);
+        }
+
+        /// <summary>
+        /// Reads all values for <see cref="Variables"/> based on <paramref name="time"/>
+        /// </summary>
+        /// <param name="time">The current time</param>
+        public void ReadAllNode(double time)
+        {
+            foreach (var (reference, _) in this.Variables)
+            {
+                var value = this.opcClientService.ReadNode((NodeId) reference.NodeId);
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(reference, value, time));
+            }
+        }
+
+        /// <summary>
+        /// Resets all <see cref="VariableRowViewModel"/> by deleting the collected values
+        /// </summary>
+        public void ResetVariables()
+        {
+            foreach (var (reference, _) in this.Variables)
+            {
+                var value = this.opcClientService.ReadNode((NodeId)reference.NodeId);
+                CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(reference, value, 0, true));
+            }
+        }
+
+        /// <summary>
+        /// Sets the next experiment step in the OPC server and retrives new values for <see cref="Variables"/>
+        /// </summary>
+        public void GetNextExperimentStep()
+        {
+            this.CallServerMethod("method_integ_cint");
+            var time = Math.Round(Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value), 2, MidpointRounding.AwayFromZero);
+            this.ReadAllNode(time);
         }
 
         /// <summary>
