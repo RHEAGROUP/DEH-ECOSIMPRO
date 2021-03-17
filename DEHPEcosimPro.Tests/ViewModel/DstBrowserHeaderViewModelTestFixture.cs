@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System;
     using System.Collections.Generic;
     using System.Reactive.Concurrency;
+    using System.Threading;
 
     using CDP4Dal;
 
@@ -42,7 +43,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using NUnit.Framework;
 
     using Opc.Ua;
-    using Opc.Ua.Client;
 
     using ReactiveUI;
 
@@ -116,7 +116,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.UpdateProperties();
-
             this.dstController.Verify(x => x.ClearSubscriptions(), Times.Exactly(2));
         }
 
@@ -140,6 +139,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             Assert.IsTrue(this.viewModel.CallRunMethodCommand.CanExecute(null));
 
+        [Test]
+        public void VerifyCallRunMethodCommand()
+        {
+            this.viewModel.SelectedStepping = 0.1;
+            this.viewModel.SelectedStopStep = 0;
+            
             this.viewModel.CallRunMethodCommand.Execute(null);
             this.dstController.Verify(x => x.CallServerMethod("method_run"), Times.Once);
 
@@ -153,7 +158,28 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.CallServerMethod("method_run")).Throws(new Exception("dummy-exception"));
             this.viewModel.CallRunMethodCommand.Execute(null);
 
-            this.statusBarViewModel.Verify(x => x.Append(It.Is<string>(s => s.Contains("dummy-exception")), StatusBarMessageSeverity.Error), Times.Once);
+            this.viewModel.IsExperimentRunning = false;
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 15;
+            this.viewModel.SelectedStepping = 1;
+
+            Assert.DoesNotThrow(() => this.viewModel.CallRunMethodCommand.Execute(null));
+            this.dstController.Setup(x => x.GetNextExperimentStep()).Throws<InvalidOperationException>();
+            Assert.DoesNotThrow(() => this.viewModel.CallRunMethodCommand.Execute(null));
+            this.statusBarViewModel.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error));
+        }
+
+        [Test]
+        public void VerifyRunExperimentTask()
+        {
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 15;
+            this.viewModel.SelectedStepping = 1;
+            this.viewModel.CancelToken = new CancellationTokenSource();
+
+            Assert.DoesNotThrow(() => this.viewModel.RunExperimentTask());
+
+            this.dstController.Verify(x => x.GetNextExperimentStep(), Times.Exactly(6));
         }
 
         [Test]

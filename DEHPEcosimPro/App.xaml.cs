@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using System.Windows;
     using System.Windows.Threading;
@@ -58,6 +59,7 @@ namespace DEHPEcosimPro
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public partial class App
     {
         /// <summary>
