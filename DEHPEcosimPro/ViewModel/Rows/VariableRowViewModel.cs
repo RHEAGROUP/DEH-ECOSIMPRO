@@ -132,20 +132,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="LastNotificationTime"/>
-        /// </summary>
-        private string lastNotificationTime;
-
-        /// <summary>
-        /// Gets the value of the represented reference
-        /// </summary>
-        public string LastNotificationTime
-        {
-            get => this.lastNotificationTime;
-            set => this.RaiseAndSetIfChanged(ref this.lastNotificationTime, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="SelectedOption"/>
         /// </summary>
         private Option selectedOption;
@@ -269,26 +255,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public bool ShouldListenToChangeMessage { get; set; }
         
         /// <summary>
-        /// Backing field for <see cref="SelectedTimeUnit"/>
-        /// </summary>
-        private TimeUnit selectedTimeUnit = TimeUnit.MilliSecond;
-
-        /// <summary>
-        /// Gets or sets the <see cref="TimeUnit"/> for discrete sampling
-        /// </summary>
-        public TimeUnit SelectedTimeUnit
-        {
-            get => this.selectedTimeUnit;
-            set => this.RaiseAndSetIfChanged(ref this.selectedTimeUnit, value);
-        }
-
-        /// <summary>
         /// Backing field for <see cref="SelectedTimeStep"/>
         /// </summary>
         private double selectedTimeStep;
 
         /// <summary>
-        /// Gets or sets the time step value
+        /// Gets or sets the timeStep step value
         /// </summary>
         public double SelectedTimeStep
         {
@@ -310,7 +282,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.SetProperties();
 
             CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
-                .Where(x => this.ShouldListenToChangeMessage && x.Id == this.Reference.NodeId.Identifier && x.TimeStamp > this.Values.Last().TimeStamp)
+                .Where(x => this.ShouldListenToChangeMessage && x.Id == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.OnNotification);
 
@@ -334,28 +306,18 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 return;
             }
 
-            var lastValue = TimeSpan.Zero;
-
-            Func<double, TimeSpan> getValue = this.SelectedTimeUnit switch
-            {
-                TimeUnit.MilliSecond => TimeSpan.FromMilliseconds,
-                TimeUnit.Second => TimeSpan.FromSeconds,
-                TimeUnit.Minute => TimeSpan.FromMinutes,
-                TimeUnit.Hour => TimeSpan.FromHours,
-                TimeUnit.Day => TimeSpan.FromDays,
-                _ => throw new ArgumentOutOfRangeException(nameof(this.SelectedTimeUnit), $"{this.SelectedTimeUnit} as {nameof(TimeUnit)} is invalid")
-            };
+            var lastValue = .0;
 
             this.SelectedValues.Add(this.Values.FirstOrDefault());
 
             foreach (var timeTaggedValueRowViewModel in this.Values)
             {
-                var lastValuePlusTimeStep = lastValue.Add(getValue(this.SelectedTimeStep));
+                var lastValuePlusTimeStep = lastValue + this.SelectedTimeStep;
 
-                if (timeTaggedValueRowViewModel.TimeDelta >= lastValuePlusTimeStep)
+                if (Math.Abs(timeTaggedValueRowViewModel.TimeStep) >= Math.Abs(lastValuePlusTimeStep))
                 {
                     this.SelectedValues.Add(timeTaggedValueRowViewModel);
-                    lastValue = timeTaggedValueRowViewModel.TimeDelta;
+                    lastValue = timeTaggedValueRowViewModel.TimeStep;
                 }
             }
         }
@@ -371,7 +333,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
-                this.UpdateValueCollection(this.data.Value, this.data.ServerTimestamp);
+                this.UpdateValueCollection(this.data.Value, 0);
             }
         }
         
@@ -380,32 +342,33 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         private void OnNotification(OpcVariableChangedEvent update)
         {
-            this.UpdateValueCollection(update.Value, update.TimeStamp);
+            if (update.Reset)
+            {
+                this.Values.Clear();
+                this.SelectedValues.Clear();
+            }
+
+            this.UpdateValueCollection(update.Value, update.Time);
 
             this.ActualValue = update.Value;
             this.AverageValue = this.ComputeAverageValue();
-
-            this.actualValue = update.Value;
-            this.LastNotificationTime = update.TimeStamp.ToString("yy-MM-dd HH:mm:ss.fffffff");
         }
 
         /// <summary>
         /// Updates the <see cref="Values"/> collection
         /// </summary>
         /// <param name="value">The value to add</param>
-        /// <param name="timeStamp">The <see cref="DateTime"/> time stamp associated with the <paramref name="value"/></param>
-        private void UpdateValueCollection(object value, DateTime timeStamp)
+        /// <param name="timeStep">The <see cref="DateTime"/> timeStep stamp associated with the <paramref name="value"/></param>
+        private void UpdateValueCollection(object value, double timeStep)
         {
-            if (this.Values.Any(x => x.Value == value && x.TimeStamp == timeStamp))
+            if (this.Values.Any(x => x.Value == value && Math.Abs(x.TimeStep - timeStep) <= 0))
             {
                 return;
             }
 
-            this.Values.Add(new TimeTaggedValueRowViewModel(
-                value, timeStamp, 
-                this.Values.FirstOrDefault()?.TimeStamp ?? default));
+            this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStep));
 
-            var sortedValues = this.Values.OrderBy(x => x.TimeDelta).ToList();
+            var sortedValues = this.Values.OrderBy(x => x.TimeStep).ToList();
             this.Values.Clear();
             this.Values.AddRange(sortedValues);
         }

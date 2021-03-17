@@ -142,7 +142,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         public void VerifyMapToNewElementDefinition()
         {
             this.iteration.Element.Add(new ElementDefinition(){ Name = "Cap" });
-            var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
+            var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, .2);
 
             this.variables.Add(new VariableRowViewModel((
                 new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.a") },
@@ -162,20 +162,20 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedParameterType = this.dateTimeParameterType
             });
 
-            this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, DateTime.Now, DateTime.Now));
+            this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, .3));
             var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>().ToList();
             Assert.AreEqual(2, elements.Count);
             var parameter = elements.Last().Parameter.First();
             Assert.AreEqual("TextXQuantity", parameter.ParameterType.Name);
             var parameterValueSet = parameter.ValueSet.Last();
-            Assert.AreEqual("0", parameterValueSet.Computed[0]);
+            Assert.AreEqual("0.2", parameterValueSet.Computed[0]);
             Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
         }
         
         [Test]
         public void VerifyMapToElementUsageParameter()
         {
-            var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, DateTime.MinValue);
+            var timeTaggedValueRowViewModel = new TimeTaggedValueRowViewModel(.2, .01);
             
             var parameter = new Parameter()
             {
@@ -259,7 +259,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
             var parameterOverride = first.ParameterOverride.Last();
             Assert.AreEqual(1, first.ParameterOverride.Count);
             var set = parameterOverride.ValueSet.First();
-            Assert.AreEqual($"{TimeSpan.Zero}", set.Computed.First());
+            Assert.AreEqual($"-", set.Computed.First());
         }
 
         private void SetParameterTypes()
@@ -397,15 +397,6 @@ namespace DEHPEcosimPro.Tests.MappingRules
 
             Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter0));
             Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter1));
-            variableRowViewModel.SelectedTimeUnit = TimeUnit.MilliSecond;
-            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
-            variableRowViewModel.SelectedTimeUnit = TimeUnit.Second;
-            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
-            variableRowViewModel.SelectedTimeUnit = TimeUnit.Minute;
-            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
-            variableRowViewModel.SelectedTimeUnit = TimeUnit.Hour;
-            Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
-            variableRowViewModel.SelectedTimeUnit = TimeUnit.Day;
             Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter2));
             Assert.DoesNotThrow(() => this.rule.UpdateValueSet(variableRowViewModel, parameter3));
             Assert.Throws<NullReferenceException>(() => this.rule.UpdateValueSet(null, null));

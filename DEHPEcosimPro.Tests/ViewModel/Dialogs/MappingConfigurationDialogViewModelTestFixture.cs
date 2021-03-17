@@ -195,7 +195,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsEmpty(this.viewModel.AvailableParameters);
             Assert.IsNotEmpty(this.viewModel.AvailableOptions);
             Assert.IsNotEmpty(this.viewModel.Variables);
-            Assert.IsNotEmpty(this.viewModel.TimeSteps);
             Assert.IsNotNull(this.viewModel.ContinueCommand);
         }
 

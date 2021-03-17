@@ -107,6 +107,11 @@ namespace DEHPEcosimPro.DstController
         ExternalIdentifierMap ExternalIdentifierMap { get; set; }
 
         /// <summary>
+        /// Gets the OPC Time <see cref="NodeId"/>
+        /// </summary>
+        NodeId TimeNodeId { get; }
+
+        /// <summary>
         /// Connects to the provided endpoint
         /// </summary>
         /// <param name="endpoint">The end point url eg. often opc.tcp:// representing the opc protocol</param>
@@ -172,6 +177,11 @@ namespace DEHPEcosimPro.DstController
         void Map(List<MappedElementDefinitionRowViewModel> mappedElement);
 
         /// <summary>
+        /// Transfers again all already transfered value to the dst in case of OPC server reset
+        /// </summary>
+        void ReTransferMappedThingsToDst();
+
+        /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
         void TransferMappedThingsToDst();
@@ -184,11 +194,35 @@ namespace DEHPEcosimPro.DstController
         bool IsVariableWritable(ReferenceDescription reference);
 
         /// <summary>
+        /// Writes the <see cref="double"/> <paramref name="value"/> to the <paramref name="nodeId"/>
+        /// </summary>
+        /// <param name="nodeId">The <see cref="NodeId"/> on which to write the <paramref name="value"/></param>
+        /// <param name="value">The <see cref="double"/> value</param>
+        /// <returns>An assert</returns>
+        bool WriteToDst(NodeId nodeId, double value);
+
+        /// <summary>
         /// Reads a node and gets its states information
         /// </summary>
         /// <param name="reference">The <see cref="ReferenceDescription"/> to read</param>
         /// <returns>The <see cref="DataValue"/></returns>
         DataValue ReadNode(ReferenceDescription reference);
+
+        /// <summary>
+        /// Reads all values for <see cref="DstController.Variables"/> based on <paramref name="time"/>
+        /// </summary>
+        /// <param name="time">The current time</param>
+        void ReadAllNode(double time);
+
+        /// <summary>
+        /// Resets all <see cref="VariableRowViewModel"/> by deleting the collected values
+        /// </summary>
+        void ResetVariables();
+
+        /// <summary>
+        /// Sets the next experiment step in the OPC server and retrives new values for <see cref="DstController.Variables"/>
+        /// </summary>
+        void GetNextExperimentStep();
 
         /// <summary>
         /// Transfers the mapped variables to the Hub data source
@@ -201,7 +235,7 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         Task UpdateParametersValueSets();
-        
+
         /// <summary>
         /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
         /// </summary>
@@ -210,7 +244,7 @@ namespace DEHPEcosimPro.DstController
         ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
 
         /// <summary>
-        /// Adds one correspondance to the <see cref="IDstController.ExternalIdentifierMap"/>
+        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
         /// </summary>
         /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
         /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>

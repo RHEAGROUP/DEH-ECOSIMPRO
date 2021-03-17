@@ -52,6 +52,8 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using DevExpress.Mvvm.Native;
+
     using Moq;
 
     using NUnit.Framework;
@@ -59,6 +61,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using Opc.Ua;
 
     using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
+    using Node = DevExpress.XtraCharts.Native.Node;
 
     [TestFixture, Apartment(ApartmentState.STA)]
     public class DstControllerTestFixture
@@ -74,6 +77,7 @@ namespace DEHPEcosimPro.Tests.DstController
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("server_methods"), BrowseName = new QualifiedName("server_methods"), NodeClass = NodeClass.Object},
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_run"), BrowseName = new QualifiedName("method_run"), NodeClass = NodeClass.Method},
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_reset"),BrowseName = new QualifiedName("method_reset"), NodeClass = NodeClass.Method},
+            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_integ_cint"),BrowseName = new QualifiedName("method_integ_cint"), NodeClass = NodeClass.Method},
         };
 
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
@@ -152,8 +156,8 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(new List<ReferenceDescription>()
             {
-                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable},
-                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 2), BrowseName = new QualifiedName("dummy"), NodeClass = NodeClass.Method}
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), BrowseName = new QualifiedName("dummy"), NodeClass = NodeClass.Variable},
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 2), BrowseName = new QualifiedName("TIME"), NodeClass = NodeClass.Method}
             }));
 
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
@@ -224,7 +228,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         { 
                             {
                                 new Parameter(), new VariableRowViewModel((
-                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new ReferenceDescription()
+                                    {
+                                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                        NodeId = new NodeId(Guid.NewGuid())
+                                    },
                                     new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                             }
                         }, 
@@ -243,7 +251,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         {
                             {
                                 new Parameter(), new VariableRowViewModel((
-                                    new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                                    new ReferenceDescription()
+                                    {
+                                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                        NodeId = new NodeId(Guid.NewGuid())
+                                    },
                                     new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                             }
                         },
@@ -260,7 +272,26 @@ namespace DEHPEcosimPro.Tests.DstController
             this.mappingEngine.Setup(x => x.Map(It.IsAny<object>())).Throws<InvalidOperationException>();
             Assert.Throws<InvalidOperationException>(() => this.controller.Map(default(List<VariableRowViewModel>)));
 
-            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(4));
+            this.mappingEngine.Setup(x => x.Map(It.IsAny<object>()))
+                .Returns((new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
+                {
+                    { 
+                        new Parameter(), new VariableRowViewModel((
+                            new ReferenceDescription()
+                            {
+                                DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                NodeId = new NodeId(Guid.NewGuid())
+                            },
+                            new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+                    }
+                }, new List<ElementBase>()
+                {
+                    new ElementDefinition()
+                }));
+
+            Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
+            
+            this.mappingEngine.Verify(x => x.Map(It.IsAny<object>()), Times.Exactly(5));
         }
 
         [Test]
@@ -275,7 +306,11 @@ namespace DEHPEcosimPro.Tests.DstController
                     SelectedParameter = new Parameter(),
                     SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                     SelectedVariable = new VariableRowViewModel((
-                        new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                        new ReferenceDescription()
+                        {
+                            DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                            NodeId = new NodeId(Guid.NewGuid())
+                        },
                         new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                 },
                 new MappedElementDefinitionRowViewModel()
@@ -283,7 +318,11 @@ namespace DEHPEcosimPro.Tests.DstController
                     SelectedParameter = new Parameter(),
                     SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                     SelectedVariable = new VariableRowViewModel((
-                        new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") },
+                        new ReferenceDescription()
+                        {
+                            DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                            NodeId = new NodeId(Guid.NewGuid())
+                        },
                         new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                 }
             };
@@ -316,7 +355,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         SelectedParameter = parameter0,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = new VariableRowViewModel((
-                            new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                            new ReferenceDescription()
+                            {
+                                DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                NodeId = new NodeId(Guid.NewGuid())
+                            },
                             new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
                     },
                     new MappedElementDefinitionRowViewModel()
@@ -324,7 +367,11 @@ namespace DEHPEcosimPro.Tests.DstController
                         SelectedParameter = parameter1,
                         SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
                         SelectedVariable = new VariableRowViewModel((
-                            new ReferenceDescription() {DisplayName = new LocalizedText(string.Empty, "Mos.a")},
+                            new ReferenceDescription() 
+                            {
+                                DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                                NodeId = new NodeId(Guid.NewGuid())
+                            },
                             new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
                     }
                 });
@@ -372,15 +419,43 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.DstMapResult.Add(new ElementDefinition(Guid.NewGuid(), null, null)
+            var elementDefinition = new ElementDefinition()
             {
                 Parameter = 
                 { 
                     parameter
                 }
+            };
+
+            this.controller.DstMapResult.Add(elementDefinition);
+
+            var parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null)
+            {
+                Parameter = parameter,
+                ValueSet =
+                {
+                    new ParameterOverrideValueSet()
+                    {
+                        Computed = new ValueArray<string>(new [] {"654321"}),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
+                }
+            };
+
+            this.controller.DstMapResult.Add(new ElementUsage()
+            {
+                ElementDefinition = elementDefinition,
+                ParameterOverride = 
+                {
+                    parameterOverride
+                }
             });
 
-            this.hubController.Setup(x => x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
+            this.hubController.Setup(x => 
+                x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
+
+            this.hubController.Setup(x => 
+                x.GetThingById(parameterOverride.Iid, It.IsAny<Iteration>(), out parameterOverride));
 
             Assert.DoesNotThrowAsync(async() => await this.controller.TransferMappedThingsToHub());
 
@@ -419,10 +494,10 @@ namespace DEHPEcosimPro.Tests.DstController
                 x => x.Refresh(), Times.Exactly(1));
             
             this.exchangeHistoryService.Verify(x => 
-                x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(2));
+                x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(3));
 
             this.exchangeHistoryService.Verify(x => 
-                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Once);
+                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Exactly(2));
         }
 
         [Test]
@@ -558,6 +633,64 @@ namespace DEHPEcosimPro.Tests.DstController
             
             this.hubController.Verify(x => 
                 x.Write(It.IsAny<ThingTransaction>()), Times.Once);
+        }
+
+        [Test]
+        public void VerifyRetransferToDst()
+        {
+            this.controller.ReTransferMappedThingsToDst();
+            this.VerifyTransferToDst();
+            this.controller.ReTransferMappedThingsToDst();
+            this.opcClient.Verify(x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<double>(), false), Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyReadAllNode()
+        {
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(42)));
+            Assert.DoesNotThrow(() => this.controller.ReadAllNode(0));
+            this.controller.Variables.Clear();
+            Assert.DoesNotThrow(() => this.controller.ReadAllNode(0));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyResetVariables()
+        {
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(42)));
+            Assert.DoesNotThrow(() => this.controller.ResetVariables());
+            this.controller.Variables.Clear();
+            Assert.DoesNotThrow(() => this.controller.ResetVariables());
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyGetNextExperimentStep()
+        {
+            this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(this.referenceDescriptionCollection));
+
+            this.referenceDescriptionCollection.Where(r => r.NodeClass == NodeClass.Method)
+                .ForEach(x => this.controller.Methods.Add(x));
+            
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(2)));
+            Assert.DoesNotThrow(() => this.controller.GetNextExperimentStep());
+
+            this.opcClient.Verify(x =>
+                    x.CallMethod(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<string>()),
+                Times.Once);
+
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(3));
+        }
+
+        [Test]
+        public void VerifyWriteToDst()
+        {
+            var nodeId = new NodeId(Guid.Empty);
+
+            this.controller.WriteToDst(nodeId, 42);
+            
+            this.opcClient.Verify(x => 
+                x.WriteNode(nodeId, 42d, true), Times.Once);
         }
     }
 }

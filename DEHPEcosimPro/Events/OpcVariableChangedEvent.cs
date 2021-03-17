@@ -28,6 +28,8 @@ namespace DEHPEcosimPro.Events
 
     using CDP4Dal;
 
+    using DEHPEcosimPro.ViewModel.Rows;
+
     using Opc.Ua;
     using Opc.Ua.Client;
 
@@ -52,6 +54,16 @@ namespace DEHPEcosimPro.Events
         public DateTime TimeStamp { get; set; }
 
         /// <summary>
+        /// Gets or sets the CINT Time associated with the value
+        /// </summary>
+        public double Time { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating if the listener should be reset
+        /// </summary>
+        public bool Reset { get; set; }
+
+        /// <summary>
         /// Initializes a new <see cref="OpcVariableChangedEvent"/>
         /// </summary>
         /// <param name="monitoredItem">The monitored via subscription variable</param>
@@ -61,6 +73,31 @@ namespace DEHPEcosimPro.Events
             var dataValue = ((MonitoredItemNotification)monitoredItem.LastValue).Value;
             this.Value = dataValue.Value;
             this.TimeStamp = dataValue.ServerTimestamp;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="OpcVariableChangedEvent"/>
+        /// </summary>
+        /// <param name="reference">The <see cref="ReferenceDescription"/></param>
+        /// <param name="value">The <see cref="DataValue"/></param>
+        /// <param name="time">The <see cref="double"/> time value</param>
+        /// <param name="reset">A value indicating if the listener should reset</param>
+        public OpcVariableChangedEvent(ReferenceDescription reference, DataValue value, double time, bool reset = false)
+        {
+            this.Id = reference.NodeId.Identifier;
+            this.Value = value.Value;
+            this.Time = time;
+            this.Reset = reset;
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="OpcVariableChangedEvent"/> based on a <see cref="MappedElementDefinitionRowViewModel"/>
+        /// </summary>
+        /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
+        public OpcVariableChangedEvent(MappedElementDefinitionRowViewModel mappedElement)
+        {
+            this.Id = mappedElement.SelectedVariable.Reference.NodeId.Identifier;
+            this.Value = mappedElement.SelectedValue.Value;
         }
 
         /// <summary>
