@@ -511,14 +511,14 @@ namespace DEHPEcosimPro.DstController
                 CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(reference, value, 0, true));
             }
         }
-
+            
         /// <summary>
         /// Sets the next experiment step in the OPC server and retrives new values for <see cref="Variables"/>
         /// </summary>
         public void GetNextExperimentStep()
         {
             this.CallServerMethod("method_integ_cint");
-            var time = Math.Round(Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value), 2, MidpointRounding.AwayFromZero);
+            var time = Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value);
             this.ReadAllNode(time);
         }
 
