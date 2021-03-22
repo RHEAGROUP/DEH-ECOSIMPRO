@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Linq.Expressions;
     using System.Reactive.Linq;
 
     using CDP4Common.EngineeringModelData;
@@ -35,9 +34,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
     using CDP4Dal;
 
-    using DEHPCommon.Extensions;
-
-    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Views;
 
@@ -361,16 +357,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="timeStep">The <see cref="DateTime"/> timeStep stamp associated with the <paramref name="value"/></param>
         private void UpdateValueCollection(object value, double timeStep)
         {
-            if (this.Values.Any(x => x.Value == value && Math.Abs(x.TimeStep - timeStep) <= 0))
-            {
-                return;
-            }
-
             this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStep));
-
-            var sortedValues = this.Values.OrderBy(x => x.TimeStep).ToList();
-            this.Values.Clear();
-            this.Values.AddRange(sortedValues);
         }
 
         /// <summary>

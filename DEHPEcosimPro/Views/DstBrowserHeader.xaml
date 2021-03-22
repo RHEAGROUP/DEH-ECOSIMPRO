@@ -75,7 +75,7 @@
         <dxe:SpinEdit Grid.Column="1" Grid.Row="2"  Margin="2" HorizontalAlignment="Stretch" CausesValidation="False"
                       EditValue="{Binding SelectedStepping, UpdateSourceTrigger=PropertyChanged}"
                       EditValueType="{x:Type system:Double}" Increment="0.01" ToolTip="Defines the stepping, the precision of the experiment"
-                      MinValue="0" MaxValue="1" ValidateOnEnterKeyPressed="True" ValidateOnTextInput="True" IsEnabled="{Binding AreTimeStepAnStepTimeEditable}"/>
+                      MinValue="0" ValidateOnEnterKeyPressed="True" ValidateOnTextInput="True" IsEnabled="{Binding AreTimeStepAnStepTimeEditable}"/>
 
         <TextBlock Margin="3" Grid.Column="2" Grid.Row="2" Text="Stop step (TSTOP): " />
         <dxe:SpinEdit Grid.Column="3" Grid.Row="2"  Margin="2" HorizontalAlignment="Stretch" CausesValidation="False"
