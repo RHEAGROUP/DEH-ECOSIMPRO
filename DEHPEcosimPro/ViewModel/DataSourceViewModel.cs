@@ -29,9 +29,7 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
-
-    using DevExpress.CodeParser.Diagnostics;
-
+    
     using ReactiveUI;
 
     /// <summary>
