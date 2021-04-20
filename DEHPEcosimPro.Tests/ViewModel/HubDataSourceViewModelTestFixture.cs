@@ -83,6 +83,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Participant participant;
         private DomainOfExpertise domain;
         private Mock<ISession> session;
+        private Mock<IStatusBarControlViewModel> statusBar;
+        private Mock<IHubSessionControlViewModel> sessionControl;
 
         [SetUp]
         public void Setup()
@@ -160,9 +162,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.hubBrowserHeader = new Mock<IHubBrowserHeaderViewModel>();
             this.dstController = new Mock<IDstController>();
+            this.statusBar = new Mock<IStatusBarControlViewModel>();
+            this.sessionControl = new Mock<IHubSessionControlViewModel>();
 
             this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object, 
-                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object);
+                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object, this.statusBar.Object, this.sessionControl.Object);
         }
 
         [Test]
@@ -245,22 +249,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.navigationService.Verify(x => 
                 x.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(It.IsAny<IHubMappingConfigurationDialogViewModel>()),
                 Times.Exactly(2));
-        }
-
-        [Test]
-        public void VerifyRefreshCommand()
-        {
-            this.hubController.Setup(x => x.Refresh());
-            Assert.IsFalse(this.viewModel.RefreshCommand.CanExecute(null));
-            this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.hubController.Setup(x => x.OpenIteration).Returns(new Iteration());
-
-            this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object,
-                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object);
-
-            Assert.IsTrue(this.viewModel.RefreshCommand.CanExecute(null));
-            Assert.DoesNotThrowAsync(async () => await this.viewModel.RefreshCommand.ExecuteAsyncTask(null));
-            this.hubController.Verify(x => x.Refresh(), Times.Once);
         }
     }
 }
