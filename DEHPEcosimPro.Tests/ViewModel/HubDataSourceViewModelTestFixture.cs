@@ -83,7 +83,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Participant participant;
         private DomainOfExpertise domain;
         private Mock<ISession> session;
-        private Mock<IStatusBarControlViewModel> statusBar;
         private Mock<IHubSessionControlViewModel> sessionControl;
 
         [SetUp]
@@ -162,11 +161,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.hubBrowserHeader = new Mock<IHubBrowserHeaderViewModel>();
             this.dstController = new Mock<IDstController>();
-            this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.sessionControl = new Mock<IHubSessionControlViewModel>();
 
             this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object, 
-                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object, this.statusBar.Object, this.sessionControl.Object);
+                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object, this.sessionControl.Object);
         }
 
         [Test]
