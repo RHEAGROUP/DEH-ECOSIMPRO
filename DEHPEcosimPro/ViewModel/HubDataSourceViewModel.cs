@@ -74,12 +74,7 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
-
-        /// <summary>
-        /// The <see cref="IStatusBarControlViewModel"/>
-        /// </summary>
-        private readonly IStatusBarControlViewModel statusBar;
-
+        
         /// <summary>
         /// Gets the <see cref="IHubSessionControlViewModel"/>
         /// </summary>
@@ -99,13 +94,12 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="sessionControl">The <see cref="IHubSessionControlViewModel"/></param>
         public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, 
             IPublicationBrowserViewModel publicationBrowser, IObjectBrowserTreeSelectorService treeSelectorService, 
-            IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController, IStatusBarControlViewModel statusBar,
+            IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController,
             IHubSessionControlViewModel sessionControl) : base(navigationService)
         {
             this.hubController = hubController;
             this.treeSelectorService = treeSelectorService;
             this.dstController = dstController;
-            this.statusBar = statusBar;
             this.SessionControl = sessionControl;
             this.ObjectBrowser = objectBrowser;
             this.PublicationBrowser = publicationBrowser;
