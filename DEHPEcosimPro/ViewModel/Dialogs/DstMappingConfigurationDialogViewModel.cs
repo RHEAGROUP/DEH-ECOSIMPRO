@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -39,6 +40,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Extensions;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     
@@ -118,16 +120,17 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
         /// </summary>
         public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
-        
+
         /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="typeComparerService">The <see cref="ITypeComparerService"/></param>
         public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, 
-            IStatusBarControlViewModel statusBar) :
-                base(hubController, dstController, statusBar)
+            IStatusBarControlViewModel statusBar, ITypeComparerService typeComparerService) :
+                base(hubController, dstController, statusBar, typeComparerService)
         {
         }
 
@@ -177,6 +180,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ =>
                 {
                     this.UpdateAvailableParameters();
+                    this.UpdateAvailableParameterType();
                     this.CheckCanExecute();
                 });
             }
@@ -241,18 +245,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.IsBusy = true;
             this.UpdateAvailableOptions();
             this.AvailableElementDefinitions.Clear();
-            this.AvailableParameterTypes.Clear();
 
             this.AvailableElementDefinitions.AddRange(
                 this.HubController.OpenIteration.Element
                     .Select(e => e.Clone(true))
                     .OrderBy(x => x.Name));
-
-            this.AvailableParameterTypes.AddRange(
-                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>().RequiredRdls
-                .SelectMany(x => x.ParameterType).Where(this.IsSampledFunctionParameterTypeAndIsCompatible)
-                .OrderBy(x => x.Name));
-
+            
+            this.UpdateAvailableParameterType();
             this.UpdateAvailableParameters();
             this.UpdateAvailableElementUsages();
             this.UpdateAvailableActualFiniteStates();
@@ -270,17 +269,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
-                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
-                && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
-            {
-                this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
-            }
-
-            else if (!(this.SelectedThing.SelectedParameter?.ParameterType is SampledFunctionParameterType))
-            {
-                this.SelectedThing.SelectedParameterType = null;
-            }
+            this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
         }
 
         /// <summary>
@@ -298,6 +287,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     && parameter.ParameterType.Iid != parameterType.Iid)
             {
                 this.SelectedThing.SelectedParameter = null;
+                this.UpdateAvailableParameterType();
             }
             else if(this.AvailableParameters.FirstOrDefault(x => 
                 x.ParameterType.Iid == this.SelectedThing.SelectedParameterType?.Iid) is Parameter parameterOrOverride )
@@ -309,6 +299,30 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.SelectedThing.SelectedOption = this.AvailableOptions.FirstOrDefault();
             }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="AvailableParameterTypes"/>
+        /// </summary>
+        private void UpdateAvailableParameterType()
+        {
+            this.AvailableParameterTypes.Clear();
+
+            Func<ParameterType, bool> isParameterTypeCompatible =  this.SelectedThing switch
+            {
+                { } variable when variable.SelectedValues.Count == 1
+                    => x => this.TypeComparerService.AreCompatible(x, variable.ActualValue),
+
+                { } variable => x => this.IsSampledFunctionParameterTypeAndIsCompatible(x, variable.ActualValue),
+                _ => _ => true
+            };
+
+            this.AvailableParameterTypes.AddRange(
+                this.HubController.OpenIteration
+                    .GetContainerOfType<EngineeringModel>().RequiredRdls
+                    .SelectMany(x => x.ParameterType)
+                    .Where(isParameterTypeCompatible)
+                    .OrderBy(x => x.Name));
         }
 
         /// <summary>
@@ -340,25 +354,27 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableParameters.Clear();
 
-            if (this.SelectedThing?.SelectedElementDefinition is { } element)
+            if (!(this.SelectedThing?.SelectedElementDefinition is { } element))
             {
-                var parameters = element.Parameter.ToList();
-                
-                if(element.Iid != Guid.Empty)
-                {
-                    parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
-                }
+                return;
+            }
 
-                if (this.SelectedThing.SelectedValues.Count > 1)
-                {
-                    this.AvailableParameters.AddRange(parameters.Where(
-                        p=> this.IsSampledFunctionParameterTypeAndIsCompatible(p.ParameterType)));
-                }
-                else
-                {
-                    this.AvailableParameters.AddRange(parameters.Where(x => !(x.ParameterType is SampledFunctionParameterType)
-                    || this.IsSampledFunctionParameterTypeAndIsCompatible(x.ParameterType)));
-                }
+            var parameters = element.Parameter.ToList();
+                
+            if(element.Iid != Guid.Empty)
+            {
+                parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
+            }
+
+            if (this.SelectedThing.SelectedValues.Count > 1)
+            {
+                this.AvailableParameters.AddRange(parameters.Where(
+                    p=> this.IsSampledFunctionParameterTypeAndIsCompatible(p.ParameterType, this.SelectedThing.ActualValue)));
+            }
+            else
+            {
+                this.AvailableParameters.AddRange(parameters.Where(x => 
+                    this.TypeComparerService.AreCompatible(x.ParameterType, this.SelectedThing.ActualValue)));
             }
         }
 
@@ -367,11 +383,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// and <see cref="SampledFunctionParameterTypeExtensions.HasCompatibleDependentAndIndependentParameterTypes"/>
         /// </summary>
         /// <param name="parameterType">The <see cref="ParameterType"/> to verify</param>
+        /// <param name="value">The <see cref="object"/> value</param>
         /// <returns>A value indicating whether the <paramref name="parameterType"/> complies</returns>
-        private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType)
+        private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType, object value)
         {
             return parameterType is SampledFunctionParameterType sampledFunctionParameterType
-                    && sampledFunctionParameterType.HasCompatibleDependentAndIndependentParameterTypes();
+                    && this.TypeComparerService.AreCompatible(sampledFunctionParameterType, value);
         }
 
         /// <summary>

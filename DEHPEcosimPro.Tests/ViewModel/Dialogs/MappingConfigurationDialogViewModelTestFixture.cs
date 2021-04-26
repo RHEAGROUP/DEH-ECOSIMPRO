@@ -38,6 +38,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -60,6 +61,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Mock<IStatusBarControlViewModel> statusBar;
         private SampledFunctionParameterType parameterType;
         private ModelReferenceDataLibrary modelReferenceDataLibrary;
+        private Mock<ITypeComparerService> typeComparer;
 
         [SetUp]
         public void Setup()
@@ -168,12 +170,16 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             this.modelReferenceDataLibrary.ParameterType.Add(this.parameterType);
             this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
+            
+            this.typeComparer = new Mock<ITypeComparerService>();
 
             this.viewModel = new DstMappingConfigurationDialogViewModel(
-            this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+                this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.typeComparer.Object);
+            
             this.viewModel.Initialize();
 
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
@@ -189,7 +195,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.SelectedThing);
             Assert.IsFalse(this.viewModel.IsBusy);
             Assert.IsEmpty(this.viewModel.AvailableActualFiniteStates);
-            Assert.AreEqual(1, this.viewModel.AvailableParameterTypes.Count);
+            Assert.AreEqual(2, this.viewModel.AvailableParameterTypes.Count);
             Assert.IsNotEmpty(this.viewModel.AvailableElementDefinitions);
             Assert.IsEmpty(this.viewModel.AvailableElementUsages);
             Assert.IsEmpty(this.viewModel.AvailableParameters);
@@ -283,7 +289,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             };
 
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameterType());
-            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameterType);
+            Assert.IsNotNull(this.viewModel.SelectedThing.SelectedParameterType);
 
             this.viewModel.SelectedThing.SelectedParameter = new Parameter()
             {
