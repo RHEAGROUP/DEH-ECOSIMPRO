@@ -170,19 +170,6 @@
                                           SelectedItem="{Binding SelectedThing.SelectedParameterType}"
                                           ShowNullTextForEmptyValue="True" ValueMember="Name"
                                           ToolTip="Select a ParameterType. Only ParameterType of type SampledFunctionParameter type &#x0a; with compatible Independant and Dependant ParameterType can be selected">
-                            <dxe:ComboBoxEdit.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0} =&gt; [{1} X {2}]">
-                                                <Binding Path="Name" />
-                                                <Binding Path="IndependentParameterType[0].ParameterType.Name" />
-                                                <Binding Path="DependentParameterType[0].ParameterType.Name" />
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </dxe:ComboBoxEdit.ItemTemplate>
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="4" Grid.Column="0" Content="Parameter:" />
                         <dxe:ComboBoxEdit Grid.Row="4" Grid.Column="1" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"

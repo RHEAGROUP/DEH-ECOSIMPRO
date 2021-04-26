@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
 
     using NLog;
 
@@ -58,6 +59,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="IDstController"/>
         /// </summary>
         protected readonly IDstController DstController;
+
+        /// <summary>
+        /// The <see cref="ITypeComparerService"/>
+        /// </summary>
+        protected readonly ITypeComparerService TypeComparerService;
 
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
@@ -94,10 +100,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, IStatusBarControlViewModel statusBar)
+        /// <param name="typeComparerService">The <see cref="ITypeComparerService"/></param>
+        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController,
+            IStatusBarControlViewModel statusBar, ITypeComparerService typeComparerService)
         {
             this.HubController = hubController;
             this.DstController = dstController;
+            this.TypeComparerService = typeComparerService;
             this.StatusBar = statusBar;
         }
         
