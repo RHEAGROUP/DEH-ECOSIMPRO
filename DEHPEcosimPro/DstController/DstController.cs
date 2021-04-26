@@ -51,6 +51,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     
     using NLog;
@@ -110,6 +111,11 @@ namespace DEHPEcosimPro.DstController
         /// The <see cref="IExchangeHistoryService"/>
         /// </summary>
         private readonly IExchangeHistoryService exchangeHistory;
+
+        /// <summary>
+        /// The <see cref="IObjectTypeResolverService"/>
+        /// </summary>
+        private readonly IObjectTypeResolverService objectTypeResolver;
 
         /// <summary>
         /// Backing field for the <see cref="MappingDirection"/>
@@ -204,10 +210,11 @@ namespace DEHPEcosimPro.DstController
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="exchangeHistory">The <see cref="IExchangeHistoryService"/></param>
+        /// <param name="objectTypeResolver">The <see cref="IObjectTypeResolverService"/></param>
         public DstController(IOpcClientService opcClientService, IHubController hubController,
             IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine,
             IStatusBarControlViewModel statusBar, INavigationService navigationService,
-            IExchangeHistoryService exchangeHistory)
+            IExchangeHistoryService exchangeHistory, IObjectTypeResolverService objectTypeResolver)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
@@ -216,6 +223,7 @@ namespace DEHPEcosimPro.DstController
             this.statusBar = statusBar;
             this.navigation = navigationService;
             this.exchangeHistory = exchangeHistory;
+            this.objectTypeResolver = objectTypeResolver;
 
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
             {
@@ -420,7 +428,7 @@ namespace DEHPEcosimPro.DstController
                 .Where(
                     mappedElement => this.opcClientService.WriteNode(
                         (NodeId) mappedElement.SelectedVariable.Reference.NodeId,
-                        double.Parse(mappedElement.SelectedValue.Value, CultureInfo.InvariantCulture)))
+                        this.objectTypeResolver.Resolve(mappedElement.SelectedValue.Value)))
                 .ToList())
             {
                 CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(mappedElement));

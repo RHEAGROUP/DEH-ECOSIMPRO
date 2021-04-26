@@ -29,6 +29,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Concurrency;
+    using System.Runtime.InteropServices.ComTypes;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -43,6 +44,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -105,6 +107,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Parameter parameterCompoundForSubscription;
         private ParameterSubscription parameterSubscriptionCompound;
         private IList<(ReferenceDescription Reference, DataValue Node)> variables;
+        private Mock<ITypeComparerService> typeComparer;
 
         [SetUp]
         public void Setup()
@@ -175,8 +178,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     new KeyValuePair<Iteration, Tuple<DomainOfExpertise, Participant>>(this.iteration, new Tuple<DomainOfExpertise, Participant>(this.domain, new Participant()))
                 }));
-            
-            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+
+            this.typeComparer = new Mock<ITypeComparerService>();
+
+            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.typeComparer.Object);
 
             var browser = new ElementDefinitionsBrowserViewModel(this.iteration, this.session.Object);
             this.elementDefinitionRows = new List<ElementDefinitionRowViewModel>();

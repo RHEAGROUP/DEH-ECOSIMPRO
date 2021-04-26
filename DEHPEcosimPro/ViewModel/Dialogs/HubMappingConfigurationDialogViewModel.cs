@@ -39,6 +39,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -175,9 +176,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="typeComparerService">The <see cref="ITypeComparerService"/></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
-            IDstController dstController, IStatusBarControlViewModel statusBar) :
-            base(hubController, dstController, statusBar)
+            IDstController dstController, IStatusBarControlViewModel statusBar, ITypeComparerService typeComparerService) :
+            base(hubController, dstController, statusBar, typeComparerService)
         {
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
@@ -220,7 +222,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.WhenAnyValue(x => x.SelectedMappedElement.SelectedVariable)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.VerifyVariableIsWritable));
+                .Subscribe(_ => this.UpdateHubFields(this.VerifyVariableTypesAreCompatible));
 
             this.WhenAnyValue(x => x.SelectedMappedElement)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -278,16 +280,21 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Verifies that the selected variable has write access
+        /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>
-        private void VerifyVariableIsWritable()
+        private void VerifyVariableTypesAreCompatible()
         {
-            if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && !variable.HasWriteAccess.HasValue))
+            if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && this.SelectedMappedElement.SelectedParameter is {} parameter))
             {
                 return;
             }
 
-            variable.HasWriteAccess = this.DstController.IsVariableWritable(variable.Reference);
+            if (!this.TypeComparerService.AreCompatible(parameter.ParameterType, variable.ActualValue))
+            {
+                this.StatusBar.Append($"Unable to map the {parameter.ParameterType.Name} with {variable.Name}");
+                this.SelectedMappedElement.SelectedVariable = null;
+            }
+            
             this.CheckCanExecute();
         }
 

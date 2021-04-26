@@ -41,6 +41,8 @@ namespace DEHPEcosimPro
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.Services.TypeResolver;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Dialogs;
@@ -152,6 +154,9 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstController.DstController>().As<IDstController>().SingleInstance();
             containerBuilder.RegisterType<UserPreferenceService<AppSettings>>().As<IUserPreferenceService<AppSettings>>().SingleInstance();
             containerBuilder.RegisterType<MappingEngine>().As<IMappingEngine>().WithParameter(MappingEngine.ParameterName, Assembly.GetExecutingAssembly());
+            containerBuilder.RegisterType<TypeComparerService>().As<ITypeComparerService>();
+            containerBuilder.RegisterType<ObjectTypeResolverService>().As<IObjectTypeResolverService>();
+            containerBuilder.RegisterType<ParameterTypeTypeResolverService>().As<IParameterTypeTypeResolverService>();
         }
 
         /// <summary>
