@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Extensions
     using System.Linq;
 
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Validation;
 
     /// <summary>
     /// Provides extension methods for <see cref="SampledFunctionParameterType"/>
@@ -37,18 +38,21 @@ namespace DEHPEcosimPro.Extensions
         /// Verify that the <paramref name="parameterType"/> is compatible with this dst adapter
         /// </summary>
         /// <param name="parameterType">The <see cref="SampledFunctionParameterType"/></param>
+        /// <param name="value">The <see cref="object"/> value</param>
+        /// <param name="scale">The <see cref="MeasurementScale"/></param>
         /// <returns>A value indicating if the <paramref name="parameterType"/> is compliant</returns>
-        public static bool HasCompatibleDependentAndIndependentParameterTypes(this SampledFunctionParameterType parameterType)
+        public static bool Validate(this SampledFunctionParameterType parameterType, object value, MeasurementScale scale = null)
         {
-            if (parameterType.HasTheRightNumberOfParameterType(out var independantParameterType, out var dependantParameterType))
+            if (!parameterType.HasTheRightNumberOfParameterType(out var independantParameterType, out var dependantParameterType))
             {
-                var independentValidation = independantParameterType.IsQuantityKindOrText();
-                var dependentValidation = dependantParameterType.IsQuantityKindOrText();
-
-                return independentValidation && dependentValidation;
+                return false;
             }
 
-            return false;
+            var independentValidation = independantParameterType.IsQuantityKindOrText();
+            var dependentValidation = dependantParameterType.Validate(value, scale ?? (dependantParameterType as QuantityKind)?.DefaultScale).ResultKind == ValidationResultKind.Valid;
+
+            return independentValidation && dependentValidation;
+
         }
 
         /// <summary>

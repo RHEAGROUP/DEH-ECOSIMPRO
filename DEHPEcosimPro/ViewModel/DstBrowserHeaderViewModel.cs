@@ -350,6 +350,9 @@ namespace DEHPEcosimPro.ViewModel
 
             if (this.dstController.IsSessionOpen)
             {
+                this.ExperimentTime = Convert.ToDouble(
+                    this.dstController.ReadNode(new ReferenceDescription() { NodeId = this.dstController.TimeNodeId }).Value);
+
                 this.ServerAddress = this.dstController.ServerAddress;
                 this.VariablesCount = this.dstController.Variables.Count;
                 this.ServerStartTime = this.dstController.GetServerStartTime();

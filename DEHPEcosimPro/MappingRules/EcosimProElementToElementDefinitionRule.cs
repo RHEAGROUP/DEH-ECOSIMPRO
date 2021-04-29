@@ -189,6 +189,11 @@ namespace DEHPEcosimPro.MappingRules
                         x.ParameterType = variable.SelectedParameterType;
                         x.Owner = this.owner;
 
+                        if (variable.SelectedParameterType is QuantityKind quantityKind)
+                        {
+                            x.Scale = quantityKind.DefaultScale;
+                        }
+
                         x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                         {
                             set.Computed = new ValueArray<string>();

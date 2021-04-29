@@ -16,8 +16,18 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Services\TypeResolver\**" />
+    <EmbeddedResource Remove="Services\TypeResolver\**" />
+    <None Remove="Services\TypeResolver\**" />
+    <Page Remove="Services\TypeResolver\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="C:\Users\nsmiechowski\.nuget\packages\nlog.config\4.6.8\contentFiles\any\any\NLog.config" />
     <None Remove="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Services\TypeResolver\Interfaces\IObjectTypeResolverService.cs" />
+    <Compile Include="Services\TypeResolver\ObjectTypeResolverService.cs" />
   </ItemGroup>
 
   <ItemGroup>
