@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Validation;
 
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
@@ -176,10 +177,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="typeComparerService">The <see cref="ITypeComparerService"/></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
-            IDstController dstController, IStatusBarControlViewModel statusBar, ITypeComparerService typeComparerService) :
-            base(hubController, dstController, statusBar, typeComparerService)
+            IDstController dstController, IStatusBarControlViewModel statusBar) :
+            base(hubController, dstController, statusBar)
         {
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
@@ -289,9 +289,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (!this.TypeComparerService.AreCompatible(parameter.ParameterType, variable.ActualValue))
+            var validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
+
+            if (validationResult.ResultKind == ValidationResultKind.Valid)
             {
-                this.StatusBar.Append($"Unable to map the {parameter.ParameterType.Name} with {variable.Name}");
+                this.StatusBar.Append($"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}");
                 this.SelectedMappedElement.SelectedVariable = null;
             }
             
@@ -490,6 +492,5 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.IsBusy = false;
         }
-
     }
 }

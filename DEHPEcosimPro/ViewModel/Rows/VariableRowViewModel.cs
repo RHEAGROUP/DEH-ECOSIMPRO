@@ -31,10 +31,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Validation;
 
     using CDP4Dal;
 
     using DEHPEcosimPro.Events;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.Views;
 
     using Opc.Ua;
@@ -195,6 +197,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             get => this.selectedActualFiniteState;
             set => this.RaiseAndSetIfChanged(ref this.selectedActualFiniteState, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="SelectedScale"/>
+        /// </summary>
+        private MeasurementScale selectedScale;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="ActualFiniteState"/>
+        /// </summary>
+        public MeasurementScale SelectedScale
+        {
+            get => this.selectedScale;
+            set => this.RaiseAndSetIfChanged(ref this.selectedScale, value);
         }
 
         /// <summary>
@@ -402,9 +418,28 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             var result = this.SelectedValues.Any()
                          && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
-                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null));
+                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null))
+                && this.ValidateParameterType();
 
             return result;
+        }
+
+        /// <summary>
+        /// Verify if the <see cref="SelectedParameterType"/> is compatible with the current variable
+        /// </summary>
+        /// <returns>An assert whether the <see cref="SelectedParameterType"/> is compatible</returns>
+        public bool ValidateParameterType()
+        {
+            return this.SelectedParameterType switch
+            {
+                SampledFunctionParameterType sampledFunctionParameterType =>
+                    sampledFunctionParameterType.Validate(this.ActualValue, this.SelectedScale),
+                ScalarParameterType scalarParameterType =>
+                    this.SelectedParameterType.Validate(this.ActualValue,
+                        this.SelectedScale ?? (scalarParameterType as QuantityKind)?.DefaultScale)
+                    .ResultKind == ValidationResultKind.Valid,
+                _ => false
+            };
         }
     }
 }

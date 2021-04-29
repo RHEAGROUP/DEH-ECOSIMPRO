@@ -78,7 +78,7 @@ namespace DEHPEcosimPro
             this.LogAppStart();
             this.Exit += this.OnExit;
             AppDomain.CurrentDomain.UnhandledException += this.CurrentDomainUnhandledException;
-            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter", Logo = new Uri("pack://application:,,,/Resources/logo.png") };
+            var splashScreenViewModel = new DXSplashScreenViewModel() { Title = "DEHP-EcosimPro Adapter", Logo = new Uri($"pack://application:,,,/Resources/logo.png") };
             SplashScreenManager.Create(() => new SplashScreen(), splashScreenViewModel).ShowOnStartup();
             containerBuilder ??= new ContainerBuilder();
             RegisterTypes(containerBuilder);
@@ -154,9 +154,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstController.DstController>().As<IDstController>().SingleInstance();
             containerBuilder.RegisterType<UserPreferenceService<AppSettings>>().As<IUserPreferenceService<AppSettings>>().SingleInstance();
             containerBuilder.RegisterType<MappingEngine>().As<IMappingEngine>().WithParameter(MappingEngine.ParameterName, Assembly.GetExecutingAssembly());
-            containerBuilder.RegisterType<TypeComparerService>().As<ITypeComparerService>();
             containerBuilder.RegisterType<ObjectTypeResolverService>().As<IObjectTypeResolverService>();
-            containerBuilder.RegisterType<ParameterTypeTypeResolverService>().As<IParameterTypeTypeResolverService>();
         }
 
         /// <summary>
