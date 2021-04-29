@@ -34,6 +34,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using CDP4Common.SiteDirectoryData;
 
     using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
@@ -61,7 +62,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Mock<IStatusBarControlViewModel> statusBar;
         private SampledFunctionParameterType parameterType;
         private ModelReferenceDataLibrary modelReferenceDataLibrary;
-        private Mock<ITypeComparerService> typeComparer;
+        private Mock<INavigationService> navigationService;
+        private MeasurementScale scale;
 
         [SetUp]
         public void Setup()
@@ -78,7 +80,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     EngineeringModelSetup = new EngineeringModelSetup()
                     {
-                        RequiredRdl = { modelReferenceDataLibrary },
+                        RequiredRdl = { this.modelReferenceDataLibrary },
                         Container = new SiteReferenceDataLibrary()
                         {
                             Container = new SiteDirectory()
@@ -119,6 +121,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
+            this.scale = new RatioScale() { Name = "scale", NumberSet = NumberSetKind.REAL_NUMBER_SET};
+
             this.parameterType = new SampledFunctionParameterType()
             {
                 Name = "TextXQuantity",
@@ -139,7 +143,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     {
                         ParameterType = new SimpleQuantityKind()
                         {
-                            Name = "DependentQuantityKing"
+                            Name = "DependentQuantityKing",
+                            DefaultScale = this.scale,
+                            PossibleScale = {this.scale}
                         }
                     }
                 }
@@ -175,10 +181,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             
-            this.typeComparer = new Mock<ITypeComparerService>();
+            this.navigationService = new Mock<INavigationService>();
 
             this.viewModel = new DstMappingConfigurationDialogViewModel(
-                this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.typeComparer.Object);
+                this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.navigationService.Object);
             
             this.viewModel.Initialize();
 
