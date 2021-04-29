@@ -107,7 +107,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Parameter parameterCompoundForSubscription;
         private ParameterSubscription parameterSubscriptionCompound;
         private IList<(ReferenceDescription Reference, DataValue Node)> variables;
-        private Mock<ITypeComparerService> typeComparer;
 
         [SetUp]
         public void Setup()
@@ -179,9 +178,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     new KeyValuePair<Iteration, Tuple<DomainOfExpertise, Participant>>(this.iteration, new Tuple<DomainOfExpertise, Participant>(this.domain, new Participant()))
                 }));
 
-            this.typeComparer = new Mock<ITypeComparerService>();
-
-            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.typeComparer.Object);
+            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object);
 
             var browser = new ElementDefinitionsBrowserViewModel(this.iteration, this.session.Object);
             this.elementDefinitionRows = new List<ElementDefinitionRowViewModel>();
