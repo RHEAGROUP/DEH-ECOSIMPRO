@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Web.WebSockets;
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;

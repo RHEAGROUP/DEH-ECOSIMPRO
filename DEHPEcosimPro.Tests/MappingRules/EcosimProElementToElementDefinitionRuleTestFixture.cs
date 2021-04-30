@@ -40,11 +40,10 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPCommon.HubController.Interfaces;
 
     using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.Xpf.NavBar;
+    using DevExpress.Xpf.WindowsUI.Base;
 
     using Moq;
 
@@ -68,6 +67,8 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private SampledFunctionParameterType scalarParameterType;
         private SampledFunctionParameterType dateTimeParameterType;
         private ActualFiniteStateList actualFiniteStates;
+        private RatioScale scale;
+        private SimpleQuantityKind quantityKindParameterType;
 
         [SetUp]
         public void Setup()
@@ -162,14 +163,33 @@ namespace DEHPEcosimPro.Tests.MappingRules
                 SelectedParameterType = this.dateTimeParameterType
             });
 
+            this.variables.Add(new VariableRowViewModel((
+                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid()), DisplayName = new LocalizedText(string.Empty, "Cap.c") },
+                new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
+            {
+                Values = { new TimeTaggedValueRowViewModel(6,0) },
+                SelectedValues = { new TimeTaggedValueRowViewModel(42, 1) },
+                SelectedParameterType = this.quantityKindParameterType,
+                SelectedScale = this.scale
+            });
+
             this.variables.FirstOrDefault()?.SelectedValues.Add(new TimeTaggedValueRowViewModel(42, .3));
             var elements = this.rule.Transform(this.variables).elementBases.OfType<ElementDefinition>().ToList();
             Assert.AreEqual(2, elements.Count);
-            var parameter = elements.Last().Parameter.First();
-            Assert.AreEqual("TextXQuantity", parameter.ParameterType.Name);
-            var parameterValueSet = parameter.ValueSet.Last();
-            Assert.AreEqual("0.2", parameterValueSet.Computed[0]);
-            Assert.AreEqual("0.2", parameterValueSet.Computed[1]);
+            Assert.AreEqual(3, elements.Last().Parameter.Count);
+
+            var firstParameter = elements.Last().Parameter.First();
+            Assert.AreEqual("TextXQuantity", firstParameter.ParameterType.Name);
+            var firstParameterValueSet = firstParameter.ValueSet.Last();
+            Assert.AreEqual("0.2", firstParameterValueSet.Computed[0]);
+            Assert.AreEqual("0.2", firstParameterValueSet.Computed[1]);
+
+            var lastParameter = elements.Last().Parameter.Last();
+            Assert.AreEqual("SimpleQuantityKind", lastParameter.ParameterType.Name);
+            Assert.AreEqual(this.scale, lastParameter.Scale);
+            var parameterValueSet = lastParameter.ValueSet.Last();
+            Assert.AreEqual("42", parameterValueSet.Computed[0]);
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = parameterValueSet.Computed[1]);
         }
         
         [Test]
@@ -314,6 +334,13 @@ namespace DEHPEcosimPro.Tests.MappingRules
                         }
                     }
                 }
+            };
+
+            this.scale = new RatioScale() { NumberSet = NumberSetKind.REAL_NUMBER_SET };
+
+            this.quantityKindParameterType = new SimpleQuantityKind()
+            {
+                DefaultScale = this.scale, PossibleScale = { this.scale }, Name = "SimpleQuantityKind"
             };
         }
 

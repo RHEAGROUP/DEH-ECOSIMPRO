@@ -62,7 +62,6 @@ namespace DEHPEcosimPro.Tests.DstController
     using Opc.Ua;
 
     using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
-    using Node = DevExpress.XtraCharts.Native.Node;
 
     [TestFixture, Apartment(ApartmentState.STA)]
     public class DstControllerTestFixture

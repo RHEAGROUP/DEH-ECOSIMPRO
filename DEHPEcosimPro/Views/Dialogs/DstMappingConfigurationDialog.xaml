@@ -30,11 +30,11 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox Grid.Row="0" x:Name="MainContainer" Header="Select Value Set To Map" Margin="10" Padding="10">
-                <dxg:TreeListControl ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedThing}" SelectionMode="Row">
+                <dxg:TreeListControl ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedThing}">
                     <dxg:TreeListControl.View>
                         <dxg:TreeListView Name="View" AllowEditing="False" AutoWidth="False" ExpandCollapseNodesOnNavigation="True" ExpandStateFieldName="IsExpanded" FixedLineWidth="0" HorizontalScrollbarVisibility="Auto"
                                           NavigationStyle="Cell" ShowHorizontalLines="False" ShowIndicator="False" ShowNodeImages="False" ShowVerticalLines="False" TreeDerivationMode="HierarchicalDataTemplate"
-                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto" />
+                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto"/>
                     </dxg:TreeListControl.View>
                     <dxg:TreeListControl.Columns>
                         <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />

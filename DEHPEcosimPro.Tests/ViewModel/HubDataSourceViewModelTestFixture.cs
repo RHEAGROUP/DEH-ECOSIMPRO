@@ -26,7 +26,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
 {
     using System;
     using System.Collections.Generic;
-    using System.Reactive;
     using System.Reactive.Concurrency;
     using System.Threading;
 
@@ -35,7 +34,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
-    using CDP4Common.Types;
 
     using CDP4Dal;
     using CDP4Dal.Permission;
@@ -52,14 +50,11 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
-    using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
-    using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
 
     using DevExpress.Xpf.Core;
-    using DevExpress.XtraPrinting.Native;
 
     using Moq;
 
