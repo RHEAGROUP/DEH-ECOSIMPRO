@@ -25,17 +25,13 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
-    using System.Threading.Tasks;
-    using System.Windows;
     using System.Windows.Input;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
-    using CDP4Common.Validation;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -76,17 +72,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.selectedThing;
             set
             {
-                if (this.ValidateSelectedParameterType() != false)
+                if (this.IsParameterTypeAllowed())
                 {
                     this.RaiseAndSetIfChanged(ref this.selectedThing, value);
                 }
-                else
-                {
-                    this.RaiseAndSetIfChanged(ref this.selectedThing, this.selectedThing);
-                }
             }
         }
-
+        
         /// <summary>
         /// Backing field for <see cref="CanContinue"/>
         /// </summary>
@@ -284,20 +276,17 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Verify that the selected <see cref="ParameterType"/> is compatible with the selected variable value type
         /// </summary>
-        /// <returns>A value indicating whether the current <see cref="SelectedThing"/> is compatible with </returns>
-        private bool? ValidateSelectedParameterType()
+        /// <returns>A value indicating whether the current <see cref="SelectedThing"/> <see cref="ParameterType"/>is compatible with </returns>
+        public bool IsParameterTypeAllowed()
         {
-            if (!(this.SelectedThing?.SelectedParameterType is {} parameterType))
-            {
-                return null;
-            }
-
-            if (this.SelectedThing.ValidateParameterType())
+            if (this.SelectedThing?.SelectedParameterType == null
+                || (this.SelectedThing?.SelectedParameterType is {}
+                && this.SelectedThing.IsParameterTypeValid()))
             {
                 return true;
             }
 
-            this.StatusBar.Append($"The selected ParameterType {{{parameterType.Name}}} isn't compatible with the selected variable", StatusBarMessageSeverity.Error);
+            this.StatusBar.Append($"The selected ParameterType isn't compatible with the selected variable", StatusBarMessageSeverity.Error);
             this.navigation.ShowDxDialog<MappingValidationErrorDialog>();
             return false;
         }
@@ -328,10 +317,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (this.SelectedThing.SelectedParameter is {} parameter)
             {
                 this.SelectedThing.SelectedScale = parameter.Scale;
+                return;
             }
                 
             this.SelectedThing.SelectedScale = 
-                this.SelectedThing?.SelectedParameterType is QuantityKind quantityKind 
+                this.SelectedThing.SelectedParameterType is QuantityKind quantityKind 
                 ? quantityKind.DefaultScale 
                 : null;
         }
@@ -369,7 +359,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Updates the <see cref="AvailableParameterTypes"/>
         /// </summary>
         /// <param name="allowScalarParameterType">A value indicating whether the <see cref="ScalarParameterType"/>s should be included in the <see cref="AvailableParameterTypes"/></param>
-        private void UpdateAvailableParameterType(bool? allowScalarParameterType = null)
+        public void UpdateAvailableParameterType(bool? allowScalarParameterType = null)
         {
             this.AvailableParameterTypes.Clear();
 

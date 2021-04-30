@@ -24,19 +24,13 @@
 
 namespace DEHPEcosimPro.Tests.ViewModel
 {
-    using Autofac;
-
-    using DEHPCommon;
     using DEHPCommon.Enumerators;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
-    using DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.Interfaces;
     using DEHPCommon.UserInterfaces.Views.ExchangeHistory;
 
     using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Services.OpcConnector;
-    using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Interfaces;
 

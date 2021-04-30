@@ -22,7 +22,6 @@
         </TextBlock>
     </Grid>
     <dx:DXDialogWindow.FooterButtons>
-        <dx:DialogButton ToolTip="Cancel" Content="Cancel" IsCancel="True" MinWidth="65" DialogResult="Cancel"/>
-        <dx:DialogButton ToolTip="Proceed with reset and delete all collected data" IsDefault="True" Content="Ok" MinWidth="65" DialogResult="OK"/>
+        <dx:DialogButton ToolTip="Ok" IsDefault="True" Content="Ok" MinWidth="65" DialogResult="OK"/>
     </dx:DXDialogWindow.FooterButtons>
 </dx:DXDialogWindow>

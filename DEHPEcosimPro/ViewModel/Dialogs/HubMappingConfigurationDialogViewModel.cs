@@ -35,6 +35,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using CDP4Common.SiteDirectoryData;
     using CDP4Common.Validation;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
@@ -222,7 +223,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.WhenAnyValue(x => x.SelectedMappedElement.SelectedVariable)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.VerifyVariableTypesAreCompatible));
+                .Subscribe(_ => this.UpdateHubFields(this.AreVariableTypesAreCompatible));
 
             this.WhenAnyValue(x => x.SelectedMappedElement)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -282,7 +283,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>
-        private void VerifyVariableTypesAreCompatible()
+        public void AreVariableTypesAreCompatible()
         {
             if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && this.SelectedMappedElement.SelectedParameter is {} parameter))
             {
@@ -291,9 +292,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             var validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
 
-            if (validationResult.ResultKind == ValidationResultKind.Valid)
+            if (validationResult.ResultKind != ValidationResultKind.Valid)
             {
-                this.StatusBar.Append($"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}");
+                this.StatusBar.Append(
+                    $"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}", 
+                    StatusBarMessageSeverity.Error);
+
                 this.SelectedMappedElement.SelectedVariable = null;
             }
             

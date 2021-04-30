@@ -24,8 +24,6 @@
 
 namespace DEHPEcosimPro.Tests.Services.TypeResolver
 {
-    using System;
-
     using DEHPEcosimPro.Services.TypeResolver;
 
     using NUnit.Framework;

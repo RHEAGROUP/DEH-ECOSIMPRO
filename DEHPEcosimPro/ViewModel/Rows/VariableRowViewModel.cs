@@ -419,7 +419,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             var result = this.SelectedValues.Any()
                          && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
                 && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null))
-                && this.ValidateParameterType();
+                && this.IsParameterTypeValid();
 
             return result;
         }
@@ -428,7 +428,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// Verify if the <see cref="SelectedParameterType"/> is compatible with the current variable
         /// </summary>
         /// <returns>An assert whether the <see cref="SelectedParameterType"/> is compatible</returns>
-        public bool ValidateParameterType()
+        public bool IsParameterTypeValid()
         {
             return this.SelectedParameterType switch
             {
