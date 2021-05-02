@@ -49,7 +49,9 @@ namespace DEHPEcosimPro.Extensions
             }
 
             var independentValidation = independantParameterType.IsQuantityKindOrText();
-            var dependentValidation = dependantParameterType.Validate(value, scale ?? (dependantParameterType as QuantityKind)?.DefaultScale).ResultKind == ValidationResultKind.Valid;
+            var measurementScale = scale ?? (dependantParameterType as QuantityKind)?.DefaultScale;
+            var validate = dependantParameterType.Validate(value, measurementScale);
+            var dependentValidation = validate.ResultKind == ValidationResultKind.Valid;
 
             return independentValidation && dependentValidation;
 

@@ -62,6 +62,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             Assert.AreEqual(value, viewModel.InitialValue);
             Assert.IsNull(viewModel.AverageValue);
             Assert.IsNull(viewModel.SelectedScale);
+            Assert.IsNull(viewModel.IsVariableMappingValid);
         }
 
         /// <summary>
@@ -166,7 +167,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         }
         
         [Test]
-        public void VerifyIsParameterTypeValid()
+        public void VerifyIsValid()
         {
             var viewModel = new VariableRowViewModel((new ReferenceDescription()
             {
@@ -174,9 +175,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 DisplayName = new LocalizedText("", "DummyVariable0")
             }, new DataValue() { Value = .2 }));
 
-            Assert.IsFalse(viewModel.IsParameterTypeValid());
+            Assert.IsFalse(viewModel.IsValid());
+            Assert.IsNull(viewModel.IsVariableMappingValid);
+            viewModel.SelectedValues.Add(new TimeTaggedValueRowViewModel(131234, .01));
+            Assert.IsFalse(viewModel.IsValid());
+            Assert.IsNull(viewModel.IsVariableMappingValid);
             viewModel.SelectedParameterType = new DateTimeParameterType();
-            Assert.IsFalse(viewModel.IsParameterTypeValid());
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsFalse(viewModel.IsVariableMappingValid);
 
             var sampledFunctionParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
             {
@@ -212,7 +218,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             };
 
             viewModel.SelectedParameterType = sampledFunctionParameterType;
-            Assert.IsFalse(viewModel.IsParameterTypeValid());
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsFalse(viewModel.IsVariableMappingValid);
 
             sampledFunctionParameterType.DependentParameterType.Clear();
             var scale = new RatioScale() { NumberSet = NumberSetKind.REAL_NUMBER_SET };
@@ -227,9 +234,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             });
 
             viewModel.SelectedScale = scale;
-            Assert.IsTrue(viewModel.IsParameterTypeValid());
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsTrue(viewModel.IsVariableMappingValid);
             viewModel.SelectedParameterType = new SimpleQuantityKind() { PossibleScale = {scale}, DefaultScale = scale};
-            Assert.IsTrue(viewModel.IsParameterTypeValid());
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsTrue(viewModel.IsVariableMappingValid);
         }
     }
 }

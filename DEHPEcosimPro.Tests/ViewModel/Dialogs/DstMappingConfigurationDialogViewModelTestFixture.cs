@@ -347,57 +347,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         }
 
         [Test]
-        public void VerifyIsParameterTypeValid()
-        {
-            this.viewModel.SelectedThing = null;
-            Assert.IsTrue(this.viewModel.IsParameterTypeAllowed());
-            this.viewModel.SelectedThing = this.variableRowViewModels.First();
-            Assert.IsTrue(this.viewModel.IsParameterTypeAllowed());
-
-            var simpleQuantityKind = new SimpleQuantityKind(Guid.NewGuid(), null, null)
-            {
-                Name = "DependentQuantityKing"
-            };
-
-            var sampledFunctionParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
-            {
-                Name = "TextXQuantity",
-                IndependentParameterType =
-                {
-                    new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
-                    {
-                        ParameterType = new TextParameterType(Guid.NewGuid(), null, null)
-                        {
-                            Name = "IndependentText"
-                        }
-                    }
-                },
-
-                DependentParameterType =
-                {
-                    new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
-                    {
-                        ParameterType = simpleQuantityKind
-                    }
-                }
-            };
-
-            this.viewModel.SelectedThing.SelectedParameterType = sampledFunctionParameterType;
-            Assert.IsFalse(this.viewModel.IsParameterTypeAllowed());
-            
-            this.viewModel.SelectedThing.SelectedParameterType = this.quantityKindParameterType;
-            Assert.IsTrue(this.viewModel.IsParameterTypeAllowed());
-
-            simpleQuantityKind.DefaultScale = this.scale;
-            simpleQuantityKind.PossibleScale.Add(this.scale);
-            this.viewModel.SelectedThing.SelectedParameterType = sampledFunctionParameterType;
-            this.viewModel.SelectedThing.SelectedScale = this.scale;
-            Assert.IsTrue(this.viewModel.IsParameterTypeAllowed());
-            
-            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Exactly(1));
-        }
-
-        [Test]
         public void VerifyUpdateSelectedScale()
         {
             this.viewModel.SelectedThing = null;

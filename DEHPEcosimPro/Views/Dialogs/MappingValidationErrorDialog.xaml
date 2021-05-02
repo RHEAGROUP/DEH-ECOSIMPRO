@@ -5,7 +5,7 @@
                    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    mc:Ignorable="d"
-                   Title="MappingValidationErrorDialog" Height="180" Width="280" ResizeMode="NoResize"
+                   Title="MappingValidationErrorDialog" Height="250" Width="280" ResizeMode="NoResize"
                    WindowStartupLocation="CenterScreen" Topmost="True">
     <Grid>
         <Grid.RowDefinitions>
@@ -13,15 +13,18 @@
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <Image Source="{dx:DXImage 'SvgImages/Icon Builder/Security_WarningCircled1.svg'}" VerticalAlignment="Top" Height="50"></Image>
-        <TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Grid.Row="1" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Run Text="You have some error in the mapping."/>
             <LineBreak></LineBreak>
-            <Run Text="The selected ParameterType"/>
             <LineBreak></LineBreak>
-            <Run Text=" is incompatible with the variable type"/>
+            <Run Text="One or more selected ParameterType"/>
+            <LineBreak></LineBreak>
+            <Run Text="are incompatible with the mapped variable type"/>
+            <LineBreak></LineBreak>
         </TextBlock>
     </Grid>
     <dx:DXDialogWindow.FooterButtons>
-        <dx:DialogButton ToolTip="Ok" IsDefault="True" Content="Ok" MinWidth="65" DialogResult="OK"/>
+        <dx:DialogButton ToolTip="Cancel the mapping and stay in the mapping dialog to correct the errors" Content="Cancel" MinWidth="65" DialogResult="Cancel"/>
+        <dx:DialogButton ToolTip="Continue with the valid mapping, ignoring errors" IsDefault="True" Content="Continue" MinWidth="65" DialogResult="OK"/>
     </dx:DXDialogWindow.FooterButtons>
 </dx:DXDialogWindow>
