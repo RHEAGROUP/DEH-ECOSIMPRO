@@ -34,9 +34,47 @@
                     <dxg:TreeListControl.View>
                         <dxg:TreeListView Name="View" AllowEditing="False" AutoWidth="False" ExpandCollapseNodesOnNavigation="True" ExpandStateFieldName="IsExpanded" FixedLineWidth="0" HorizontalScrollbarVisibility="Auto"
                                           NavigationStyle="Cell" ShowHorizontalLines="False" ShowIndicator="False" ShowNodeImages="False" ShowVerticalLines="False" TreeDerivationMode="HierarchicalDataTemplate"
-                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto"/>
+                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto">
+                            <dxg:TreeListView.RowStyle>
+                                <Style TargetType="{x:Type dxg:RowControl}">
+                                    <Style.Triggers>
+                                        <Trigger Property="dxg:GridViewBase.IsFocusedRow" Value="True">
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Setter Property="FontWeight" Value="Bold"></Setter>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="{x:Null}">
+                                            <Setter Property="Background" Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="True">
+                                            <Setter Property="Background" Value="LightGreen"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="False">
+                                            <Setter Property="Background" Value="LightCoral"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </dxg:TreeListView.RowStyle>
+                        </dxg:TreeListView>
                     </dxg:TreeListControl.View>
                     <dxg:TreeListControl.Columns>
+                        <dxg:TreeListColumn AllowEditing="False" FieldName="IsVariableMappingValid" Fixed="Left" Header="Is Mapping Valid">
+                            <dxg:TreeListColumn.DisplayTemplate>
+                                <ControlTemplate>
+                                    <Image x:Name="Icon" Height="16" VerticalAlignment="Center" Source="{dx:DXImage 'SvgImages/XAF/Action_ParametrizedAction_Clear.svg'}"/>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{x:Null}">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/Action_ParametrizedAction_Clear.svg'}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/State_Validation_Valid.svg'}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="False">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/State_Validation_Invalid.svg'}" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </dxg:TreeListColumn.DisplayTemplate>
+                        </dxg:TreeListColumn>
                         <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />
                         <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" />
                         <dxg:TreeListColumn AllowEditing="False" FieldName="LastNotificationTime" Header="Last Time Updated" />

@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -42,6 +43,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
+
+    using DevExpress.CodeParser;
 
     using Opc.Ua;
 
@@ -70,13 +73,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public VariableRowViewModel SelectedThing
         {
             get => this.selectedThing;
-            set
-            {
-                if (this.IsParameterTypeAllowed())
-                {
-                    this.RaiseAndSetIfChanged(ref this.selectedThing, value);
-                }
-            }
+            set => this.RaiseAndSetIfChanged(ref this.selectedThing, value);
         }
         
         /// <summary>
@@ -201,13 +198,23 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.WhenAnyValue(x => x.CanContinue),
                 RxApp.MainThreadScheduler);
 
-            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
-                () =>
+            this.ContinueCommand.Subscribe(_ =>
+            {
+                if (this.Variables.Any(x => x.IsVariableMappingValid is false)
+                    && this.navigation.ShowDxDialog<MappingValidationErrorDialog>() is false)
                 {
-                    var variableRowViewModels = this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList();
+                        return;
+                }
+
+                this.ExecuteContinueCommand(() =>
+                {
+                    var variableRowViewModels = this.Variables
+                        .Where(x => x.IsVariableMappingValid is true).ToList();
+
                     this.DstController.Map(variableRowViewModels);
                     this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
-                }));
+                });
+            });
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -225,6 +232,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 {
                     this.UpdateSelectedParameter();
                     this.UpdateSelectedScale();
+                    this.NotifyIfParameterTypeIsNotAllowed();
                     this.CheckCanExecute();
                     }));
             
@@ -248,7 +256,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void CheckCanExecute()
         {
-            this.CanContinue = this.Variables.Any(x => x.IsValid());
+            foreach (var variable in this.Variables)
+            {
+                if (variable.IsValid())
+                {
+                    this.CanContinue = true;
+                }
+            }
         }
         
         /// <summary>
@@ -276,19 +290,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Verify that the selected <see cref="ParameterType"/> is compatible with the selected variable value type
         /// </summary>
-        /// <returns>A value indicating whether the current <see cref="SelectedThing"/> <see cref="ParameterType"/>is compatible with </returns>
-        public bool IsParameterTypeAllowed()
+        public void NotifyIfParameterTypeIsNotAllowed()
         {
-            if (this.SelectedThing?.SelectedParameterType == null
-                || (this.SelectedThing?.SelectedParameterType is {}
-                && this.SelectedThing.IsParameterTypeValid()))
+            if (this.SelectedThing?.IsVariableMappingValid is false)
             {
-                return true;
+                this.StatusBar.Append($"The selected ParameterType isn't compatible with the selected variable", StatusBarMessageSeverity.Error);
             }
-
-            this.StatusBar.Append($"The selected ParameterType isn't compatible with the selected variable", StatusBarMessageSeverity.Error);
-            this.navigation.ShowDxDialog<MappingValidationErrorDialog>();
-            return false;
         }
 
         /// <summary>

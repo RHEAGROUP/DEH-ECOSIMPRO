@@ -281,6 +281,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="IsVariableMappingValid"/>
+        /// </summary>
+        private bool? isVariableMappingValid;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the mapping is valid or there is no mapping
+        /// </summary>
+        public bool? IsVariableMappingValid
+        {
+            get => this.isVariableMappingValid;
+            set => this.RaiseAndSetIfChanged(ref this.isVariableMappingValid, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
@@ -411,15 +425,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to nbe mapped
+        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to be mapped
+        /// And sets the <see cref="IsVariableMappingValid"/>
         /// </summary>
-        /// <returns></returns>
-        internal bool IsValid()
+        /// <returns>An assert</returns>
+        public bool IsValid()
         {
             var result = this.SelectedValues.Any()
                          && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
-                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null))
-                && this.IsParameterTypeValid();
+                && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null));
+
+            this.IsVariableMappingValid = result ? this.IsParameterTypeValid() : default(bool?);
 
             return result;
         }
