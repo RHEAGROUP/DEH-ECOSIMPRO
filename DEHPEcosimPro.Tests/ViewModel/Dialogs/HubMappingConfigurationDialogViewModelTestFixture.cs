@@ -94,7 +94,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private ParameterGroup parameterGroup3ForUsage1;
         private Parameter parameter1;
         private Parameter parameter4;
-        private Parameter parameter6ForOverride;
         private Parameter parameterCompoundForSubscription;
         private ParameterSubscription parameterSubscriptionCompound;
         private IList<(ReferenceDescription Reference, DataValue Node)> variables;
@@ -141,7 +140,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 IterationSetup = this.iterationSetup
             };
 
-            var engineeringModel = new EngineeringModel(Guid.NewGuid(), null, null)
+            _ = new EngineeringModel(Guid.NewGuid(), null, null)
             {
                 EngineeringModelSetup = this.engineeringSetup,
                 Iteration = { this.iteration }
@@ -322,12 +321,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             {
                 ParameterType = this.qqParamType,
                 Owner = this.domain2
-            };
-            
-            this.parameter6ForOverride = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain
             };
 
             this.parameterCompoundForSubscription = new Parameter(Guid.NewGuid(), null, null)
