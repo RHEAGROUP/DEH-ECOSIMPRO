@@ -5,7 +5,7 @@
                    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    mc:Ignorable="d"
-                   Title="MappingValidationErrorDialog" Height="250" Width="280" ResizeMode="NoResize"
+                   Title="Mapping error" Height="250" Width="280" ResizeMode="NoResize"
                    WindowStartupLocation="CenterScreen" Topmost="True">
     <Grid>
         <Grid.RowDefinitions>
@@ -14,12 +14,12 @@
         </Grid.RowDefinitions>
         <Image Source="{dx:DXImage 'SvgImages/Icon Builder/Security_WarningCircled1.svg'}" VerticalAlignment="Top" Height="50"></Image>
         <TextBlock Grid.Row="1" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Run Text="You have some error in the mapping."/>
+            <Run Text="There is a mapping error!"/>
             <LineBreak></LineBreak>
             <LineBreak></LineBreak>
-            <Run Text="One or more selected ParameterType"/>
+            <Run Text="One or more selected ParameterTypes"/>
             <LineBreak></LineBreak>
-            <Run Text="are incompatible with the mapped variable type"/>
+            <Run Text="are incompatible with the mapped variables"/>
             <LineBreak></LineBreak>
         </TextBlock>
     </Grid>

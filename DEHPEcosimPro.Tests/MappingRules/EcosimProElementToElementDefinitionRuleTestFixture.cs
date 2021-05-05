@@ -43,8 +43,6 @@ namespace DEHPEcosimPro.Tests.MappingRules
     using DEHPEcosimPro.MappingRules;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.Xpf.WindowsUI.Base;
-
     using Moq;
 
     using NUnit.Framework;
