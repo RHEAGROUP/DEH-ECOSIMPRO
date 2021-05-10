@@ -33,12 +33,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Validation;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -220,7 +223,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.WhenAnyValue(x => x.SelectedMappedElement.SelectedVariable)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.VerifyVariableIsWritable));
+                .Subscribe(_ => this.UpdateHubFields(this.AreVariableTypesAreCompatible));
 
             this.WhenAnyValue(x => x.SelectedMappedElement)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -278,16 +281,26 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Verifies that the selected variable has write access
+        /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>
-        private void VerifyVariableIsWritable()
+        public void AreVariableTypesAreCompatible()
         {
-            if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && !variable.HasWriteAccess.HasValue))
+            if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && this.SelectedMappedElement.SelectedParameter is {} parameter))
             {
                 return;
             }
 
-            variable.HasWriteAccess = this.DstController.IsVariableWritable(variable.Reference);
+            var validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
+
+            if (validationResult.ResultKind != ValidationResultKind.Valid)
+            {
+                this.StatusBar.Append(
+                    $"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}", 
+                    StatusBarMessageSeverity.Error);
+
+                this.SelectedMappedElement.SelectedVariable = null;
+            }
+            
             this.CheckCanExecute();
         }
 
@@ -483,6 +496,5 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.IsBusy = false;
         }
-
     }
 }

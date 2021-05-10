@@ -30,6 +30,7 @@ namespace DEHPEcosimPro.ViewModel
     using System.Reactive.Linq;
     using System.Threading.Tasks;
     using System.Windows.Input;
+    using System.Windows.Threading;
 
     using Autofac;
 
@@ -73,11 +74,11 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
-
+        
         /// <summary>
-        /// Gets or sets the command to refresh the session
+        /// Gets the <see cref="IHubSessionControlViewModel"/>
         /// </summary>
-        public ReactiveCommand<Unit> RefreshCommand { get; set; }
+        public IHubSessionControlViewModel SessionControl { get; }
 
         /// <summary>
         /// Initializes a new <see cref="HubDataSourceViewModel"/>
@@ -89,12 +90,17 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="treeSelectorService">The <see cref="IObjectBrowserTreeSelectorService"/></param>
         /// <param name="hubBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, IPublicationBrowserViewModel publicationBrowser,
-            IObjectBrowserTreeSelectorService treeSelectorService, IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController) : base(navigationService)
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="sessionControl">The <see cref="IHubSessionControlViewModel"/></param>
+        public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, 
+            IPublicationBrowserViewModel publicationBrowser, IObjectBrowserTreeSelectorService treeSelectorService, 
+            IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController,
+            IHubSessionControlViewModel sessionControl) : base(navigationService)
         {
             this.hubController = hubController;
             this.treeSelectorService = treeSelectorService;
             this.dstController = dstController;
+            this.SessionControl = sessionControl;
             this.ObjectBrowser = objectBrowser;
             this.PublicationBrowser = publicationBrowser;
             this.HubBrowserHeader = hubBrowserHeader;
@@ -116,19 +122,14 @@ namespace DEHPEcosimPro.ViewModel
 
             this.ObjectBrowser.MapCommand = ReactiveCommand.Create(canMap);
             this.ObjectBrowser.MapCommand.Subscribe(_ => this.MapCommandExecute());
-
-            var isConnectedObservable = this.WhenAny(x => x.hubController.OpenIteration,
-                x => x.hubController.IsSessionOpen,
-                (i, o) => 
-                    i.Value != null && o.Value)
-                .ObserveOn(RxApp.MainThreadScheduler);
-            
-            isConnectedObservable.Subscribe(this.UpdateConnectButtonText);
-
-            this.RefreshCommand = ReactiveCommand.CreateAsyncTask(isConnectedObservable, async _ =>
-                await this.RefreshCommandExecute(), RxApp.MainThreadScheduler);
             
             this.ObjectBrowser.SelectedThings.CountChanged.Subscribe(_ => this.UpdateNetChangePreviewBasedOnSelection());
+
+            this.WhenAny(x => x.hubController.OpenIteration,
+                x => x.hubController.IsSessionOpen,
+                (i, o) =>
+                    i.Value != null && o.Value)
+                .Subscribe(this.UpdateConnectButtonText);
         }
 
         /// <summary>
@@ -138,15 +139,6 @@ namespace DEHPEcosimPro.ViewModel
         {
             CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(
                 this.ObjectBrowser.SelectedThings.OfType<ElementDefinitionRowViewModel>(), null, false));
-        }
-
-        /// <summary>
-        /// Executes the <see cref="RefreshCommand"/>
-        /// </summary>
-        /// <returns></returns>
-        private async Task RefreshCommandExecute()
-        {
-            await this.hubController.Refresh();
         }
 
         /// <summary>

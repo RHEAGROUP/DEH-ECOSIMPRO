@@ -180,6 +180,7 @@ namespace DEHPEcosimPro.MappingRules
                     is {} parameter)
                 {
                     variable.SelectedParameter = parameter;
+                    variable.SelectedParameter.Scale = variable.SelectedScale;
                 }
 
                 else
@@ -188,6 +189,7 @@ namespace DEHPEcosimPro.MappingRules
                     {
                         x.ParameterType = variable.SelectedParameterType;
                         x.Owner = this.owner;
+                        x.Scale = variable.SelectedScale;
 
                         x.ValueSet.Add(this.Bake<ParameterValueSet>(set =>
                         {

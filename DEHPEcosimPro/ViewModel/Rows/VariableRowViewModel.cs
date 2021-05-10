@@ -31,10 +31,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Validation;
 
     using CDP4Dal;
 
     using DEHPEcosimPro.Events;
+    using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.Views;
 
     using Opc.Ua;
@@ -198,6 +200,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="SelectedScale"/>
+        /// </summary>
+        private MeasurementScale selectedScale;
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="ActualFiniteState"/>
+        /// </summary>
+        public MeasurementScale SelectedScale
+        {
+            get => this.selectedScale;
+            set => this.RaiseAndSetIfChanged(ref this.selectedScale, value);
+        }
+
+        /// <summary>
         /// Gets or sets the collection of selected <see cref="ElementUsage"/>s
         /// </summary>
         public ReactiveList<ElementUsage> SelectedElementUsages { get; set; } = new ReactiveList<ElementUsage>();
@@ -262,6 +278,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             get => this.selectedTimeStep;
             set => this.RaiseAndSetIfChanged(ref this.selectedTimeStep, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="IsVariableMappingValid"/>
+        /// </summary>
+        private bool? isVariableMappingValid;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the mapping is valid or there is no mapping
+        /// </summary>
+        public bool? IsVariableMappingValid
+        {
+            get => this.isVariableMappingValid;
+            set => this.RaiseAndSetIfChanged(ref this.isVariableMappingValid, value);
         }
 
         /// <summary>
@@ -395,16 +425,37 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to nbe mapped
+        /// Verify whether this <see cref="VariableRowViewModel"/> is ready to be mapped
+        /// And sets the <see cref="IsVariableMappingValid"/>
         /// </summary>
-        /// <returns></returns>
-        internal bool IsValid()
+        /// <returns>An assert</returns>
+        public bool IsValid()
         {
             var result = this.SelectedValues.Any()
                          && ((this.SelectedParameter != null) || (this.SelectedParameterType != null && this.SelectedParameter is null))
                 && (this.SelectedElementUsages.IsEmpty || (this.SelectedElementDefinition != null && this.SelectedParameter != null));
 
+            this.IsVariableMappingValid = result ? this.IsParameterTypeValid() : default(bool?);
+
             return result;
+        }
+
+        /// <summary>
+        /// Verify if the <see cref="SelectedParameterType"/> is compatible with the current variable
+        /// </summary>
+        /// <returns>An assert whether the <see cref="SelectedParameterType"/> is compatible</returns>
+        public bool IsParameterTypeValid()
+        {
+            return this.SelectedParameterType switch
+            {
+                SampledFunctionParameterType sampledFunctionParameterType =>
+                    sampledFunctionParameterType.Validate(this.ActualValue, this.SelectedScale),
+                ScalarParameterType scalarParameterType =>
+                    this.SelectedParameterType.Validate(this.ActualValue,
+                        this.SelectedScale ?? (scalarParameterType as QuantityKind)?.DefaultScale)
+                    .ResultKind == ValidationResultKind.Valid,
+                _ => false
+            };
         }
     }
 }

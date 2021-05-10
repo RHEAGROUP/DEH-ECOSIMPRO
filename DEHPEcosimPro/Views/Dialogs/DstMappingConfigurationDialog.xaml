@@ -12,7 +12,7 @@
                    xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                    xmlns:system="clr-namespace:System;assembly=mscorlib" Title="Mapping Configuration Dialog" MinWidth="800"
-                   MinHeight="600" mc:Ignorable="d" Topmost="True">
+                   MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
             <converters:ListToElementUsageConverter x:Key="ListToElementUsageConverter" />
@@ -30,13 +30,51 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <GroupBox Grid.Row="0" x:Name="MainContainer" Header="Select Value Set To Map" Margin="10" Padding="10">
-                <dxg:TreeListControl ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedThing}" SelectionMode="Row">
+                <dxg:TreeListControl ItemsSource="{Binding Variables}" SelectedItem="{Binding SelectedThing}">
                     <dxg:TreeListControl.View>
                         <dxg:TreeListView Name="View" AllowEditing="False" AutoWidth="False" ExpandCollapseNodesOnNavigation="True" ExpandStateFieldName="IsExpanded" FixedLineWidth="0" HorizontalScrollbarVisibility="Auto"
                                           NavigationStyle="Cell" ShowHorizontalLines="False" ShowIndicator="False" ShowNodeImages="False" ShowVerticalLines="False" TreeDerivationMode="HierarchicalDataTemplate"
-                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto" />
+                                          TreeLineStyle="Solid" VerticalScrollbarVisibility="Auto">
+                            <dxg:TreeListView.RowStyle>
+                                <Style TargetType="{x:Type dxg:RowControl}">
+                                    <Style.Triggers>
+                                        <Trigger Property="dxg:GridViewBase.IsFocusedRow" Value="True">
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Setter Property="FontWeight" Value="Bold"></Setter>
+                                        </Trigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="{x:Null}">
+                                            <Setter Property="Background" Value="White"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="True">
+                                            <Setter Property="Background" Value="LightGreen"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Row.IsVariableMappingValid}" Value="False">
+                                            <Setter Property="Background" Value="LightCoral"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </dxg:TreeListView.RowStyle>
+                        </dxg:TreeListView>
                     </dxg:TreeListControl.View>
                     <dxg:TreeListControl.Columns>
+                        <dxg:TreeListColumn AllowEditing="False" FieldName="IsVariableMappingValid" Fixed="Left" Header="Is Mapping Valid">
+                            <dxg:TreeListColumn.DisplayTemplate>
+                                <ControlTemplate>
+                                    <Image x:Name="Icon" Height="16" VerticalAlignment="Center" Source="{dx:DXImage 'SvgImages/XAF/Action_ParametrizedAction_Clear.svg'}"/>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="{x:Null}">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/Action_ParametrizedAction_Clear.svg'}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/State_Validation_Valid.svg'}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RowData.Row.IsVariableMappingValid, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Value="False">
+                                            <Setter TargetName="Icon" Property="Source" Value="{dx:DXImage 'SvgImages/XAF/State_Validation_Invalid.svg'}" />
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </dxg:TreeListColumn.DisplayTemplate>
+                        </dxg:TreeListColumn>
                         <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />
                         <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" />
                         <dxg:TreeListColumn AllowEditing="False" FieldName="LastNotificationTime" Header="Last Time Updated" />
@@ -128,6 +166,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                        
@@ -161,46 +200,68 @@
                                 <dxe:CheckedTokenComboBoxStyleSettings AllowEditTokens="False" NewTokenPosition="Far" />
                             </dxe:ComboBoxEdit.StyleSettings>
                         </dxe:ComboBoxEdit>
-                        <Label Grid.Row="3" Grid.Column="0" Content="Parameter type:" />
-                        <dxe:ComboBoxEdit Grid.Row="3" Grid.Column="1" Margin="2" AllowNullInput="True" ClearSelectionOnBackspace="True"
-                                          DisplayMember="Name"
-                                          IsTextEditable="False"
-                                          ItemsSource="{Binding AvailableParameterTypes}"
-                                          NullText="Select One Parameter Type" NullValueButtonPlacement="EditBox"
-                                          SelectedItem="{Binding SelectedThing.SelectedParameterType}"
-                                          ShowNullTextForEmptyValue="True" ValueMember="Name"
-                                          ToolTip="Select a ParameterType. Only ParameterType of type SampledFunctionParameter type &#x0a; with compatible Independant and Dependant ParameterType can be selected">
-                            <dxe:ComboBoxEdit.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock>
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0} =&gt; [{1} X {2}]">
-                                                <Binding Path="Name" />
-                                                <Binding Path="IndependentParameterType[0].ParameterType.Name" />
-                                                <Binding Path="DependentParameterType[0].ParameterType.Name" />
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </dxe:ComboBoxEdit.ItemTemplate>
-                        </dxe:ComboBoxEdit>
-                        <Label Grid.Row="4" Grid.Column="0" Content="Parameter:" />
-                        <dxe:ComboBoxEdit Grid.Row="4" Grid.Column="1" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
+                        <Grid HorizontalAlignment="Stretch" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*"></ColumnDefinition>
+                                <ColumnDefinition Width="4*"></ColumnDefinition>
+                                <ColumnDefinition Width="2*"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                        <Label Content="Parameter type:" />
+
+                        <dxg:LookUpEdit Grid.Column="1" Margin="2" AllowNullInput="True" ClearSelectionOnBackspace="True"
+                                      DisplayMember="Name"
+                                      ShowNullText="True"
+                                      IsTextEditable="False"
+                                      AllowUpdateTwoWayBoundPropertiesOnSynchronization="True"
+                                      ItemsSource="{Binding AvailableParameterTypes}"
+                                      SelectedItem="{Binding SelectedThing.SelectedParameterType}"
+                                      NullText="Select One Parameter Type" NullValueButtonPlacement="EditBox"
+                                      ShowNullTextForEmptyValue="True" ClosePopupOnClickMode="Normal"
+                                      ToolTip="Select a ParameterType to create a new Parameter">
+                            <dxg:LookUpEdit.StyleSettings>
+                                <dxg:SearchLookUpEditStyleSettings/>
+                            </dxg:LookUpEdit.StyleSettings>
+                            <dxg:LookUpEdit.PopupContentTemplate>
+                                <ControlTemplate>
+                                    <dxg:GridControl EnableSmartColumnsGeneration="False"
+                                                 ItemsSource="{Binding AvailableParameterTypes}" SelectionMode="None" SelectedItem="{Binding SelectedThing.SelectedParameterType}">
+                                        <dxg:GridControl.View>
+                                            <dxg:TableView AllowPerPixelScrolling="True"/>
+                                        </dxg:GridControl.View>
+                                        <dxg:GridControl.Columns>
+                                            <dxg:GridColumn FieldName="Name" />
+                                            <dxg:GridColumn FieldName="ClassKind" />
+                                        </dxg:GridControl.Columns>
+                                    </dxg:GridControl>
+                                </ControlTemplate>
+                            </dxg:LookUpEdit.PopupContentTemplate>
+                        </dxg:LookUpEdit>
+                        <dxe:ComboBoxEdit Grid.Column="2" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
+                                      DisplayMember="ShortName"
+                                      ItemsSource="{Binding SelectedThing.SelectedParameterType.AllPossibleScale}"
+                                      NullText="-" NullValueButtonPlacement="EditBox"
+                                      SelectedItem="{Binding SelectedThing.SelectedScale}"
+                                      ToolTip="Select a scale if the parameter type allows to do so"
+                                      ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
+
+                        </Grid>
+                        <Label Grid.Row="5" Grid.Column="0" Content="Parameter:" />
+                        <dxe:ComboBoxEdit Grid.Row="5" Grid.Column="1" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
                                                   DisplayMember="ParameterType.Name"
                                                   ItemsSource="{Binding AvailableParameters}"
                                                   NullText="Create New Parameter" NullValueButtonPlacement="EditBox"
                                                   SelectedItem="{Binding SelectedThing.SelectedParameter}"
                                                   ToolTip="Select A Parameter. When no Parameter are selected, &#x0a;a new one will be added based on the selected ParameterType"
                                                   ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="ParameterType.Name" />
-                        <Label Grid.Row="5" Grid.Column="0" Content="Actual Finite State:" />
-                        <dxe:ComboBoxEdit Grid.Row="5" Grid.Column="1" Margin="2" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" DisplayMember="Name"
+                        <Label Grid.Row="6" Grid.Column="0" Content="Actual Finite State:" />
+                        <dxe:ComboBoxEdit Grid.Row="6" Grid.Column="1" Margin="2" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" DisplayMember="Name"
                                                   ItemsSource="{Binding AvailableActualFiniteStates}"
                                                   NullText="No State Depent Parameter Selected"
                                                   SelectedItem="{Binding SelectedThing.SelectedActualFiniteState}"
                                                   ToolTip="Select an ActualFiniteState when the selected Parameter has state dependency"
                                                   ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" ValueMember="Name" />
-                        <Label Grid.Row="6" Grid.Column="0" Content="Option:" />
-                        <dxe:ComboBoxEdit Grid.Row="6" Grid.Column="1" Margin="2" AutoComplete="True" DisplayMember="ShortName"
+                        <Label Grid.Row="7" Grid.Column="0" Content="Option:" />
+                        <dxe:ComboBoxEdit Grid.Row="7" Grid.Column="1" Margin="2" AutoComplete="True" DisplayMember="ShortName"
                                           ItemsSource="{Binding AvailableOptions}" SelectedIndex="0" NullText="Select an option"
                                           SelectedItem="{Binding SelectedThing.SelectedOption}" NullValueButtonPlacement="EditBox"
                                           ShowNullTextForEmptyValue="True" ValidateOnTextInput="False" 

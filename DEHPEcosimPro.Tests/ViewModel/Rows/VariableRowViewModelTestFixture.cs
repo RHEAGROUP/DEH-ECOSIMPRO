@@ -28,9 +28,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     using System.Collections.Generic;
     using System.Linq;
 
+    using CDP4Common.SiteDirectoryData;
+
     using CDP4Dal;
 
-    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -60,6 +61,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             Assert.IsNotEmpty(viewModel.Values);
             Assert.AreEqual(value, viewModel.InitialValue);
             Assert.IsNull(viewModel.AverageValue);
+            Assert.IsNull(viewModel.SelectedScale);
+            Assert.IsNull(viewModel.IsVariableMappingValid);
         }
 
         /// <summary>
@@ -161,6 +164,81 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             viewModel.SelectedTimeStep = 0;
             viewModel.ApplyTimeStep();
             Assert.AreEqual(14, viewModel.SelectedValues.Count);
+        }
+        
+        [Test]
+        public void VerifyIsValid()
+        {
+            var viewModel = new VariableRowViewModel((new ReferenceDescription()
+            {
+                NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                DisplayName = new LocalizedText("", "DummyVariable0")
+            }, new DataValue() { Value = .2 }));
+
+            Assert.IsFalse(viewModel.IsValid());
+            Assert.IsNull(viewModel.IsVariableMappingValid);
+            viewModel.SelectedValues.Add(new TimeTaggedValueRowViewModel(131234, .01));
+            Assert.IsFalse(viewModel.IsValid());
+            Assert.IsNull(viewModel.IsVariableMappingValid);
+            viewModel.SelectedParameterType = new DateTimeParameterType();
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsFalse(viewModel.IsVariableMappingValid);
+
+            var sampledFunctionParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+            {
+                Name = "TextXQuantity",
+                IndependentParameterType =
+                {
+                    new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                    {
+                        ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                        {
+                            Name = "Time", PossibleScale =
+                            {
+                                new RatioScale() { Name = "millisecond" },
+                                new RatioScale() { Name = "second" },
+                                new RatioScale() { Name = "minute" },
+                                new RatioScale() { Name = "hour" },
+                                new RatioScale() { Name = "Day" }
+                            }
+                        }
+                    }
+                },
+
+                DependentParameterType =
+                {
+                    new DependentParameterTypeAssignment(Guid.NewGuid(),null,null)
+                    {
+                        ParameterType = new DateTimeParameterType(Guid.NewGuid(),null,null)
+                        {
+                            Name = "DependentDateTime"
+                        }
+                    }
+                }
+            };
+
+            viewModel.SelectedParameterType = sampledFunctionParameterType;
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsFalse(viewModel.IsVariableMappingValid);
+
+            sampledFunctionParameterType.DependentParameterType.Clear();
+            var scale = new RatioScale() { NumberSet = NumberSetKind.REAL_NUMBER_SET };
+
+            sampledFunctionParameterType.DependentParameterType.Add(
+                new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+            {
+                ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                {
+                    Name = "DependentQuantityKing", DefaultScale = scale, PossibleScale = { scale }
+                }
+            });
+
+            viewModel.SelectedScale = scale;
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsTrue(viewModel.IsVariableMappingValid);
+            viewModel.SelectedParameterType = new SimpleQuantityKind() { PossibleScale = {scale}, DefaultScale = scale};
+            Assert.IsTrue(viewModel.IsValid());
+            Assert.IsTrue(viewModel.IsVariableMappingValid);
         }
     }
 }

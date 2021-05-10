@@ -9,19 +9,29 @@
     <Product>DEHPEcosimPro</Product>
     <Description>DEHPEcosimPro desktop application</Description>
     <Copyright>Copyright © RHEA System S.A.</Copyright>
-    <AssemblyVersion>1.3.1</AssemblyVersion>
-    <FileVersion>1.3.1</FileVersion>
+    <AssemblyVersion>1.3.2</AssemblyVersion>
+    <FileVersion>1.3.2</FileVersion>
     <LangVersion>latest</LangVersion>
     <StartupObject>DEHPEcosimPro.App</StartupObject>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Services\TypeResolver\**" />
+    <EmbeddedResource Remove="Services\TypeResolver\**" />
+    <None Remove="Services\TypeResolver\**" />
+    <Page Remove="Services\TypeResolver\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="C:\Users\nsmiechowski\.nuget\packages\nlog.config\4.6.8\contentFiles\any\any\NLog.config" />
     <None Remove="Resources\logo.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Services\TypeResolver\Interfaces\IObjectTypeResolverService.cs" />
+    <Compile Include="Services\TypeResolver\ObjectTypeResolverService.cs" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.195" />
+    <PackageReference Include="DEHPCommon" Version="1.0.212" />
     <PackageReference Include="NLog" Version="4.6.8" />
     <PackageReference Include="NLog.Schema" Version="4.6.8" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />

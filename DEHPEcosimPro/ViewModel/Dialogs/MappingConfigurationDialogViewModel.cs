@@ -58,7 +58,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="IDstController"/>
         /// </summary>
         protected readonly IDstController DstController;
-
+        
         /// <summary>
         /// Gets or sets the <see cref="ICloseWindowBehavior"/> instance
         /// </summary>
@@ -94,7 +94,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, IStatusBarControlViewModel statusBar)
+        protected MappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController,
+            IStatusBarControlViewModel statusBar)
         {
             this.HubController = hubController;
             this.DstController = dstController;

@@ -50,6 +50,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
+    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using DevExpress.Mvvm.Native;
@@ -61,7 +62,6 @@ namespace DEHPEcosimPro.Tests.DstController
     using Opc.Ua;
 
     using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
-    using Node = DevExpress.XtraCharts.Native.Node;
 
     [TestFixture, Apartment(ApartmentState.STA)]
     public class DstControllerTestFixture
@@ -85,6 +85,7 @@ namespace DEHPEcosimPro.Tests.DstController
         private Assembler assembler;
         private Mock<INavigationService> navigationService;
         private Mock<IExchangeHistoryService> exchangeHistoryService;
+        private Mock<IObjectTypeResolverService> objectTypeResolver;
 
         [SetUp]
         public void Setup()
@@ -166,9 +167,11 @@ namespace DEHPEcosimPro.Tests.DstController
             this.exchangeHistoryService = new Mock<IExchangeHistoryService>();
             this.exchangeHistoryService.Setup(x => x.Write()).Returns(Task.CompletedTask);
 
+            this.objectTypeResolver = new Mock<IObjectTypeResolverService>();
+
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object, 
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
-                this.navigationService.Object, this.exchangeHistoryService.Object);
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object);
         }
 
         [Test]

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MappingConfigurationDialogViewModelTestFixture.cs" company="RHEA System S.A.">
+// <copyright file="DstMappingConfigurationDialogViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
@@ -27,13 +27,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
@@ -48,7 +49,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using Opc.Ua;
 
     [TestFixture]
-    public class MappingConfigurationDialogViewModelTestFixture
+    public class DstMappingConfigurationDialogViewModelTestFixture
     {
         private DstMappingConfigurationDialogViewModel viewModel;
         private Mock<IDstController> dstController;
@@ -60,6 +61,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Mock<IStatusBarControlViewModel> statusBar;
         private SampledFunctionParameterType parameterType;
         private ModelReferenceDataLibrary modelReferenceDataLibrary;
+        private Mock<INavigationService> navigationService;
+        private MeasurementScale scale;
+        private SimpleQuantityKind quantityKindParameterType;
 
         [SetUp]
         public void Setup()
@@ -76,7 +80,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     EngineeringModelSetup = new EngineeringModelSetup()
                     {
-                        RequiredRdl = { modelReferenceDataLibrary },
+                        RequiredRdl = { this.modelReferenceDataLibrary },
                         Container = new SiteReferenceDataLibrary()
                         {
                             Container = new SiteDirectory()
@@ -84,17 +88,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
-            
+
             this.hubController = new Mock<IHubController>();
             this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
             this.hubController.Setup(x => x.CurrentDomainOfExpertise).Returns(this.domain);
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
-            
+
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.Map(It.IsAny<List<VariableRowViewModel>>()));
 
-            this.variableRowViewModels = new List<VariableRowViewModel> 
-            { 
+            this.variableRowViewModels = new List<VariableRowViewModel>
+            {
                 new VariableRowViewModel(
                     (new ReferenceDescription()
                     {
@@ -117,6 +121,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }, new DataValue()))
             };
 
+            this.scale = new RatioScale() { Name = "scale", NumberSet = NumberSetKind.REAL_NUMBER_SET };
+
             this.parameterType = new SampledFunctionParameterType()
             {
                 Name = "TextXQuantity",
@@ -137,7 +143,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     {
                         ParameterType = new SimpleQuantityKind()
                         {
-                            Name = "DependentQuantityKing"
+                            Name = "DependentQuantityKing",
+                            DefaultScale = this.scale,
+                            PossibleScale = { this.scale }
                         }
                     }
                 }
@@ -168,12 +176,23 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
+            this.quantityKindParameterType = new SimpleQuantityKind()
+            {
+                DefaultScale = this.scale,
+                PossibleScale = { this.scale },
+                Name = "SimpleQuantityKind"
+            };
+
             this.modelReferenceDataLibrary.ParameterType.Add(this.parameterType);
             this.modelReferenceDataLibrary.ParameterType.Add(invalidParameterType);
             this.statusBar = new Mock<IStatusBarControlViewModel>();
 
+            this.navigationService = new Mock<INavigationService>();
+
             this.viewModel = new DstMappingConfigurationDialogViewModel(
-            this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+                this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.navigationService.Object);
+
             this.viewModel.Initialize();
 
             this.viewModel.Variables.AddRange(this.variableRowViewModels);
@@ -189,7 +208,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.SelectedThing);
             Assert.IsFalse(this.viewModel.IsBusy);
             Assert.IsEmpty(this.viewModel.AvailableActualFiniteStates);
-            Assert.AreEqual(1, this.viewModel.AvailableParameterTypes.Count);
+            Assert.AreEqual(2, this.viewModel.AvailableParameterTypes.Count);
             Assert.IsNotEmpty(this.viewModel.AvailableElementDefinitions);
             Assert.IsEmpty(this.viewModel.AvailableElementUsages);
             Assert.IsEmpty(this.viewModel.AvailableParameters);
@@ -237,7 +256,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             var correspondences = new List<IdCorrespondence>
             {
-                new IdCorrespondence() { ExternalId = "trans0", InternalThing = elementDefinition.Iid},
+                new IdCorrespondence() { ExternalId = "trans0", InternalThing = elementDefinition.Iid },
                 new IdCorrespondence() { ExternalId = "res0", InternalThing = parameter.Iid },
                 new IdCorrespondence() { ExternalId = "trans0", InternalThing = option.Iid },
                 new IdCorrespondence() { ExternalId = "trans0", InternalThing = state.Iid },
@@ -283,7 +302,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             };
 
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameterType());
-            Assert.IsNull(this.viewModel.SelectedThing.SelectedParameterType);
+            Assert.IsNotNull(this.viewModel.SelectedThing.SelectedParameterType);
 
             this.viewModel.SelectedThing.SelectedParameter = new Parameter()
             {
@@ -325,7 +344,53 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedParameter());
             Assert.IsNull(this.viewModel.SelectedThing.SelectedParameter);
+        }
 
+        [Test]
+        public void VerifyUpdateSelectedScale()
+        {
+            this.viewModel.SelectedThing = null;
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedScale());
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedScale());
+
+            var ratioScale = new CyclicRatioScale()
+            {
+                Name = "scale2", NumberSet = NumberSetKind.REAL_NUMBER_SET
+            };
+
+            this.quantityKindParameterType.DefaultScale = ratioScale;
+            this.quantityKindParameterType.PossibleScale.Add(this.scale);
+            this.quantityKindParameterType.PossibleScale.Add(ratioScale);
+
+            this.viewModel.SelectedThing.SelectedParameterType = this.quantityKindParameterType;
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedScale());
+            Assert.AreEqual(ratioScale, this.viewModel.SelectedThing.SelectedScale);
+
+            this.viewModel.SelectedThing.SelectedParameter = new Parameter()
+            {
+                ParameterType = this.quantityKindParameterType,
+                Scale = this.scale
+            };
+
+            Assert.DoesNotThrow(() => this.viewModel.UpdateSelectedScale());
+            Assert.AreEqual(this.scale, this.viewModel.SelectedThing.SelectedScale);
+        }
+
+        [Test]
+        public void VerifyUpdateAvailableParameterType()
+        {
+            this.modelReferenceDataLibrary.ParameterType.Add(this.quantityKindParameterType);
+            Assert.DoesNotThrow(() => this.viewModel.UpdateAvailableParameterType());
+            Assert.AreEqual(3, this.viewModel.AvailableParameterTypes.Count);
+            this.viewModel.SelectedThing = this.viewModel.Variables.First();
+            this.viewModel.SelectedThing.SelectedValues.AddRange(this.viewModel.SelectedThing.Values);
+            Assert.DoesNotThrow(() => this.viewModel.UpdateAvailableParameterType());
+            Assert.AreEqual(2, this.viewModel.AvailableParameterTypes.Count);
+            Assert.DoesNotThrow(() => this.viewModel.UpdateAvailableParameterType(true));
+            Assert.AreEqual(2, this.viewModel.AvailableParameterTypes.Count);
+            Assert.DoesNotThrow(() => this.viewModel.UpdateAvailableParameterType(false));
+            Assert.AreEqual(1, this.viewModel.AvailableParameterTypes.Count);
         }
     }
 }

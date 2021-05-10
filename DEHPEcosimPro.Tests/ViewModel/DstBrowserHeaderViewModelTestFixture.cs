@@ -75,6 +75,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.IsSessionOpen).Returns(false);
 
             this.dstController.Setup(x => x.AddSubscription(It.IsAny<ReferenceDescription>()));
+            this.dstController.Setup(x => x.ReadNode(It.IsAny<ReferenceDescription>())).Returns(new DataValue(.5));
 
             this.dstController.Setup(x => x.Variables).Returns(
                 new List<(ReferenceDescription Reference, DataValue Value)>()
@@ -160,7 +161,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             Assert.AreEqual(DateTime.Today, this.viewModel.CurrentServerTime);
         }
-
 
         [Test]
         public void VerifyRunEperimentCanExecute()

@@ -37,6 +37,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using CDP4Dal;
     using CDP4Dal.Permission;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
@@ -69,7 +70,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Iteration iteration;
         private DomainOfExpertise domain;
         private Mock<IPermissionService> permissionService;
-        private Parameter parameterForOptions;
         private SiteReferenceDataLibrary srdl;
         private ModelReferenceDataLibrary mrdl;
         private SiteDirectory sitedir;
@@ -93,18 +93,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private ParameterGroup parameterGroup2ForUsage2;
         private ParameterGroup parameterGroup3ForUsage1;
         private Parameter parameter1;
-        private Parameter parameter2;
-        private Parameter parameter3;
         private Parameter parameter4;
-        private Parameter parameterForStates;
-        private Parameter parameter5ForSubscription;
-        private Parameter parameter6ForOverride;
-        private ParameterOverride parameter6Override;
-        private Parameter parameterArray;
-        private Parameter parameterCompound;
         private Parameter parameterCompoundForSubscription;
         private ParameterSubscription parameterSubscriptionCompound;
         private IList<(ReferenceDescription Reference, DataValue Node)> variables;
+        private MeasurementScale measurementScale;
 
         [SetUp]
         public void Setup()
@@ -129,6 +122,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             
             this.iterationSetup = new IterationSetup(Guid.NewGuid(), null, null);
 
+            var person = new Person(Guid.NewGuid(), null, null) { GivenName = "test", Surname = "test" };
+            var participant = new Participant(Guid.NewGuid(), null, null) { Person = person, SelectedDomain = this.domain };
+
             this.engineeringSetup = new EngineeringModelSetup(Guid.NewGuid(), null, null)
             {
                 IterationSetup = { this.iterationSetup },
@@ -144,7 +140,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 IterationSetup = this.iterationSetup
             };
 
-            var engineeringModel = new EngineeringModel(Guid.NewGuid(), null, null)
+            _ = new EngineeringModel(Guid.NewGuid(), null, null)
             {
                 EngineeringModelSetup = this.engineeringSetup,
                 Iteration = { this.iteration }
@@ -154,14 +150,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.domain = new DomainOfExpertise(Guid.NewGuid(), null, null) { Name = "TestDomain", ShortName = "TD" };
 
-            var person = new Person(Guid.NewGuid(), null, null) { GivenName = "test", Surname = "test" };
-            var participant = new Participant(Guid.NewGuid(), null, null) { Person = person, SelectedDomain = this.domain };
             this.session.Setup(x => x.ActivePerson).Returns(person);
             this.engineeringSetup.Participant.Add(participant);
 
             this.iteration.Option.Add(this.option1);
             this.session = new Mock<ISession>();
-            this.session.Setup(x => x.ActivePerson).Returns(new Person());
             this.session.Setup(x => x.DataSourceUri).Returns("dataSourceUri");
 
             this.permissionService = new Mock<IPermissionService>();
@@ -175,7 +168,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     new KeyValuePair<Iteration, Tuple<DomainOfExpertise, Participant>>(this.iteration, new Tuple<DomainOfExpertise, Participant>(this.domain, new Participant()))
                 }));
-            
+
             this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object);
 
             var browser = new ElementDefinitionsBrowserViewModel(this.iteration, this.session.Object);
@@ -232,11 +225,16 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.domain2 = new DomainOfExpertise(Guid.NewGuid(), null, null);
             this.session = new Mock<ISession>();
+
+            this.measurementScale = new RatioScale(Guid.NewGuid(), null, null) 
+                { Name = "a", ShortName = "a", NumberSet = NumberSetKind.REAL_NUMBER_SET };
+
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
             {
                 Name = "PTName",
                 ShortName = "PTShortName",
-                PossibleScale = { new RatioScale(Guid.NewGuid(), null, null) {Name = "a", ShortName = "a"}}
+                PossibleScale = { measurementScale},
+                DefaultScale = measurementScale
             };
 
             // Array parameter type with components
@@ -319,58 +317,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Owner = this.domain
             };
 
-            this.parameter2 = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain
-            };
-
-            this.parameter3 = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain2
-            };
-
             this.parameter4 = new Parameter(Guid.NewGuid(), null, null)
             {
                 ParameterType = this.qqParamType,
-                Owner = this.domain2
-            };
-
-            this.parameterForStates = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain2,
-                StateDependence = this.stateList
-            };
-
-            this.parameter5ForSubscription = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain2
-            };
-
-            this.parameter6ForOverride = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.qqParamType,
-                Owner = this.domain
-            };
-
-            this.parameter6Override = new ParameterOverride(Guid.NewGuid(), null, null)
-            {
-                Parameter = this.parameter6ForOverride,
-                Owner = this.domain
-            };
-
-            this.parameterArray = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.apType,
-                Owner = this.domain2
-            };
-
-            this.parameterCompound = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.cptType,
                 Owner = this.domain2
             };
 
@@ -386,14 +335,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             };
 
             this.parameterCompoundForSubscription.ParameterSubscription.Add(this.parameterSubscriptionCompound);
-
-            this.parameterForOptions = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = this.cptType,
-                Owner = this.domain2,
-                IsOptionDependent = true
-            };
-
+            
             this.iteration.Element.Add(this.element0);
             this.element0.ParameterGroup.Add(this.parameterGroup1);
             this.element0.ParameterGroup.Add(this.parameterGroup2);
@@ -431,6 +373,27 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.viewModel.Elements.AddRange(this.elementDefinitionRows);
             Assert.DoesNotThrow(() => this.viewModel.CreateMappedElements());
             Assert.IsEmpty(this.viewModel.MappedElements);
+        }
+
+        [Test]
+        public void VerifyVerifyVariableTypesAreCompatible()
+        {
+            this.viewModel.SelectedMappedElement = null;
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
+            this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            mappedElementDefinitionRowViewModel.SelectedVariable = this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            mappedElementDefinitionRowViewModel.SelectedParameter = this.parameter1;
+            mappedElementDefinitionRowViewModel.SelectedVariable = this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            this.parameter1.Scale = this.measurementScale;
+            mappedElementDefinitionRowViewModel.SelectedParameter = this.parameter1;
+            mappedElementDefinitionRowViewModel.SelectedVariable = this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+
+            this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Exactly(1));
         }
 
         [Test]

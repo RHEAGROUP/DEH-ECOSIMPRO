@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -33,24 +34,34 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Extensions;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-    
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using DevExpress.CodeParser;
+
     using Opc.Ua;
 
     using ReactiveUI;
+
+    using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
 
     /// <summary>
     /// The <see cref="DstMappingConfigurationDialogViewModel"/> is the view model to let the user configure the mapping to the hub source
     /// </summary>
     public class DstMappingConfigurationDialogViewModel : MappingConfigurationDialogViewModel, IDstMappingConfigurationDialogViewModel
     {
+        /// <summary>
+        /// The <see cref="INavigationService"/>
+        /// </summary>
+        private readonly INavigationService navigation;
+
         /// <summary>
         /// Backing field for <see cref="SelectedThing"/>
         /// </summary>
@@ -64,7 +75,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.selectedThing;
             set => this.RaiseAndSetIfChanged(ref this.selectedThing, value);
         }
-
+        
         /// <summary>
         /// Backing field for <see cref="CanContinue"/>
         /// </summary>
@@ -118,17 +129,19 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
         /// </summary>
         public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
-        
+
         /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="navigation">The <see cref="INavigationService"/></param>
         public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, 
-            IStatusBarControlViewModel statusBar) :
+            IStatusBarControlViewModel statusBar, INavigationService navigation) :
                 base(hubController, dstController, statusBar)
         {
+            this.navigation = navigation;
         }
 
         /// <summary>
@@ -141,16 +154,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.WhenAny(x => x.Variables.CountChanged,
                     x => x.Value.Where(c => c > 0))
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ =>
-                {
-                    this.UpdateHubFields(() =>
+                .Subscribe(_ => this.UpdateHubFields(() =>
                     {
                         this.InitializesCommandsAndObservableSubscriptions();
                         this.AssignMapping();
                         this.UpdatePropertiesBasedOnMappingConfiguration();
                         this.CheckCanExecute();
-                    });
-                });
+                    }));
         }
 
         /// <summary>
@@ -174,30 +184,44 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             foreach (var variableRowViewModel in this.Variables)
             {
-                variableRowViewModel.SelectedValues.CountChanged.Subscribe(_ =>
-                {
-                    this.UpdateAvailableParameters();
-                    this.CheckCanExecute();
-                });
+                variableRowViewModel.SelectedValues.CountChanged
+                    .Subscribe(n =>
+                        this.UpdateHubFields(() =>
+                        {
+                            this.UpdateAvailableParameters();
+                            this.UpdateAvailableParameterType(n < 2);
+                            this.CheckCanExecute();
+                        }));
             }
 
             this.ContinueCommand = ReactiveCommand.Create(
                 this.WhenAnyValue(x => x.CanContinue),
                 RxApp.MainThreadScheduler);
 
-            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
-                () =>
+            this.ContinueCommand.Subscribe(_ =>
+            {
+                if (this.Variables.Any(x => x.IsVariableMappingValid is false)
+                    && this.navigation.ShowDxDialog<MappingValidationErrorDialog>() is false)
                 {
-                    var variableRowViewModels = this.Variables.Where(x => !x.SelectedValues.IsEmpty).ToList();
+                        return;
+                }
+
+                this.ExecuteContinueCommand(() =>
+                {
+                    var variableRowViewModels = this.Variables
+                        .Where(x => x.IsVariableMappingValid is true).ToList();
+
                     this.DstController.Map(variableRowViewModels);
                     this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
-                }));
+                });
+            });
 
             this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
                     this.UpdateAvailableParameters();
+                    this.UpdateAvailableParameterType();
                     this.UpdateAvailableElementUsages();
                     this.CheckCanExecute();
                 }));
@@ -205,9 +229,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
-                    {
-                        this.UpdateSelectedParameter();
-                        this.CheckCanExecute();
+                {
+                    this.UpdateSelectedParameter();
+                    this.UpdateSelectedScale();
+                    this.NotifyIfParameterTypeIsNotAllowed();
+                    this.CheckCanExecute();
                     }));
             
             this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
@@ -230,7 +256,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void CheckCanExecute()
         {
-            this.CanContinue = this.Variables.Any(x => x.IsValid());
+            foreach (var variable in this.Variables)
+            {
+                if (variable.IsValid())
+                {
+                    this.CanContinue = true;
+                }
+            }
         }
         
         /// <summary>
@@ -241,23 +273,29 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.IsBusy = true;
             this.UpdateAvailableOptions();
             this.AvailableElementDefinitions.Clear();
-            this.AvailableParameterTypes.Clear();
 
             this.AvailableElementDefinitions.AddRange(
                 this.HubController.OpenIteration.Element
                     .Select(e => e.Clone(true))
                     .OrderBy(x => x.Name));
-
-            this.AvailableParameterTypes.AddRange(
-                this.HubController.OpenIteration.GetContainerOfType<EngineeringModel>().RequiredRdls
-                .SelectMany(x => x.ParameterType).Where(this.IsSampledFunctionParameterTypeAndIsCompatible)
-                .OrderBy(x => x.Name));
-
+            
+            this.UpdateAvailableParameterType();
             this.UpdateAvailableParameters();
             this.UpdateAvailableElementUsages();
             this.UpdateAvailableActualFiniteStates();
 
             this.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Verify that the selected <see cref="ParameterType"/> is compatible with the selected variable value type
+        /// </summary>
+        public void NotifyIfParameterTypeIsNotAllowed()
+        {
+            if (this.SelectedThing?.IsVariableMappingValid is false)
+            {
+                this.StatusBar.Append($"The selected ParameterType isn't compatible with the selected variable", StatusBarMessageSeverity.Error);
+            }
         }
 
         /// <summary>
@@ -270,17 +308,29 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter?.ParameterType.Iid != this.SelectedThing.SelectedParameterType?.Iid
-                && this.SelectedThing.SelectedParameter.ParameterType is SampledFunctionParameterType parameterType
-                && parameterType.HasCompatibleDependentAndIndependentParameterTypes())
+            this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SelectedThing"/> <see cref="MeasurementScale"/> according to the selected <see cref="Parameter"/> and the selected <see cref="ParameterType"/>
+        /// </summary>
+        public void UpdateSelectedScale()
+        {
+            if (this.SelectedThing?.SelectedParameterType is null)
             {
-                this.SelectedThing.SelectedParameterType = this.SelectedThing.SelectedParameter.ParameterType;
+                return;
             }
 
-            else if (!(this.SelectedThing.SelectedParameter?.ParameterType is SampledFunctionParameterType))
+            if (this.SelectedThing.SelectedParameter is {} parameter)
             {
-                this.SelectedThing.SelectedParameterType = null;
+                this.SelectedThing.SelectedScale = parameter.Scale;
+                return;
             }
+                
+            this.SelectedThing.SelectedScale = 
+                this.SelectedThing.SelectedParameterType is QuantityKind quantityKind 
+                ? quantityKind.DefaultScale 
+                : null;
         }
 
         /// <summary>
@@ -298,6 +348,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     && parameter.ParameterType.Iid != parameterType.Iid)
             {
                 this.SelectedThing.SelectedParameter = null;
+                this.UpdateAvailableParameterType();
             }
             else if(this.AvailableParameters.FirstOrDefault(x => 
                 x.ParameterType.Iid == this.SelectedThing.SelectedParameterType?.Iid) is Parameter parameterOrOverride )
@@ -309,6 +360,51 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.SelectedThing.SelectedOption = this.AvailableOptions.FirstOrDefault();
             }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="AvailableParameterTypes"/>
+        /// </summary>
+        /// <param name="allowScalarParameterType">A value indicating whether the <see cref="ScalarParameterType"/>s should be included in the <see cref="AvailableParameterTypes"/></param>
+        public void UpdateAvailableParameterType(bool? allowScalarParameterType = null)
+        {
+            this.AvailableParameterTypes.Clear();
+
+            allowScalarParameterType ??= !(this.SelectedThing?.SelectedValues.Count > 1);
+
+            var parameterTypes = 
+                this.HubController.OpenIteration
+                    .GetContainerOfType<EngineeringModel>().RequiredRdls
+                    .SelectMany(x => x.ParameterType);
+
+            if (allowScalarParameterType != true)
+            {
+                parameterTypes = parameterTypes.OfType<SampledFunctionParameterType>();
+            }
+
+            var filteredParameterTypes = parameterTypes
+                .Where(this.FilterParameterType)
+                .OrderBy(x => x.Name);
+
+                this.AvailableParameterTypes.AddRange(filteredParameterTypes);
+        }
+
+        /// <summary>
+        /// Verify if the <paramref name="parameterType"/> is <see cref="ScalarParameterType"/>
+        /// or is <see cref="SampledFunctionParameterType"/> and at least compatible with this dst adapter
+        /// </summary>
+        /// <param name="parameterType">The <see cref="ParameterType"/></param>
+        /// <returns>An value indicating whether the <paramref name="parameterType"/> is valid</returns>
+        private bool FilterParameterType(ParameterType parameterType)
+        {
+            return parameterType switch
+            {
+                SampledFunctionParameterType _ when this.SelectedThing is null => true,
+                SampledFunctionParameterType sampledFunctionParameterType => 
+                    sampledFunctionParameterType.Validate(this.SelectedThing?.ActualValue, this.SelectedThing?.SelectedScale),
+                ScalarParameterType _ => true,
+                _ => false
+            };
         }
 
         /// <summary>
@@ -340,38 +436,41 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableParameters.Clear();
 
-            if (this.SelectedThing?.SelectedElementDefinition is { } element)
+            if (!(this.SelectedThing?.SelectedElementDefinition is { } element))
             {
-                var parameters = element.Parameter.ToList();
-                
-                if(element.Iid != Guid.Empty)
-                {
-                    parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
-                }
+                return;
+            }
 
-                if (this.SelectedThing.SelectedValues.Count > 1)
-                {
-                    this.AvailableParameters.AddRange(parameters.Where(
-                        p=> this.IsSampledFunctionParameterTypeAndIsCompatible(p.ParameterType)));
-                }
-                else
-                {
-                    this.AvailableParameters.AddRange(parameters.Where(x => !(x.ParameterType is SampledFunctionParameterType)
-                    || this.IsSampledFunctionParameterTypeAndIsCompatible(x.ParameterType)));
-                }
+            var parameters = element.Parameter.ToList();
+                
+            if(element.Iid != Guid.Empty)
+            {
+                parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
+            }
+
+            if (this.SelectedThing.SelectedValues.Count > 1)
+            {
+                this.AvailableParameters.AddRange(parameters.Where(
+                    p=> this.IsSampledFunctionParameterTypeAndIsCompatible(p.ParameterType, this.SelectedThing.ActualValue, this.SelectedThing.SelectedScale)));
+            }
+            else
+            {
+                this.AvailableParameters.AddRange(parameters.Where(x => this.FilterParameterType(x.ParameterType)));
             }
         }
 
         /// <summary>
         /// Verify that the <see cref="ParameterType"/> is <see cref="SampledFunctionParameterType"/>
-        /// and <see cref="SampledFunctionParameterTypeExtensions.HasCompatibleDependentAndIndependentParameterTypes"/>
+        /// and that it is compatible
         /// </summary>
         /// <param name="parameterType">The <see cref="ParameterType"/> to verify</param>
+        /// <param name="value">The <see cref="object"/> value</param>
+        /// <param name="scale">The <see cref="MeasurementScale"/></param>
         /// <returns>A value indicating whether the <paramref name="parameterType"/> complies</returns>
-        private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType)
+        private bool IsSampledFunctionParameterTypeAndIsCompatible(ParameterType parameterType, object value, MeasurementScale scale = null)
         {
             return parameterType is SampledFunctionParameterType sampledFunctionParameterType
-                    && sampledFunctionParameterType.HasCompatibleDependentAndIndependentParameterTypes();
+                   && sampledFunctionParameterType.Validate(value, scale);
         }
 
         /// <summary>
