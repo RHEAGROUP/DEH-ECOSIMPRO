@@ -70,6 +70,17 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.HubMapResult)
                 .Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
             
+            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ElementBase>()
+            {
+                new ElementDefinition()
+            });
+
+            this.dstController.Setup(x => x.SelectedHubMapResultToTransfer).Returns(new ReactiveList<MappedElementDefinitionRowViewModel>()
+            {
+                new MappedElementDefinitionRowViewModel()
+            });
+
+
             this.exchangeHistoryService = new Mock<IExchangeHistoryService>();
 
             this.viewModel = new EcosimProTransferControlViewModel(this.dstController.Object, this.statusBar.Object, this.exchangeHistoryService.Object);
@@ -118,7 +129,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             {
                 new MappedElementDefinitionRowViewModel()
             });
-            
+
             Assert.IsFalse(this.viewModel.CancelCommand.CanExecute(null));
             this.viewModel.AreThereAnyTransferInProgress = true;
             Assert.IsTrue(this.viewModel.CancelCommand.CanExecute(null));

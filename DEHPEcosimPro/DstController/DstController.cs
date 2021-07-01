@@ -181,6 +181,16 @@ namespace DEHPEcosimPro.DstController
         public ReactiveList<ElementBase> DstMapResult { get; private set; } = new ReactiveList<ElementBase>();
 
         /// <summary>
+        /// Gets the colection of <see cref="ElementBase"/> that are selected to be transfered
+        /// </summary>
+        public ReactiveList<ElementBase> SelectedDstMapResultToTransfer { get; private set; } = new ReactiveList<ElementBase>();
+
+        /// <summary>
+        /// Gets the colection of <see cref="MappedElementDefinitionRowViewModel"/> that are selected to be transfered
+        /// </summary>
+        public ReactiveList<MappedElementDefinitionRowViewModel> SelectedHubMapResultToTransfer { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
+
+        /// <summary>
         /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="VariableRowViewModel"/>
         /// </summary>
         public Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; } = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
@@ -424,7 +434,7 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         public void TransferMappedThingsToDst()
         {
-            foreach (var mappedElement in this.HubMapResult
+            foreach (var mappedElement in this.SelectedHubMapResultToTransfer
                 .Where(
                     mappedElement => this.opcClientService.WriteNode(
                         (NodeId) mappedElement.SelectedVariable.Reference.NodeId,
@@ -435,6 +445,7 @@ namespace DEHPEcosimPro.DstController
 
                 this.UpdateTransferedHubMapResult(mappedElement);
 
+                this.SelectedHubMapResultToTransfer.Remove(mappedElement);
                 this.HubMapResult.Remove(mappedElement);
                 this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
 
@@ -540,12 +551,12 @@ namespace DEHPEcosimPro.DstController
             {
                 var (iterationClone, transaction) = this.GetIterationTransaction();
 
-                if (!(this.DstMapResult.Any() && this.TrySupplyingAndCreatingLogEntry(transaction)))
+                if (!(this.SelectedDstMapResultToTransfer.Any() && this.TrySupplyingAndCreatingLogEntry(transaction)))
                 {
                     return;
                 }
 
-                foreach (var element in this.DstMapResult)
+                foreach (var element in this.SelectedDstMapResultToTransfer)
                 {
                     switch (element)
                     {
@@ -588,6 +599,7 @@ namespace DEHPEcosimPro.DstController
                 this.ExternalIdentifierMap = map.Clone(true);
 
                 this.DstMapResult.Clear();
+                this.SelectedDstMapResultToTransfer.Clear();
                 this.ParameterVariable.Clear();
 
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
@@ -617,8 +629,8 @@ namespace DEHPEcosimPro.DstController
         {
             var (iterationClone, transaction) = this.GetIterationTransaction();
 
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.OfType<ElementDefinition>().SelectMany(x => x.Parameter));
-            this.UpdateParametersValueSets(transaction, this.DstMapResult.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride));
+            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ElementDefinition>().SelectMany(x => x.Parameter));
+            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride));
 
             transaction.CreateOrUpdate(iterationClone);
             await this.hubController.Write(transaction);

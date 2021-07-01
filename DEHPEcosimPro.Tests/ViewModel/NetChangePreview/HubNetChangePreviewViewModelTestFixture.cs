@@ -334,7 +334,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         public void VerifyContextMenu()
         {
             this.viewModel.PopulateContextMenu();
-            Assert.IsEmpty(this.viewModel.ContextMenu);
+            Assert.AreEqual(2, this.viewModel.ContextMenu.Count);
         }
 
         [Test]

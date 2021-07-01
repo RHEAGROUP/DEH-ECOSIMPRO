@@ -73,6 +73,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Backing field for <see cref="IsSelectedForTransfer"/>
+        /// </summary>
+        private bool isSelectedForTransfer;
+
+        /// <summary>
+        /// Gets a value indicating whether the row is selected for transfer
+        /// </summary>
+        public bool IsSelectedForTransfer
+        {
+            get => this.isSelectedForTransfer;
+            set => this.RaiseAndSetIfChanged(ref this.isSelectedForTransfer, value);
+        }
+
+        /// <summary>
         /// Gets the values that the represented variable has held
         /// </summary>
         public ReactiveList<TimeTaggedValueRowViewModel> Values { get; } = new ReactiveList<TimeTaggedValueRowViewModel>();

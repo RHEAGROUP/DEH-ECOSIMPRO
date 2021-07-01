@@ -350,7 +350,7 @@ namespace DEHPEcosimPro.Tests.DstController
 
             _ = new ElementDefinition() { Parameter = { parameter0, parameter1 } };
 
-            this.controller.HubMapResult.AddRange(
+            this.controller.SelectedHubMapResultToTransfer.AddRange(
                 new List<MappedElementDefinitionRowViewModel>()
                 {
                     new MappedElementDefinitionRowViewModel()
@@ -430,7 +430,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.DstMapResult.Add(elementDefinition);
+            this.controller.SelectedDstMapResultToTransfer.Add(elementDefinition);
 
             var parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null)
             {
@@ -445,7 +445,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.DstMapResult.Add(new ElementUsage()
+            this.controller.SelectedDstMapResultToTransfer.Add(new ElementUsage()
             {
                 ElementDefinition = elementDefinition,
                 ParameterOverride = 

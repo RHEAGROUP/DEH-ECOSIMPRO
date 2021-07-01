@@ -30,8 +30,6 @@ namespace DEHPEcosimPro.ViewModel
     using System.Reactive.Linq;
 
     using CDP4Common.EngineeringModelData;
-    using CDP4Common.MetaInfo;
-    using CDP4Common.Types;
 
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
@@ -39,9 +37,6 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using DevExpress.Data.Helpers;
-    using DevExpress.Xpf.NavBar;
 
     using ReactiveUI;
 
@@ -66,9 +61,14 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstVariablesControlViewModel dstVariablesControlViewModel;
 
         /// <summary>
-        /// Gets or sets the collection of <see cref="MappingRows"/>
+        /// Gets or sets the collection of <see cref="MappingRowViewModel"/>
         /// </summary>
         public ReactiveList<MappingRowViewModel> MappingRows { get; set; } = new ReactiveList<MappingRowViewModel>();
+
+        /// <summary>
+        /// Gets or sets the selected <see cref="MappingRowViewModel"/>
+        /// </summary>
+        public ReactiveList<MappingRowViewModel> SelectedRows { get; set; } = new ReactiveList<MappingRowViewModel>();
 
         /// <summary>
         /// Initializes a new <see cref="MappingViewModel"/>

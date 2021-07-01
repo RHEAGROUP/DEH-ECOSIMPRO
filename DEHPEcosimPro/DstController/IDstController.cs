@@ -92,6 +92,16 @@ namespace DEHPEcosimPro.DstController
         ReactiveList<ElementBase> DstMapResult { get; }
 
         /// <summary>
+        /// Gets the colection of <see cref="ElementBase"/> that are selected to be transfered
+        /// </summary>
+        ReactiveList<ElementBase> SelectedDstMapResultToTransfer { get; }
+
+        /// <summary>
+        /// Gets the colection of <see cref="MappedElementDefinitionRowViewModel"/> that are selected to be transfered
+        /// </summary>
+        ReactiveList<MappedElementDefinitionRowViewModel> SelectedHubMapResultToTransfer { get; }
+
+        /// <summary>
         /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="VariableRowViewModel"/>
         /// </summary>
         Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; }

@@ -71,6 +71,18 @@
                                     <Setter Property="FontWeight" Value="Bold" />
                                     <Setter Property="Foreground" Value="Blue" />
                                 </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding Row.IsSelectedForTransfer}" Value="False" />
+                                        <Condition Binding="{Binding Row.IsHighlighted}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Background" Value="Yellow"/>
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                    <Setter Property="Foreground" Value="Blue" />
+                                </MultiDataTrigger>
+                                <DataTrigger Binding="{Binding Row.IsSelectedForTransfer}" Value="True">
+                                    <Setter Property="Background" Value="LightGreen"/>
+                                </DataTrigger>
                             </Style.Triggers>
                             <Setter Property="ToolTip" Value="{Binding Row.Tooltip}" />
                         </Style>

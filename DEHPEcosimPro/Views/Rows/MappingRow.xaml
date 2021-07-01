@@ -12,7 +12,7 @@
             <ColumnDefinition></ColumnDefinition>
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Border Grid.Column="{Binding HubThing.GridColumnIndex}" BorderBrush="DarkGray" BorderThickness="1">
+            <Border Grid.Column="{Binding HubThing.GridColumnIndex}" BorderBrush="DarkGray" BorderThickness="1">
             <Grid  Background="AliceBlue">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
