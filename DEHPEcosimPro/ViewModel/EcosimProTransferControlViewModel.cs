@@ -148,8 +148,7 @@ namespace DEHPEcosimPro.ViewModel
                 MappingDirection.FromHubToDst => this.dstController.SelectedHubMapResultToTransfer.Count,
                 MappingDirection.FromDstToHub => this.dstController.SelectedDstMapResultToTransfer.OfType<ElementDefinition>().SelectMany(x => x.Parameter).Count()
                     + this.dstController.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride).Count(),
-                _ => throw new ArgumentOutOfRangeException(nameof(this.dstController.MappingDirection),
-                    this.dstController.MappingDirection, $"Use of forbidden value of {nameof(this.dstController.MappingDirection)}")
+                _ => throw new ArgumentException($"Use of unsupported value of {nameof(this.dstController.MappingDirection)}")
             };
 
             this.UpdateCanTransfer(this.NumberOfThing > 0);

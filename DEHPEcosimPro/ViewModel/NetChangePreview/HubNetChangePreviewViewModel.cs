@@ -189,7 +189,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 }
                 case ElementUsageRowViewModel elementUsageRow when IsThingTransferable(elementUsageRow):
                 {
-                    this.SelectChainOfContainerViewModel(elementUsageRow, !elementUsageRow.IsSelectedForTransfer);
+                    this.SelectChainOfContainerViewModel(elementUsageRow);
 
                     var definitionRowViewModel = this.Things.OfType<ElementDefinitionsBrowserViewModel>()
                         .SelectMany(r => r.ContainedRows.OfType<ElementDefinitionRowViewModel>())
@@ -227,8 +227,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// </summary>
         /// <typeparam name="TElement">The type of <see cref="ElementBase"/> the <paramref name="row"/> represents</typeparam>
         /// <param name="row">The <see cref="IRowViewModelBase{T}"/> to select or deselect</param>
-        /// <param name="isSelected">A value indicating whether the <paramref name="row"/> should be added or removed</param>
-        private void SelectChainOfContainerViewModel<TElement>(IRowViewModelBase<TElement> row, bool isSelected = true) where TElement : ElementBase
+        private void SelectChainOfContainerViewModel<TElement>(IRowViewModelBase<TElement> row) where TElement : ElementBase
         {
             this.AddOrRemoveToSelectedThingsToTransfer(row);
 
