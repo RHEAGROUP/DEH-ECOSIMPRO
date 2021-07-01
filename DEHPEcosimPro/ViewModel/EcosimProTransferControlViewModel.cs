@@ -26,8 +26,11 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
+
+    using CDP4Common.EngineeringModelData;
 
     using CDP4Dal;
 
@@ -110,9 +113,12 @@ namespace DEHPEcosimPro.ViewModel
                 .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.UpdateCanTransfer);
 
-            this.dstController.DstMapResult.CountChanged.Subscribe(x => this.UpdateCanTransfer(x > 0));
-            this.dstController.HubMapResult.CountChanged.Subscribe(x => this.UpdateCanTransfer(x > 0));
+            this.dstController.SelectedDstMapResultToTransfer.CountChanged.Subscribe(_ => this.UpdateNumberOfThingsToTransfer());
+            this.dstController.SelectedHubMapResultToTransfer.CountChanged.Subscribe(_ => this.UpdateNumberOfThingsToTransfer());
 
+            this.WhenAnyValue(x => x.dstController.MappingDirection)
+                .Subscribe(x => this.UpdateNumberOfThingsToTransfer());
+            
             this.TransferCommand = ReactiveCommand.CreateAsyncTask(
                 this.WhenAnyValue(x => x.CanTransfer),
                 async _ => await this.TransferCommandExecute(),
@@ -131,6 +137,24 @@ namespace DEHPEcosimPro.ViewModel
                 async _ => await this.CancelTransfer(),
                 RxApp.MainThreadScheduler);
         }
+        
+        /// <summary>
+        /// Updates the <see cref="TransferControlViewModel.NumberOfThing"/>
+        /// </summary>
+        private void UpdateNumberOfThingsToTransfer()
+        {
+            this.NumberOfThing = this.dstController.MappingDirection switch
+            {
+                MappingDirection.FromHubToDst => this.dstController.SelectedHubMapResultToTransfer.Count,
+                MappingDirection.FromDstToHub => this.dstController.SelectedDstMapResultToTransfer.OfType<ElementDefinition>().SelectMany(x => x.Parameter).Count()
+                    + this.dstController.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride).Count(),
+                _ => throw new ArgumentOutOfRangeException(nameof(this.dstController.MappingDirection),
+                    this.dstController.MappingDirection, $"Use of forbidden value of {nameof(this.dstController.MappingDirection)}")
+            };
+
+            this.UpdateCanTransfer(this.NumberOfThing > 0);
+        }
+
 
         /// <summary>
         /// Updates the <see cref="CanTransfer"/>
@@ -168,8 +192,16 @@ namespace DEHPEcosimPro.ViewModel
             this.AreThereAnyTransferInProgress = true;
             this.IsIndeterminate = true;
             this.statusBar.Append($"Transfers in progress");
-            await this.dstController.TransferMappedThingsToHub();
-            this.dstController.TransferMappedThingsToDst();
+
+            if (this.dstController.MappingDirection is MappingDirection.FromDstToHub)
+            {
+                await this.dstController.TransferMappedThingsToHub();
+            }
+            else
+            {
+                this.dstController.TransferMappedThingsToDst();
+            }
+
             await this.exchangeHistoryService.Write();
             timer.Stop();
             this.statusBar.Append($"Transfers completed in {timer.ElapsedMilliseconds} ms");

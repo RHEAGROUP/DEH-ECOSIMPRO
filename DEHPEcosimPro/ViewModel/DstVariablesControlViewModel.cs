@@ -251,7 +251,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Populate the context menu for this browser
         /// </summary>
-        public void PopulateContextMenu()
+        public virtual void PopulateContextMenu()
         {
             this.ContextMenu.Clear();
 
