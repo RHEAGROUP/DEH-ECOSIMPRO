@@ -197,7 +197,7 @@ namespace DEHPEcosimPro.ViewModel
             }
             else
             {
-                this.dstController.TransferMappedThingsToDst();
+                await this.dstController.TransferMappedThingsToDst();
             }
 
             await this.exchangeHistoryService.Write();

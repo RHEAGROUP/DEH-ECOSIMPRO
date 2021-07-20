@@ -112,8 +112,6 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         {
             foreach (var rowViewModel in variableRowViewModels)
             {
-                Application.Current.Dispatcher.Invoke(() => rowViewModel.SelectedValues.Clear());
-
                 var timeTaggedValueRowViewModels = this.correspondences
                     .Where(x => 
                         x.ExternalIdentifier.Identifier.Equals(rowViewModel.Reference.NodeId.Identifier) 
@@ -121,12 +119,16 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
                     .DistinctBy(x => x.ExternalIdentifier.ValueIndex)
                     .Select(x => rowViewModel.Values.FirstOrDefault(
                         v => Math.Abs(v.TimeStep - x.ExternalIdentifier.ValueIndex.GetValueOrDefault()) <= 0 ))
-                    .Where(x => x is {});
+                    .Where(x => x is {})
+                    .ToList();
 
-                foreach (var value in timeTaggedValueRowViewModels)
+                if (!timeTaggedValueRowViewModels.Any())
                 {
-                    Application.Current.Dispatcher.Invoke(() => rowViewModel.SelectedValues.Add(value));
+                    continue;
                 }
+
+                rowViewModel.SelectedValues.Clear();
+                rowViewModel.SelectedValues.AddRange(timeTaggedValueRowViewModels);
             }
 
             this.statusBar.Append($"Loading of the selected values from saved configuration done!");
@@ -144,7 +146,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
 
             this.correspondences.AddRange(this.ExternalIdentifierMap.Correspondence.Select(x =>
             (
-                x.InternalThing, JsonConvert.DeserializeObject<ExternalIdentifier>(x.ExternalId), x.Iid
+                x.InternalThing, JsonConvert.DeserializeObject<ExternalIdentifier>(x.ExternalId ?? string.Empty), x.Iid
             )));
 
             stopwatch.Stop();
@@ -157,18 +159,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// <param name="variables">The collection of <see cref="VariableRowViewModel"/></param>
         /// <returns>A collection of <see cref="VariableRowViewModel"/></returns>
         public List<MappedElementDefinitionRowViewModel> LoadMappingFromHubToDst(IList<VariableRowViewModel> variables)
-        {
-            this.logger.Debug($"Loading the mapping configuration in progress");
-
-            if (this.ExternalIdentifierMap != null && this.ExternalIdentifierMap.Iid != Guid.Empty
-                                                   && this.ExternalIdentifierMap.Correspondence.Any())
-            {
-                return this.MapElementsFromTheExternalIdentifierMapToDst(variables);
-            }
-
-            this.logger.Debug($"The mapping configuration doesn't contain any mapping", StatusBarMessageSeverity.Warning);
-            return default;
-        }
+            => this.LoadMapping(this.MapElementsFromTheExternalIdentifierMapToDst, variables);
 
         /// <summary>
         /// Loads the mapping configuration and generates the map result respectively
@@ -176,13 +167,23 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// <param name="variables">The collection of <see cref="VariableRowViewModel"/></param>
         /// <returns>A collection of <see cref="VariableRowViewModel"/></returns>
         public List<VariableRowViewModel> LoadMappingFromDstToHub(IList<VariableRowViewModel> variables)
+            => this.LoadMapping(this.MapElementsFromTheExternalIdentifierMapToHub, variables);
+
+        /// <summary>
+        /// Calls the specify load mapping function <param name="loadMappingFunction"></param>
+        /// </summary>
+        /// <typeparam name="TViewModel">The type of row view model to return depending on the mapping direction</typeparam>
+        /// <param name="loadMappingFunction">The specific load mapping <see cref="Func{TInput,TResult}"/></param>
+        /// <param name="variables">The collection of <see cref="VariableRowViewModel"/></param>
+        /// <returns>A collection of <typeparamref name="TViewModel"/></returns>
+        private List<TViewModel> LoadMapping<TViewModel>(Func<IList<VariableRowViewModel>, List<TViewModel>> loadMappingFunction, IList<VariableRowViewModel> variables)
         {
             this.logger.Debug($"Loading the mapping configuration in progress");
 
-            if (this.ExternalIdentifierMap != null && this.ExternalIdentifierMap.Iid != Guid.Empty 
+            if (this.ExternalIdentifierMap != null && this.ExternalIdentifierMap.Iid != Guid.Empty
                                                    && this.ExternalIdentifierMap.Correspondence.Any())
             {
-                return this.MapElementsFromTheExternalIdentifierMapToHub(variables);
+                return loadMappingFunction(variables);
             }
 
             this.logger.Debug($"The mapping configuration doesn't contain any mapping", StatusBarMessageSeverity.Warning);
@@ -208,7 +209,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
                     continue;
                 }
                 
-                foreach (var (internalId, externalIdentifier, _) in idCorrespondences)
+                foreach (var (internalId, externalIdentifier, idCorrespondenceId) in idCorrespondences)
                 {
                     if (!this.hubController.GetThingById(internalId, this.hubController.OpenIteration, out ParameterValueSetBase valueSet))
                     {
@@ -288,7 +289,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
                     Application.Current.Dispatcher.Invoke(() => element.SelectedParameterType = selectedParameter.ParameterType);
                 }
 
-                Application.Current.Dispatcher.Invoke(() => action?.Invoke() );
+                action?.Invoke();
             }
         }
         
@@ -332,7 +333,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
         public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
         {
-            return new ExternalIdentifierMap()
+            return new()
             {
                 Name = newName,
                 ExternalToolName = DstController.ThisToolName,
@@ -434,6 +435,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
             {
                 correspondence.InternalThing = internalId;
                 correspondence.ExternalId = JsonConvert.SerializeObject(externalIdentifier);
+                return;
             }
 
             this.ExternalIdentifierMap.Correspondence.Add(new IdCorrespondence()
