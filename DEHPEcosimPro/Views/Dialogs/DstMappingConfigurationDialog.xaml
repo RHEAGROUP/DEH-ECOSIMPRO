@@ -11,7 +11,11 @@
                    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid" 
                    xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-                   xmlns:system="clr-namespace:System;assembly=mscorlib" Title="Mapping Configuration Dialog" MinWidth="800"
+                   xmlns:system="clr-namespace:System;assembly=mscorlib"
+                   xmlns:hitTest="http://schemas.devexpress.com/winfx/2008/xaml/grid/internal"
+                   xmlns:dxgt="http://schemas.devexpress.com/winfx/2008/xaml/grid/themekeys"
+                   xmlns:dialogs="clr-namespace:DEHPEcosimPro.Views.Dialogs"
+                   Title="Mapping Configuration Dialog" MinWidth="800"
                    MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
@@ -144,7 +148,19 @@
                             <dxg:GridControl.View>
                                 <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
                                                        IsDetailButtonVisibleBinding="{x:Null}"
-                                                       RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="true" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
+                                                       RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="true" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" >
+                                    <dxg:TableView.CheckBoxSelectorColumnHeaderTemplate>
+                                        <DataTemplate>
+                                            <dx:MeasurePixelSnapper HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                    <CheckBox Command="{Binding RelativeSource={RelativeSource FindAncestor, 
+                                                        AncestorType={x:Type dialogs:DstMappingConfigurationDialog}},
+                                                        Path=DataContext.SelectAllValuesCommand}"/>
+                                                </Grid>
+                                            </dx:MeasurePixelSnapper>
+                                        </DataTemplate>
+                                    </dxg:TableView.CheckBoxSelectorColumnHeaderTemplate>
+                                </dxg:TableView>
                             </dxg:GridControl.View>
                             <dxg:GridControl.Columns>
                                 <dxg:GridColumn FieldName="TimeStep" />

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IDstReferencesViewModel.cs" company="RHEA System S.A.">
-//    Copyright (c) 2020-2020 RHEA System S.A.
+// <copyright file="LoadMappingEvent.cs" company="RHEA System S.A.">
+//    Copyright (c) 2020-2021 RHEA System S.A.
 // 
 //    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
 // 
@@ -22,25 +22,14 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Interfaces
+namespace DEHPEcosimPro.Events
 {
-    using DEHPEcosimPro.ViewModel.Rows;
-
-    using ReactiveUI;
+    using CDP4Dal;
 
     /// <summary>
-    /// Interface definition for <see cref="DstVariablesControlViewModel"/>
+    /// An event for <see cref="CDPMessageBus"/>
     /// </summary>
-    public interface IDstVariablesControlViewModel
+    public class LoadMappingEvent
     {
-        /// <summary>
-        /// Gets or sets the assert indicating whether the view is busy
-        /// </summary>
-        bool IsBusy { get; set; }
-
-        /// <summary>
-        /// Gets the collection of <see cref="VariableRowViewModel"/>
-        /// </summary>
-        ReactiveList<VariableRowViewModel> Variables { get; }
     }
 }

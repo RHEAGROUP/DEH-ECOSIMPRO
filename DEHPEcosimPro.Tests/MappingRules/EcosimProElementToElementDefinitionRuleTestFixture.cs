@@ -41,6 +41,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.MappingRules;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using Moq;
@@ -67,6 +68,7 @@ namespace DEHPEcosimPro.Tests.MappingRules
         private ActualFiniteStateList actualFiniteStates;
         private RatioScale scale;
         private SimpleQuantityKind quantityKindParameterType;
+        private Mock<IMappingConfigurationService> mappingConfigurationService;
 
         [SetUp]
         public void Setup()
@@ -101,12 +103,12 @@ namespace DEHPEcosimPro.Tests.MappingRules
             this.hubController.Setup(x => x.GetSiteDirectory()).Returns(new SiteDirectory());
 
             this.dstController = new Mock<IDstController>();
-            this.dstController.Setup(x => x.ExternalIdentifierMap).Returns(new ExternalIdentifierMap());
-            this.dstController.Setup(x => x.AddToExternalIdentifierMap(It.IsAny<Guid>(), It.IsAny<string>()));
+            this.mappingConfigurationService = new Mock<IMappingConfigurationService>();
 
             var containerBuilder = new ContainerBuilder();
             containerBuilder.RegisterInstance(this.hubController.Object).As<IHubController>();
             containerBuilder.RegisterInstance(this.dstController.Object).As<IDstController>();
+            containerBuilder.RegisterInstance(this.mappingConfigurationService.Object).As<IMappingConfigurationService>();
             AppContainer.Container = containerBuilder.Build();
 
             this.actualFiniteStates = new ActualFiniteStateList()

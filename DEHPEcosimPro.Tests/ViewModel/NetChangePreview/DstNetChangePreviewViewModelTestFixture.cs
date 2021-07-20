@@ -72,10 +72,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.hubController = new Mock<IHubController>();
             this.statusBar = new Mock<IStatusBarControlViewModel>();
 
-            this.viewModel = new DstNetChangePreviewViewModel(this.dstController.Object, 
-                this.navigation.Object, this.hubController.Object, this.statusBar.Object);
-
-            this.viewModel.Variables.AddRange(new[]
+            this.dstController.Setup(x => x.VariableRowViewModels).Returns(new ReactiveList<VariableRowViewModel>()
             {
                 new VariableRowViewModel((
                     new ReferenceDescription()
@@ -93,6 +90,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
             });
 
+            this.viewModel = new DstNetChangePreviewViewModel(this.dstController.Object,
+                this.navigation.Object, this.hubController.Object, this.statusBar.Object);
+            
             this.parameter0 = new Parameter() { ParameterType = new BooleanParameterType()};
             this.parameter1 = new Parameter() { ParameterType = new TextParameterType()};
 

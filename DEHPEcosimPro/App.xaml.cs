@@ -39,6 +39,7 @@ namespace DEHPEcosimPro
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.Services.TypeResolver;
@@ -155,6 +156,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<UserPreferenceService<AppSettings>>().As<IUserPreferenceService<AppSettings>>().SingleInstance();
             containerBuilder.RegisterType<MappingEngine>().As<IMappingEngine>().WithParameter(MappingEngine.ParameterName, Assembly.GetExecutingAssembly());
             containerBuilder.RegisterType<ObjectTypeResolverService>().As<IObjectTypeResolverService>();
+            containerBuilder.RegisterType<MappingConfigurationService>().As<IMappingConfigurationService>().SingleInstance();
         }
 
         /// <summary>

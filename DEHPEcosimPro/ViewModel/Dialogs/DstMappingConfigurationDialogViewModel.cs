@@ -63,6 +63,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private readonly INavigationService navigation;
 
         /// <summary>
+        /// A value indicatin whether <see cref="WhenVariableValueSelectionChanged"/>
+        /// </summary>
+        private bool canTriggerWhenVariableValueSelectionChanged = true;
+
+        /// <summary>
         /// Backing field for <see cref="SelectedThing"/>
         /// </summary>
         private VariableRowViewModel selectedThing;
@@ -89,7 +94,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.canContinue;
             set => this.RaiseAndSetIfChanged(ref this.canContinue, value);
         }
-
+        
         /// <summary>
         /// Gets the collection of the available <see cref="Option"/> from the connected Hub Model
         /// </summary>
@@ -131,6 +136,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public ReactiveCommand<object> ApplyTimeStepOnSelectionCommand { get; set; }
 
         /// <summary>
+        /// Gets or sets the command that Add or Remove all available values to the <see cref="SelectedThing"/> <see cref="VariableRowViewModel.SelectedValues"/>
+        /// </summary>
+        public ReactiveCommand<object> SelectAllValuesCommand { get; set; }
+
+        /// <summary>
         /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
@@ -150,37 +160,21 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public void Initialize()
         {
             this.UpdateProperties();
-
-            this.WhenAny(x => x.Variables.CountChanged,
-                    x => x.Value.Where(c => c > 0))
-                .ObserveOn(RxApp.MainThreadScheduler)
+            
+            this.Variables.CountChanged
                 .Subscribe(_ => this.UpdateHubFields(() =>
                     {
                         this.InitializesCommandsAndObservableSubscriptions();
-                        this.AssignMapping();
+                        this.DstController.LoadMapping();
                         this.UpdatePropertiesBasedOnMappingConfiguration();
                         this.CheckCanExecute();
                     }));
         }
-
-        /// <summary>
-        /// Assings a mapping configuration if any to each of the selected variables
-        /// </summary>
-        private void AssignMapping()
-        {
-            foreach (var variable in this.Variables)
-            {
-                variable.MappingConfigurations.AddRange(
-                    this.DstController.ExternalIdentifierMap.Correspondence.Where(
-                        x => x.ExternalId == variable.ElementName ||
-                             x.ExternalId == variable.Name));
-            }
-        }
-
+        
         /// <summary>
         /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
         /// </summary>
-        public void InitializesCommandsAndObservableSubscriptions()
+        public void InitializesCommandsAndObservableSubscriptions() 
         {
             foreach (var variableRowViewModel in this.Variables)
             {
@@ -188,9 +182,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     .Subscribe(n =>
                         this.UpdateHubFields(() =>
                         {
-                            this.UpdateAvailableParameters();
-                            this.UpdateAvailableParameterType(n < 2);
-                            this.CheckCanExecute();
+                            this.WhenVariableValueSelectionChanged(n);
                         }));
             }
 
@@ -248,7 +240,53 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
 
             this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
-                this.UpdateHubFields(() => this.SelectedThing?.ApplyTimeStep()));
+                this.UpdateHubFields(() =>
+                {
+                    this.canTriggerWhenVariableValueSelectionChanged = false;
+                    this.SelectedThing?.ApplyTimeStep();
+                    this.canTriggerWhenVariableValueSelectionChanged = true;
+                    this.WhenVariableValueSelectionChanged();
+                }));
+            
+            this.SelectAllValuesCommand = ReactiveCommand.Create();
+
+            this.SelectAllValuesCommand.Subscribe(_ =>
+                this.UpdateHubFields(() =>
+                {
+                    this.canTriggerWhenVariableValueSelectionChanged = false;
+
+                    if (this.SelectedThing?.SelectedValues.Count == 0)
+                    {
+                        this.SelectedThing?.SelectedValues.AddRange(this.SelectedThing?.Values);
+                    }
+                    else
+                    {
+                        this.SelectedThing?.SelectedValues.Clear();
+                    }
+
+                    this.canTriggerWhenVariableValueSelectionChanged = true;
+                    this.WhenVariableValueSelectionChanged();
+                }));
+
+
+        }
+
+        /// <summary>
+        /// Occurs when the <see cref="SelectedThing"/> <see cref="VariableRowViewModel.SelectedValues"/> changes
+        /// </summary>
+        /// <param name="selectionNumber">The number of the current item selected values</param>
+        private void WhenVariableValueSelectionChanged(int? selectionNumber = null)
+        {
+            if (!this.canTriggerWhenVariableValueSelectionChanged)
+            {
+                return;
+            }
+
+            selectionNumber ??= this.SelectedThing?.SelectedValues.Count;
+
+            this.UpdateAvailableParameters();
+            this.UpdateAvailableParameterType(selectionNumber < 2);
+            this.CheckCanExecute();
         }
 
         /// <summary>

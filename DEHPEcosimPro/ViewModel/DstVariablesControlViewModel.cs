@@ -28,6 +28,7 @@ namespace DEHPEcosimPro.ViewModel
     using System.Diagnostics;
     using System.Linq;
     using System.Reactive.Linq;
+    using System.Threading.Tasks;
     using System.Windows.Input;
 
     using Autofac;
@@ -61,7 +62,6 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class DstVariablesControlViewModel : ReactiveObject, IDstVariablesControlViewModel, IHaveContextMenuViewModel
     {
-
         /// <summary>
         /// The <see cref="NLog"/> logger
         /// </summary>
@@ -86,7 +86,7 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="INavigationService"/>
         /// </summary>
         private readonly INavigationService navigationService;
-
+        
         /// <summary>
         /// Backing field for <see cref="IsBusy"/>
         /// </summary>
@@ -116,6 +116,11 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
+        /// </summary>
+        public ReactiveList<VariableRowViewModel> Variables { get; }
+
+        /// <summary>
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
         /// </summary>
         public ReactiveList<VariableRowViewModel> SelectedThings { get; set; } = new ReactiveList<VariableRowViewModel>();
@@ -125,11 +130,6 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         public ReactiveList<ContextMenuItemViewModel> ContextMenu { get; } = new ReactiveList<ContextMenuItemViewModel>();
 
-        /// <summary>
-        /// Gets the collection of <see cref="VariableRowViewModel"/>
-        /// </summary>
-        public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
-        
         /// <summary>
         /// Gets the command that allows to map the selected things
         /// </summary>
@@ -149,11 +149,7 @@ namespace DEHPEcosimPro.ViewModel
             this.navigationService = navigationService;
             this.hubController = hubController;
             this.statusBar = statusBar;
-
-            this.WhenAnyValue(x => x.DstController.IsSessionOpen)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateProperties());
-
+            
             this.WhenAnyValue(vm => vm.SelectedThing, vm => vm.SelectedThings.CountChanged)
                 .Subscribe(_ =>
                 {
@@ -161,6 +157,8 @@ namespace DEHPEcosimPro.ViewModel
                 });
 
             this.SelectedThings.CountChanged.Subscribe(_ => this.UpdateNetChangePreviewBasedOnSelection());
+            
+            this.Variables = this.DstController.VariableRowViewModels;
 
             this.InitializeCommands();
         }
@@ -190,7 +188,7 @@ namespace DEHPEcosimPro.ViewModel
             this.MapCommand.Subscribe(_ => this.MapCommandExecute());
             this.MapCommand.ThrownExceptions.Subscribe(e => Logger.Error(e));
         }
-
+        
         /// <summary>
         /// Executes the <see cref="MapCommand"/>
         /// </summary>
@@ -229,22 +227,6 @@ namespace DEHPEcosimPro.ViewModel
                 Logger.Error(e);
                 Console.WriteLine(e);
                 throw;
-            }
-        }
-
-        /// <summary>
-        /// Updates this view model properties
-        /// </summary>
-        public void UpdateProperties()
-        {
-            if (this.DstController.IsSessionOpen)
-            {
-                this.Variables.AddRange(this.DstController.Variables.Select(r => new VariableRowViewModel(r)));
-            }
-            else
-            {
-                this.Variables.Clear();
-                this.DstController.ClearSubscriptions();
             }
         }
         

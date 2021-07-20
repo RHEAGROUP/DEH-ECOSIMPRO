@@ -37,6 +37,7 @@ namespace DEHPEcosimPro.MappingRules
     using CDP4Common.Types;
 
     using DEHPCommon;
+    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.MappingEngine;
     using DEHPCommon.MappingRules.Core;
@@ -44,6 +45,7 @@ namespace DEHPEcosimPro.MappingRules
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Extensions;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using NLog;
@@ -67,9 +69,9 @@ namespace DEHPEcosimPro.MappingRules
         private readonly IHubController hubController = AppContainer.Container.Resolve<IHubController>();
 
         /// <summary>
-        /// The <see cref="IDstController"/>
+        /// The <see cref="IMappingConfigurationService"/>
         /// </summary>
-        private IDstController dstController;
+        private IMappingConfigurationService mappingConfigurationService;
 
         /// <summary>
         /// The current <see cref="DomainOfExpertise"/>
@@ -90,7 +92,7 @@ namespace DEHPEcosimPro.MappingRules
         {
             try
             {
-                this.dstController = AppContainer.Container.Resolve<IDstController>();
+                this.mappingConfigurationService = AppContainer.Container.Resolve<IMappingConfigurationService>();
 
                 this.owner = this.hubController.CurrentDomainOfExpertise;
 
@@ -111,7 +113,8 @@ namespace DEHPEcosimPro.MappingRules
 
                         this.AddsValueSetToTheSelectectedParameter(variable);
 
-                        this.AddToExternalIdentifierMap(variable.SelectedElementDefinition.Iid, variable.ElementName);
+                         this.mappingConfigurationService.AddToExternalIdentifierMap(
+                             variable.SelectedElementDefinition.Iid, variable.Reference.NodeId.Identifier, MappingDirection.FromDstToHub);
                     }
                 }
 
@@ -279,26 +282,18 @@ namespace DEHPEcosimPro.MappingRules
         /// <param name="variable">The external identifier: the variable name</param>
         private void AddParameterToExternalIdentifierMap(ParameterBase parameter, VariableRowViewModel variable)
         {
-            this.AddToExternalIdentifierMap(parameter.Iid, variable.Name);
-
             if (parameter.IsOptionDependent)
             {
-                this.AddToExternalIdentifierMap(variable.SelectedOption.Iid, variable.Name);
+                this.mappingConfigurationService.AddToExternalIdentifierMap(
+                    variable.SelectedOption.Iid, variable.Reference.NodeId.Identifier, MappingDirection.FromDstToHub);
             }
 
             if (parameter.StateDependence is {})
             {
-                this.AddToExternalIdentifierMap(variable.SelectedActualFiniteState.Iid, variable.Name);
+                this.mappingConfigurationService.AddToExternalIdentifierMap(
+                    variable.SelectedActualFiniteState.Iid, variable.Reference.NodeId.Identifier, MappingDirection.FromDstToHub);
             }
         }
-
-        /// <summary>
-        /// Adds one correspondance to the <see cref="IHubController.ExternalIdentifierMap"/>
-        /// </summary>
-        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
-        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
-        private void AddToExternalIdentifierMap(Guid internalId, string externalId)
-            => this.dstController.AddToExternalIdentifierMap(internalId, externalId);
     }
 }
 
