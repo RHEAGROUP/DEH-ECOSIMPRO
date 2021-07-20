@@ -297,16 +297,6 @@ namespace DEHPEcosimPro.DstController
         {
             if (this.CanLoadSelectedValues && !isRunning)
             {
-                //Task.Run(this.LoadMapping)
-                //    .ContinueWith(t =>
-                //    {
-                //        if (t.IsFaulted)
-                //        {
-                //            this.statusBar.Append(t.Exception?.Message, StatusBarMessageSeverity.Error);
-                //        }
-
-                //        this.canLoadSelectedValues = false;
-                //    });
                 var numberOfMappedThings = this.LoadMapping();
                 this.statusBar.Append($"{numberOfMappedThings} mapped element(s) has been loaded from the saved mapping configuration " +
                                       $"{this.mappingConfigurationService.ExternalIdentifierMap.Name}");
@@ -418,7 +408,7 @@ namespace DEHPEcosimPro.DstController
                     this.Map(validMappedVariables);
                 }
 
-                return validMappedVariables.Count();
+                return validMappedVariables.Count;
             }
 
             return 0;
@@ -589,7 +579,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        public void TransferMappedThingsToDst()
+        public async Task TransferMappedThingsToDst()
         {
             foreach (var mappedElement in this.SelectedHubMapResultToTransfer
                 .Where(
@@ -614,7 +604,8 @@ namespace DEHPEcosimPro.DstController
             var (iteration, transaction) = this.GetIterationTransaction();
             this.mappingConfigurationService.PersistExternalIdentifierMap(transaction, iteration);
             transaction.CreateOrUpdate(iteration);
-            this.hubController.Write(transaction);
+            await this.hubController.Write(transaction);
+            await this.hubController.Refresh();
             this.mappingConfigurationService.RefreshExternalIdentifierMap();
 
             this.LoadMappingToDst();

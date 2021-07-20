@@ -205,7 +205,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        void TransferMappedThingsToDst();
+        Task TransferMappedThingsToDst();
 
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 

@@ -54,11 +54,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     public class HubMappingConfigurationDialogViewModel : MappingConfigurationDialogViewModel, IHubMappingConfigurationDialogViewModel
     {
         /// <summary>
-        /// The <see cref="IMappingConfigurationService"/>
-        /// </summary>
-        private readonly IMappingConfigurationService mappingService;
-
-        /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
         public ReactiveList<VariableRowViewModel> AvailableVariables { get; set; }
@@ -184,12 +179,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="mappingService">The <see cref="IMappingConfigurationService"/></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
             IDstController dstController, IStatusBarControlViewModel statusBar, IMappingConfigurationService mappingService) :
             base(hubController, dstController, statusBar)
         {
-            this.mappingService = mappingService;
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
         }
@@ -408,6 +401,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.MappedElements.Add(this.CreateMappedElement(parameterOverride));
             }
+
+            this.CheckCanExecute();
         }
 
         /// <summary>
