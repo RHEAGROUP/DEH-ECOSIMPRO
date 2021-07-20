@@ -53,12 +53,7 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// Gets or sets the experiment progress value
         /// </summary>
         double ExperimentProgress { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the experiment is running
-        /// </summary>
-        bool IsExperimentRunning { get; set; }
-
+        
         /// <summary>
         /// Gets or sets the CINT of the experiment
         /// </summary>

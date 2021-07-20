@@ -41,6 +41,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.Services.TypeResolver.Interfaces;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
@@ -52,6 +53,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     /// </summary>
     public class HubMappingConfigurationDialogViewModel : MappingConfigurationDialogViewModel, IHubMappingConfigurationDialogViewModel
     {
+        /// <summary>
+        /// The <see cref="IMappingConfigurationService"/>
+        /// </summary>
+        private readonly IMappingConfigurationService mappingService;
+
         /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
@@ -178,10 +184,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="mappingService">The <see cref="IMappingConfigurationService"/></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
-            IDstController dstController, IStatusBarControlViewModel statusBar) :
+            IDstController dstController, IStatusBarControlViewModel statusBar, IMappingConfigurationService mappingService) :
             base(hubController, dstController, statusBar)
         {
+            this.mappingService = mappingService;
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
         }
@@ -400,22 +408,22 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 this.MappedElements.Add(this.CreateMappedElement(parameterOverride));
             }
-
-            this.AssignMapping();
         }
 
         /// <summary>
         /// Creates a new <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>
+        /// if it does not exist in the mapped things
         /// </summary>
         /// <param name="thing">The base <see cref="Thing"/></param>
         /// <returns>A new <see cref="MappedElementDefinitionRowViewModel"/></returns>
         private MappedElementDefinitionRowViewModel CreateMappedElement(ParameterOrOverrideBase thing)
         {
-            var selectedElement = new MappedElementDefinitionRowViewModel()
-            {
-                SelectedParameter = thing
-            };
-
+            var selectedElement = this.DstController.HubMapResult
+                .FirstOrDefault(x => x.SelectedParameter.Iid == thing.Iid) 
+                is { } existinMappedElement
+                ? existinMappedElement
+                : new MappedElementDefinitionRowViewModel() { SelectedParameter = thing };
+            
             selectedElement.WhenAnyValue(x => x.IsValid).Subscribe(_ => this.CheckCanExecute());
             return selectedElement;
         }
@@ -449,51 +457,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
             this.MappedElements.ChangeTrackingEnabled = true;
             
-            this.IsBusy = false;
-        }
-
-        /// <summary>
-        /// Assings a mapping configuration if any to each of the selected variables
-        /// </summary>
-        private void AssignMapping()
-        {
-            foreach (var elementDefinitionRowViewModel in this.MappedElements)
-            {
-                elementDefinitionRowViewModel.MappingConfiguration =
-                    this.DstController.ExternalIdentifierMap.Correspondence.FirstOrDefault(
-                        x => elementDefinitionRowViewModel.SelectedParameter
-                            .ValueSets.Cast<ParameterValueSetBase>()
-                            .Any(v => v.Iid == x.InternalThing));
-            }
-
-            this.UpdatePropertiesBasedOnMappingConfiguration();
-        }
-
-        /// <summary>
-        /// Updates the mapping based on the available 10-25 elements
-        /// </summary>
-        public void UpdatePropertiesBasedOnMappingConfiguration()
-        {
-            this.IsBusy = true;
-
-            foreach (var rowViewModel in this.MappedElements.Where(x => x.MappingConfiguration != null))
-            {
-                if (this.HubController.GetThingById(
-                        rowViewModel.MappingConfiguration.InternalThing, 
-                        this.HubController.OpenIteration, out ParameterValueSetBase thing)
-                && (this.ElementDefinitions.Any(
-                        x => thing.GetContainerOfType<ElementDefinition>()?.Iid == x.Iid)
-                || this.ElementDefinitions.Any(x => 
-                    x.ReferencingElementUsages().Any( u => thing.GetContainerOfType<ElementUsage>()?.Iid == x.Iid))))
-                { 
-                    rowViewModel.SelectedParameter = thing.GetContainerOfType<ParameterOrOverrideBase>();
-                    this.ComputesAvailableValues();
-
-                    rowViewModel.SelectedVariable = this.AvailableVariables.FirstOrDefault(
-                        x => x.Name == rowViewModel.MappingConfiguration.ExternalId);
-                }
-            }
-
             this.IsBusy = false;
         }
     }

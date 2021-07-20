@@ -107,14 +107,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Initializes a new <see cref="MappedElementDefinitionRowViewModel"/>
+        /// </summary>
+        /// <param name="valueSet">The <see cref="IValueSet"/></param>
+        /// <param name="valueIndex">The value index</param>
+        /// <param name="switchKind">The <see cref="ParameterSwitchKind"/></param>
+        public MappedElementDefinitionRowViewModel(IValueSet valueSet, int valueIndex, ParameterSwitchKind switchKind) : this()
+        {
+            this.SelectedParameter = (valueSet as ParameterValueSetBase)?.GetContainerOfType<ParameterOrOverrideBase>();
+            this.SelectedValue = new ValueSetValueRowViewModel(valueSet, valueIndex, switchKind);
+        }
+
+        /// <summary>
         /// Verify validity of the this <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>
         public void VerifyValidity()
         {
             this.IsValid = this.SelectedValue != null && 
                            this.SelectedValue.Value != "-" && 
-                           this.SelectedVariable != null && 
-                           this.SelectedVariable.HasWriteAccess == true;
+                           this.SelectedVariable != null;
         }
     }
 }

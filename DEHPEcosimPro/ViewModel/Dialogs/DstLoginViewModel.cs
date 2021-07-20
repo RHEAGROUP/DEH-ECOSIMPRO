@@ -41,6 +41,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
     using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
 
     using Opc.Ua;
@@ -66,7 +67,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="IUserPreferenceService{AppSettings}"/> instance
         /// </summary>
         private readonly IUserPreferenceService<AppSettings> userPreferenceService;
-        
+
+        /// <summary>
+        /// The <see cref="IMappingConfigurationService"/>
+        /// </summary>
+        private readonly IMappingConfigurationService mappingConfiguration;
+
         /// <summary>
         /// Backing field for <see cref="IsBusy"/>
         /// </summary>
@@ -225,12 +231,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="statusBarControlView">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="userPreferenceService">The <see cref="IUserPreferenceService{AppSettings}"/></param>
         /// <param name="hubController">The <see cref="IHubController"/></param>
+        /// <param name="mappingConfiguration">The <see cref="IMappingConfigurationService"/></param>
         public DstLoginViewModel(IDstController dstController, IStatusBarControlViewModel statusBarControlView, 
-            IUserPreferenceService<AppSettings> userPreferenceService, IHubController hubController)
+            IUserPreferenceService<AppSettings> userPreferenceService, IHubController hubController,
+            IMappingConfigurationService mappingConfiguration)
         {
             this.dstController = dstController;
             this.statusBarControlView = statusBarControlView;
             this.userPreferenceService = userPreferenceService;
+            this.mappingConfiguration = mappingConfiguration;
 
             this.PopulateSavedUris();
 
@@ -241,7 +250,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.SaveCurrentUriCommand.Subscribe(_ => this.ExecuteSaveCurrentUri());
 
             this.AvailableExternalIdentifierMap = new ReactiveList<ExternalIdentifierMap>(
-                hubController.AvailableExternalIdentifierMap(this.dstController.ThisToolName));
+                hubController.AvailableExternalIdentifierMap(DstController.ThisToolName)
+                    .OrderBy(x => x.Name));
 
             this.WhenAnyValue(x => x.SelectedExternalIdentifierMap).Subscribe(_ =>
             {
@@ -361,12 +371,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Creates a new <see cref="ExternalIdentifierMap"/> and or set the <see cref="IDstController.ExternalIdentifierMap"/>
+        /// Creates a new <see cref="ExternalIdentifierMap"/> and or set the <see cref="IMappingConfigurationService.ExternalIdentifierMap"/>
         /// </summary>
         private void ProcessExternalIdentifierMap()
         {
-            this.dstController.ExternalIdentifierMap = this.SelectedExternalIdentifierMap?.Clone(true) ??
-                                                       this.dstController.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
+            this.mappingConfiguration.ExternalIdentifierMap = this.SelectedExternalIdentifierMap?.Clone(true) ??
+                                                       this.mappingConfiguration.CreateExternalIdentifierMap(this.ExternalIdentifierMapNewName);
         }
     }
 }

@@ -62,6 +62,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private ReactiveList<ElementBase> dstMapResult;
         private Mock<IHubController> hubController;
         private ReactiveList<MappedElementDefinitionRowViewModel> hubMapResult;
+        private Parameter parameter1;
 
         [SetUp]
         public void Setup()
@@ -92,23 +93,36 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.parameter0 = new Parameter(Guid.NewGuid(), null, null)
             {
-                ParameterType = new TextParameterType(), ValueSet = 
+                ParameterType = new TextParameterType(){Name = "parameterType0"}, ValueSet = 
                 {
                     new ParameterValueSet()
                     {
-                        Computed = new ValueArray<string>(new []{"-"}),
-                        Manual = new ValueArray<string>(new []{"-"}),
-                        Reference = new ValueArray<string>(new []{"-"}),
-                        Published = new ValueArray<string>(new []{"-"})
+                        Computed = new ValueArray<string>(new []{"8"}),
+                        Manual = new ValueArray<string>(new []{"5"}),
+                        Reference = new ValueArray<string>(new []{"3"})
+                    }
+                }
+            };
+
+            this.parameter1 = new Parameter(Guid.NewGuid(), null, null)
+            {
+                ParameterType = new TextParameterType(){Name = "parameterType1"}, ValueSet = 
+                {
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new []{"1"}),
+                        Manual = new ValueArray<string>(new []{"2"}),
+                        Reference = new ValueArray<string>(new []{"3"})
                     }
                 }
             };
 
             this.element0 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
+                Name = "element",
                 Parameter =
                 {
-                    this.parameter0,
+                    this.parameter0, this.parameter1,
                     new Parameter(Guid.NewGuid(), null, null),
                 }
             };
@@ -176,66 +190,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstMapResult.Add(this.element0);
             Assert.AreEqual(1,this.viewModel.MappingRows.Count);
             
-            var newParameter = new Parameter(Guid.NewGuid(), null, null)
-            {
-                ParameterType = new TextParameterType(),
-                ValueSet =
-                {
-                    new ParameterValueSet()
-                    {
-                        Computed = new ValueArray<string>(new []{"-"}),
-                        Manual = new ValueArray<string>(new []{"-"}),
-                        Reference = new ValueArray<string>(new []{"-"}),
-                        Published = new ValueArray<string>(new []{"-"})
-                    }
-                }
-            };
-
-            var newElement = new ElementDefinition(Guid.NewGuid(), null, null)
-            {
-                Parameter =
-                {
-                    newParameter,
-                    new Parameter(Guid.NewGuid(), null, null),
-                }
-            };
-            
-            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
-            {
-                { newParameter, this.variableRowViewModels.FirstOrDefault() }
-            });
-
-            this.dstMapResult.Add(newElement);
-            Assert.AreEqual(2, this.viewModel.MappingRows.Count);
-
-            var clone = this.element0.Clone(true);
-            clone.Iid = Guid.NewGuid();
-
-            clone.Parameter.Add(newParameter);
-
-            this.dstMapResult.Add(clone);
-            Assert.AreEqual(3, this.viewModel.MappingRows.Count);
-
-            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>()
-            {
-                { this.elementUsage.ParameterOverride.First(), this.variableRowViewModels.FirstOrDefault() }
-            });
-
-            this.dstMapResult.Add(this.elementUsage);
-            Assert.AreEqual(4, this.viewModel.MappingRows.Count);
-
-            this.hubMapResult.Add(new MappedElementDefinitionRowViewModel()
-            {
-                SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "8", new RatioScale() ),
-                SelectedParameter = this.parameter0,
-                IsValid = true,
-                SelectedVariable = this.variableRowViewModels.FirstOrDefault()
-            });
-
-            Assert.AreEqual(5, this.viewModel.MappingRows.Count);
-
-            this.hubMapResult.Clear();
-            Assert.AreEqual(4, this.viewModel.MappingRows.Count);
             this.dstMapResult.Clear();
             Assert.AreEqual(0, this.viewModel.MappingRows.Count);
         }
@@ -252,9 +206,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.hubMapResult.Add(new MappedElementDefinitionRowViewModel()
             {
                 SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "8", new RatioScale()),
-                SelectedParameter = this.parameter0,
+                SelectedParameter = this.parameter1,
                 IsValid = true,
-                SelectedVariable = this.variableRowViewModels.FirstOrDefault()
+                SelectedVariable = this.variableRowViewModels.Last()
             });
             
             Assert.AreEqual(180, this.viewModel.MappingRows[1].ArrowDirection);

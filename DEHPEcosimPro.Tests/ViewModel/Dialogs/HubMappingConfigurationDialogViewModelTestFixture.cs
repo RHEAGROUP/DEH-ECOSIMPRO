@@ -44,6 +44,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
 
@@ -98,11 +99,15 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private ParameterSubscription parameterSubscriptionCompound;
         private IList<(ReferenceDescription Reference, DataValue Node)> variables;
         private MeasurementScale measurementScale;
+        private Mock<IMappingConfigurationService> mappingConfigurationService;
 
         [SetUp]
         public void Setup()
         {
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
+
+            this.mappingConfigurationService = new Mock<IMappingConfigurationService>();
+
             this.hubController = new Mock<IHubController>();
             this.dstController = new Mock<IDstController>();
             this.SetupDstData();
@@ -169,7 +174,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     new KeyValuePair<Iteration, Tuple<DomainOfExpertise, Participant>>(this.iteration, new Tuple<DomainOfExpertise, Participant>(this.domain, new Participant()))
                 }));
 
-            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object);
+            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.mappingConfigurationService.Object);
 
             var browser = new ElementDefinitionsBrowserViewModel(this.iteration, this.session.Object);
             this.elementDefinitionRows = new List<ElementDefinitionRowViewModel>();

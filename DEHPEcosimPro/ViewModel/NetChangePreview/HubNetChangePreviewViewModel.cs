@@ -370,8 +370,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             var selectedParameters = parentViewModel.ContainedRows
                 .OfType<ParameterOrOverrideBaseRowViewModel>()
                 .Where(x => x.IsSelectedForTransfer)
-                .Select(x => x.Thing)
-                .Cast<TParameter>()
+                .Select(x => x.Thing as TParameter)
+                .Where(x => x is {})
                 .ToList();
             
             parametersToAdd

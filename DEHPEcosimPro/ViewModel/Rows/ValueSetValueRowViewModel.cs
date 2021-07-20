@@ -24,8 +24,13 @@
 
 namespace DEHPEcosimPro.ViewModel.Rows
 {
+    using System;
+
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
+    using CDP4Common.Types;
+    using DevExpress.Mvvm.Native;
+    using DevExpress.Xpf.Core.Native;
 
     using ReactiveUI;
 
@@ -98,12 +103,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Gets the string representation of this value
         /// </summary>
-        public string Representation
-        {
-            get => this.representation;
-            set => this.RaiseAndSetIfChanged(ref this.representation, value);
-        }
-
+        public string Representation => $"{(this.Option is null ? string.Empty : $" Option: {this.Option.Name}")} " +
+                                                $"{(this.ActualState is null ? string.Empty : $" State: {this.ActualState.Name} ")}" +
+                                                $"{this.Value} [{(this.Scale is null ? "-" : this.Scale.ShortName)}]";
+        
         /// <summary>
         /// Backing field for <see cref="Container"/>
         /// </summary>
@@ -131,10 +134,64 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.Option = container.ActualOption;
             this.ActualState = container.ActualState;
             this.Scale = scale;
+        }
 
-            this.Representation = $"{(this.Option is null ? string.Empty : $" Option: {this.Option.Name}")} " +
-                                  $"{(this.ActualState is null ? string.Empty : $" State: {this.ActualState.Name} ")}" +
-                                  $"{this.Value} [{(this.Scale is null ? "-" : this.Scale.ShortName)}]";
+        /// <summary>
+        /// Initializes a new <see cref="ValueSetValueRowViewModel"/>
+        /// </summary>
+        /// <param name="valueSet">The <see cref="IValueSet"/></param>
+        /// <param name="valueIndex">The value index</param>
+        /// <param name="parameterSwitchKind">The <see cref="ParameterSwitchKind"/></param>
+        public ValueSetValueRowViewModel(IValueSet valueSet, int valueIndex, ParameterSwitchKind parameterSwitchKind)
+        {
+            this.Container = valueSet;
+            this.SetValueFromValueIndex(valueIndex, parameterSwitchKind);
+        }
+
+        /// <summary>
+        /// Setsn the value from the <paramref name="valueIndex"/>
+        /// </summary>
+        /// <param name="valueIndex">The value index</param>
+        /// <param name="parameterSwitchKind">The <see cref="ParameterSwitchKind"/></param>
+        private void SetValueFromValueIndex(int valueIndex, ParameterSwitchKind parameterSwitchKind)
+        {
+            var collection = parameterSwitchKind switch
+            {
+                ParameterSwitchKind.REFERENCE => this.Container.Reference,
+                ParameterSwitchKind.COMPUTED => this.Container.Computed,
+                ParameterSwitchKind.MANUAL => this.Container.Manual,
+                _ => throw new ArgumentOutOfRangeException(nameof(parameterSwitchKind), parameterSwitchKind, null)
+            };
+
+            this.Value = collection[valueIndex];
+        }
+
+        /// <summary>
+        /// Gets the represented <see cref="Value"/> index from its <see cref="IValueSet"/> <see cref="Container"/>
+        /// as 0 based index, -1 if not found
+        /// </summary>
+        public (int Index, ParameterSwitchKind SwitchKind) GetValueIndexAndParameterSwitchKind()
+        {
+            var indexFromComputed = this.Container.Computed
+                .IndexOf(x => x.Equals(this.Value, StringComparison.InvariantCulture));
+
+            if (indexFromComputed > -1)
+            {
+                return (indexFromComputed, ParameterSwitchKind.COMPUTED);
+            }
+
+            var indexFromReference = this.Container.Reference
+                .IndexOf(x => x.Equals(this.Value, StringComparison.InvariantCulture));
+
+            if (indexFromReference > -1)
+            {
+                return (indexFromReference, ParameterSwitchKind.REFERENCE);
+            }
+
+            var indexFromManual = this.Container.Manual
+                .IndexOf(x => x.Equals(this.Value, StringComparison.InvariantCulture));
+
+            return (indexFromManual, ParameterSwitchKind.MANUAL);
         }
     }
 }
