@@ -343,7 +343,7 @@ namespace DEHPEcosimPro.DstController
                 else
                 {
                     this.Variables.Clear();
-                    Application.Current.Dispatcher.Invoke(() => this.VariableRowViewModels.Clear());
+                    this.VariableRowViewModels.Clear();
                     this.Methods.Clear();
                     this.TimeNodeId = null;
                     this.ClearSubscriptions();
@@ -351,9 +351,10 @@ namespace DEHPEcosimPro.DstController
 
                 this.IsSessionOpen = isOpcSessionOpen;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                Console.WriteLine(e);
+                this.logger.Error(exception);
+                this.statusBar.Append("An error occured while reaching the opc server, please check the log for more details.");
             }
         }
 
@@ -397,11 +398,8 @@ namespace DEHPEcosimPro.DstController
             {
                 this.mappingConfigurationService.SelectValues(mappedVariables);
 
-                var validMappedVariables = new List<VariableRowViewModel>();
-
-                Application.Current.Dispatcher.Invoke(() =>
-                    validMappedVariables = mappedVariables.Where(x => x.IsValid()).ToList());
-
+                var validMappedVariables = mappedVariables.Where(x => x.IsValid()).ToList();
+                
                 if (validMappedVariables.Any())
                 {
                     this.ParameterVariable.Clear();
