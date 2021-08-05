@@ -62,6 +62,8 @@ namespace DEHPEcosimPro.Tests.DstController
 
     using Opc.Ua;
 
+    using ReactiveUI;
+
     using INavigationService = DEHPCommon.Services.NavigationService.INavigationService;
 
     [TestFixture, Apartment(ApartmentState.STA)]
@@ -77,9 +79,9 @@ namespace DEHPEcosimPro.Tests.DstController
         {
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("server_methods"), BrowseName = new QualifiedName("server_methods"), NodeClass = NodeClass.Object},
             new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_run"), BrowseName = new QualifiedName("method_run"), NodeClass = NodeClass.Method},
-            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_reset"),BrowseName = new QualifiedName("method_reset"), NodeClass = NodeClass.Method},
-            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_integ_cint"),BrowseName = new QualifiedName("method_integ_cint"), NodeClass = NodeClass.Method},
-            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("CINT"),BrowseName = new QualifiedName("CINT"), NodeClass = NodeClass.Variable},
+            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_reset"), BrowseName = new QualifiedName("method_reset"), NodeClass = NodeClass.Method},
+            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("method_integ_cint"), BrowseName = new QualifiedName("method_integ_cint"), NodeClass = NodeClass.Method},
+            new ReferenceDescription { NodeId = ExpandedNodeId.Parse("CINT"), BrowseName = new QualifiedName("CINT"), NodeClass = NodeClass.Variable},
         };
 
         private Mock<IStatusBarControlViewModel> statusBarViewModel;
@@ -162,8 +164,21 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.opcClient.Setup(x => x.References).Returns(new ReferenceDescriptionCollection(new List<ReferenceDescription>()
             {
-                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), BrowseName = new QualifiedName("dummy"), NodeClass = NodeClass.Variable},
-                new ReferenceDescription() { NodeId = new ExpandedNodeId(Guid.NewGuid(), 2), BrowseName = new QualifiedName("TIME"), NodeClass = NodeClass.Method}
+                new ReferenceDescription() 
+                { 
+                    NodeId = 
+                    new ExpandedNodeId(Guid.NewGuid(), 4),
+                    DisplayName = "dummy",
+                    BrowseName = new QualifiedName("dummy"),
+                    NodeClass = NodeClass.Variable
+                },
+                new ReferenceDescription()
+                {
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 2),
+                    DisplayName = "TIME",
+                    BrowseName = new QualifiedName("TIME"),
+                    NodeClass = NodeClass.Method
+                }
             }));
 
             this.statusBarViewModel = new Mock<IStatusBarControlViewModel>();
@@ -184,7 +199,7 @@ namespace DEHPEcosimPro.Tests.DstController
         {
             Assert.Null(this.controller.ServerAddress);
             Assert.Zero(this.controller.RefreshInterval);
-            Assert.IsFalse(this.controller.IsSessionOpen);
+            Assert.IsTrue(this.controller.IsSessionOpen);
             Assert.IsNotEmpty(this.controller.Variables);
             Assert.IsNotNull(this.controller.References);
             Assert.IsNotEmpty(this.controller.Methods);
@@ -367,7 +382,7 @@ namespace DEHPEcosimPro.Tests.DstController
                     }
                 });
 
-            Assert.DoesNotThrow(() => this.controller.TransferMappedThingsToDst());
+            Assert.DoesNotThrowAsync(() => this.controller.TransferMappedThingsToDst());
 
             this.opcClient.Verify(
                 x => x.WriteNode(It.IsAny<NodeId>(), It.IsAny<object>(), true), 
@@ -655,6 +670,91 @@ namespace DEHPEcosimPro.Tests.DstController
             
             this.opcClient.Verify(x => 
                 x.WriteNode(nodeId, 42d, true), Times.Once);
+        }
+
+        [Test]
+        public void VerifyWhenConnectionToOpcStatus()
+        {
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue("21"));
+            this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
+
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
+                this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+
+            this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Disconnected);
+
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
+                this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+
+            this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Throws<InvalidOperationException>();
+
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
+                this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+
+            this.mappingConfigurationService.Verify(
+                x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()),
+                Times.Exactly(2));
+
+            this.mappingConfigurationService.Verify(
+                x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
+                Times.Exactly(2));
+        }
+
+        [Test]
+        public void VerifyWhenIsExperimentRunningChanged()
+        {
+            this.mappingConfigurationService.Setup(x => x.ExternalIdentifierMap)
+                .Returns(new ExternalIdentifierMap{ Name = "test" });
+
+            this.controller.CanLoadSelectedValues = false;
+            this.controller.IsExperimentRunning = true;
+            Assert.IsFalse(this.controller.CanLoadSelectedValues);
+            this.controller.IsExperimentRunning = false;
+            Assert.IsFalse(this.controller.CanLoadSelectedValues);
+        }
+
+        [Test]
+        public void VerifyLoadMapping()
+        {
+            this.mappingConfigurationService.Setup(
+                    x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()))
+                .Returns(default(List<MappedElementDefinitionRowViewModel>));
+
+            this.mappingConfigurationService.Setup(
+                    x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()))
+                .Returns(default(List<VariableRowViewModel>));
+
+            Assert.DoesNotThrow(() => this.controller.LoadMapping());
+
+            var mappedElementDefinitionRowViewModels = new List<MappedElementDefinitionRowViewModel>();
+            var variableRowViewModels = new List<VariableRowViewModel>();
+
+            this.mappingConfigurationService.Setup(
+                    x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()))
+                .Returns(mappedElementDefinitionRowViewModels);
+
+            this.mappingConfigurationService.Setup(
+                    x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()))
+                .Returns(variableRowViewModels);
+
+            Assert.DoesNotThrow(() => this.controller.LoadMapping());
+            
+            mappedElementDefinitionRowViewModels.AddRange(new List<MappedElementDefinitionRowViewModel>()
+            {
+                new MappedElementDefinitionRowViewModel(),
+                new MappedElementDefinitionRowViewModel()
+            });
+
+            variableRowViewModels.AddRange(new List<VariableRowViewModel>()
+            {
+                new VariableRowViewModel((this.opcClient.Object.References.First(), new DataValue("3")))
+            });
+
+            Assert.DoesNotThrow(() => this.controller.LoadMapping());
         }
     }
 }
