@@ -333,7 +333,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Updates the <see cref="SelectedValues"/> based on <see cref="SelectedTimeUnit"/>
+        /// Updates the <see cref="SelectedValues"/> based on <see cref="SelectedTimeStep"/>
         /// and <see cref="SelectedTimeStep"/>
         /// </summary>
         public void ApplyTimeStep()

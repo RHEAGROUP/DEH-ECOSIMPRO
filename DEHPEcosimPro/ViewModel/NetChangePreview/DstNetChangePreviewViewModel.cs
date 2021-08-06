@@ -253,7 +253,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 variable.ShouldListenToChangeMessage = true;
                 variable.IsSelectedForTransfer = false;
                 variable.ActualValue = this.DstController.ReadNode(variable.Reference);
-                CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variable.Reference.NodeId.Identifier, false));
             }
         }
 
@@ -281,8 +280,9 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             {
                 return;
             }
-
+            
             CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier));
+
             variableChanged.ActualValue = mappedElement.SelectedValue.Value;
             variableChanged.ShouldListenToChangeMessage = false;
         }
