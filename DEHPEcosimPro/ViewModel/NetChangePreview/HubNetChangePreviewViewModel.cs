@@ -215,11 +215,30 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <summary>
         /// Verifies that the <see cref="thingViewModel"/> is transferable
         /// </summary>
+        /// <param name="thingViewModel">The <see cref="ParameterOrOverrideBaseRowViewModel"/></param>
+        /// <returns>An assert</returns>
+        private bool IsThingTransferable(ParameterOrOverrideBaseRowViewModel thingViewModel)
+        {
+            var thingContainer = thingViewModel.ContainerViewModel.Thing;
+
+            var element = this.dstController.DstMapResult
+                .FirstOrDefault(x => x.ShortName == (thingContainer as IShortNamedThing)?.ShortName && x.Iid == thingContainer.Iid);
+
+            return element?.Iid == Guid.Empty || element?.Original != null;
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="thingViewModel"/> is transferable
+        /// </summary>
+        /// <typeparam name="TElement">The type of <see cref="ElementBase"/></typeparam>
         /// <param name="thingViewModel"></param>
         /// <returns>An assert</returns>
-        private static bool IsThingTransferable(IRowViewModelBase<Thing> thingViewModel)
+        private bool IsThingTransferable<TElement>(IViewModelBase<TElement> thingViewModel) where TElement : ElementBase
         {
-            return thingViewModel.Thing.Iid == Guid.Empty || thingViewModel.Thing.Original != null;
+            var element = this.dstController.DstMapResult.OfType<TElement>()
+                .FirstOrDefault(x => x.Iid == thingViewModel.Thing.Iid && x.ShortName == thingViewModel.Thing.ShortName);
+
+            return element?.Iid == Guid.Empty || element?.Original != null;
         }
 
         /// <summary>
