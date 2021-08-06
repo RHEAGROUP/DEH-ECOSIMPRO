@@ -712,7 +712,7 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.controller.CanLoadSelectedValues = false;
             this.controller.IsExperimentRunning = true;
-            Assert.IsFalse(this.controller.CanLoadSelectedValues);
+            Assert.IsTrue(this.controller.CanLoadSelectedValues);
             this.controller.IsExperimentRunning = false;
             Assert.IsFalse(this.controller.CanLoadSelectedValues);
         }
