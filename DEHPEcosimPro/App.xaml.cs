@@ -178,6 +178,7 @@ namespace DEHPEcosimPro
             containerBuilder.RegisterType<DstNetChangePreviewViewModel>().As<IDstNetChangePreviewViewModel>().SingleInstance();
             containerBuilder.RegisterType<MappingViewModel>().As<IMappingViewModel>().SingleInstance();
             containerBuilder.RegisterType<EcosimProStatusBarControlViewModel>().As<IStatusBarControlViewModel>().SingleInstance();
+            containerBuilder.RegisterType<DifferenceViewModel>().As<IDifferenceViewModel>().SingleInstance();   
         }
     }
 }

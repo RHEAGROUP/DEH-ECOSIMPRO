@@ -52,6 +52,8 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private readonly INavigationService navigationService;
 
+        public IDifferenceViewModel DifferenceViewModel { get; private set; }
+
         /// <summary>
         /// Backing field for <see cref="MappingDirection"/>
         /// </summary>
@@ -128,14 +130,16 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         /// <param name="mappingViewModel">The <see cref="IMappingViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
+        /// <param name="differenceViewModel">The <see cref="IDifferenceViewModel"/></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
             IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
             IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, 
             ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel,
-            INavigationService navigationService)
+            INavigationService navigationService, IDifferenceViewModel differenceViewModel)
         {
             this.dstController = dstController;
             this.navigationService = navigationService;
+            this.DifferenceViewModel = differenceViewModel;
             this.TransferControlViewModel = transferControlViewModel;
             this.MappingViewModel = mappingViewModel;
             this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;

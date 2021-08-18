@@ -52,6 +52,8 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using DevExpress.CodeParser;
+
     using NLog;
 
     using ReactiveUI;
@@ -158,7 +160,10 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             .Any(x => x.IsSelectedForTransfer);
                     }
 
+                    CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(parameterRow.IsSelectedForTransfer, parameterRow.Thing));
+
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterRow);
+
                     break;
                 }
                 case ParameterOverrideRowViewModel parameterOverrideRow when IsThingTransferable(parameterOverrideRow):
