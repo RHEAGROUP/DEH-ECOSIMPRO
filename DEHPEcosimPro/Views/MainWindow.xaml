@@ -146,7 +146,7 @@
                                     </TabItem>
                                     <TabItem>
                                         <TabItem.Header>
-                                            <TextBlock Text="Difference" />
+                                            <TextBlock Text="Value Diff" />
                                         </TabItem.Header>
                                         <dxg:GridControl ToolTip="Select some values" MaxHeight="210" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
                                                          EnableSmartColumnsGeneration="False"
@@ -156,11 +156,13 @@
                                             <dxg:GridControl.View>
                                                 <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
                                                                IsDetailButtonVisibleBinding="{x:Null}"
-                                                               RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="true" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
+                                                               RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="false" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
                                             </dxg:GridControl.View>
                                             <dxg:GridControl.Columns>
-                                                <dxg:GridColumn FieldName="Oldthing" />
-                                                <dxg:GridColumn FieldName="Value" />
+                                                <dxg:GridColumn FieldName="Name" />
+                                                <dxg:GridColumn FieldName="OldValue" />
+                                                <dxg:GridColumn FieldName="NewValue" />
+                                                <dxg:GridColumn FieldName="Difference" />
                                             </dxg:GridControl.Columns>
                                         </dxg:GridControl>
                                     </TabItem>

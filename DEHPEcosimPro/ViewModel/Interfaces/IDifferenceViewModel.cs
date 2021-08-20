@@ -2,7 +2,7 @@
 // <copyright file="IDifferenceViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -28,6 +28,9 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
 
     using ReactiveUI;
 
+    /// <summary>
+    /// TODO
+    /// </summary>
     public interface IDifferenceViewModel
     {
         /// <summary>
