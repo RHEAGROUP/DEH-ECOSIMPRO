@@ -44,21 +44,21 @@ namespace DEHPEcosimPro.ViewModel.Rows
         private readonly IDstController dstController;
 
         /// <summary>
-        /// 
+        /// The Thing already on the data hub
         /// </summary>
         public Parameter OldThing;
         /// <summary>
-        /// 
+        /// The thing from Ecosimpro
         /// </summary>
         public Parameter NewThing;
 
         /// <summary>
-        /// Backing field for <see cref="Value"/>
+        /// The value the data hud had, string
         /// </summary>
         private object oldValue;
 
         /// <summary>
-        /// Gets the value of the represented reference
+        /// The value the data hud had, string
         /// </summary>
         public object OldValue
         {
@@ -67,12 +67,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="Value"/>
+        /// The new value from Ecosimpro, string
         /// </summary>
         private object newValue;
 
         /// <summary>
-        /// Gets the value of the represented reference
+        /// The new value from Ecosimpro, string
         /// </summary>
         public object NewValue
         {
@@ -81,12 +81,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="Value"/>
+        /// Name of the Value, string
         /// </summary>
         private object name;
 
         /// <summary>
-        /// Gets the value of the represented reference
+        /// Name of the Value, string
         /// </summary>
         public object Name
         {
@@ -95,12 +95,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Backing field for <see cref="Value"/>
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
         /// </summary>
         private object difference;
 
         /// <summary>
-        /// Gets the value of the represented reference
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
         /// </summary>
         public object Difference
         {
@@ -137,10 +137,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the <see cref="T:DEHPEcosimPro.ViewModel.Rows.ParameterDifferenceRowViewModel" /> class.
         /// </summary>
-        /// <param name="OldThing"></param>
-        /// <param name="NewThing"></param>
+        /// <param name="OldThing"><see cref="Parameter"/></param>
+        /// <param name="NewThing"><see cref="Parameter"/></param>
         public ParameterDifferenceRowViewModel(Parameter OldThing, Parameter NewThing, IDstController dstController)
         {
             this.dstController = dstController;
@@ -148,15 +148,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.OldThing = OldThing;
             this.NewThing = NewThing;
 
-            //this.ComputeParametersValues(NewThing, OldThing);
+            this.ComputeParametersValues(NewThing, OldThing);
 
-            this.OldValue = this.OldThing.ValueSet[0].ActualValue[0]; //not the real value
-            this.NewValue = this.NewThing.ValueSet[0].ActualValue[0];
             this.Name = this.NewThing.ParameterType.Name;
             this.Difference = this.CalculateDiff();
 
         }
 
+        /// <summary>
+        /// Calculate the difference between the old and new value, if possible
+        /// </summary>
+        /// <returns>a number, positive or negative (with + or - sign)</returns>
         private string CalculateDiff()
         {
             string result = "0";
@@ -183,7 +185,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
             return result;
         }
 
-
+        /// <summary>
+        /// Get the real values for <see cref="OldValue"/> and <see cref="NewValue"/>
+        /// </summary>
+        /// <param name="newParameterOrOverride"><see cref="ParameterOrOverrideBase"/></param>
+        /// <param name="oldParameterOrOverride"><see cref="ParameterOrOverrideBase"/></param>
         public void ComputeParametersValues(ParameterOrOverrideBase newParameterOrOverride, ParameterOrOverrideBase oldParameterOrOverride)
         {
             var variableRowViewModel = this.dstController.ParameterVariable
@@ -199,8 +205,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 _ => default((Option option, ActualFiniteState actualFiniteState))
             };
 
-            this.ActualFiniteStateName = variableRowViewModel.SelectedActualFiniteState.Name;
-            this.OptionName = variableRowViewModel.SelectedOption.Name;
+            this.ActualFiniteStateName = variableRowViewModel?.SelectedActualFiniteState?.Name ?? null;
+            this.OptionName = variableRowViewModel?.SelectedOption?.Name ?? null;
 
             this.NewValue = newParameterOrOverride.QueryParameterBaseValueSet(option, actualFiniteState).ActualValue.FirstOrDefault();
             this.OldValue = oldParameterOrOverride.QueryParameterBaseValueSet(option, actualFiniteState).ActualValue.FirstOrDefault();

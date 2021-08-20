@@ -83,14 +83,15 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IDstController dstController;
 
         /// <summary>
-        /// TODO
+        /// List of parameter to show on the window
         /// </summary>
         public ReactiveList<ParameterDifferenceRowViewModel> Parameters { get; set; } = new ReactiveList<ParameterDifferenceRowViewModel>();
 
         /// <summary>
-        /// 
+        /// Initializes a new instance of the <see cref="T:DEHPEcosimPro.ViewModel.DifferenceViewModel" /> class.
         /// </summary>
-        /// <param name="hubController"></param>
+        /// <param name="hubController"><see cref="IHubController"/></param>
+        /// <param name="dstController"><see cref="IDstController"/></param>
         public DifferenceViewModel(IHubController hubController, IDstController dstController)
         {
             this.hubController = hubController;
@@ -108,7 +109,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Add or Remove the thing from Parameters list
         /// </summary>
-        /// <param name="parameterEvent"></param>
+        /// <param name="parameterEvent"><see cref="DifferenceEvent<ParameterOrOverrideBase>"/></param>
         private void HandleDifferentEvent(DifferenceEvent<ParameterOrOverrideBase> parameterEvent)
         {
             
@@ -129,6 +130,10 @@ namespace DEHPEcosimPro.ViewModel
             }
         }
 
+        /// <summary>
+        /// Add or Remove the list of thing from Parameters list
+        /// </summary>
+        /// <param name="elementDefinition"><see cref="DifferenceEvent<ElementDefinition>"/></param>
         private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> elementDefinition)
         {
             var listOfParameters = elementDefinition.Thing.Parameter;
