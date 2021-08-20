@@ -160,6 +160,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             .Any(x => x.IsSelectedForTransfer);
                     }
 
+                    //used by the DifferenceViewModel
                     CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(parameterRow.IsSelectedForTransfer, parameterRow.Thing));
 
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterRow);
@@ -189,7 +190,11 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         parameter.IsSelectedForTransfer = elementDefinitionRow.IsSelectedForTransfer;
                     }
 
-                    this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
+                    //used by the DifferenceViewModel
+                    var listofparameters = elementDefinitionRow.Thing.ContainerLists;
+                    CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(elementDefinitionRow.IsSelectedForTransfer, elementDefinitionRow.Thing));
+
+                        this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
                     break;
                 }
                 case ElementUsageRowViewModel elementUsageRow when IsThingTransferable(elementUsageRow):

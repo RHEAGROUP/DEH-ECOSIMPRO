@@ -78,7 +78,12 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IHubController hubController;
 
         /// <summary>
-        /// 
+        /// The <see cref="IDstController"/>
+        /// </summary>
+        private readonly IDstController dstController;
+
+        /// <summary>
+        /// TODO
         /// </summary>
         public ReactiveList<ParameterDifferenceRowViewModel> Parameters { get; set; } = new ReactiveList<ParameterDifferenceRowViewModel>();
 
@@ -86,13 +91,18 @@ namespace DEHPEcosimPro.ViewModel
         /// 
         /// </summary>
         /// <param name="hubController"></param>
-        public DifferenceViewModel(IHubController hubController)
+        public DifferenceViewModel(IHubController hubController, IDstController dstController)
         {
             this.hubController = hubController;
+            this.dstController = dstController;
 
             CDPMessageBus.Current.Listen<DifferenceEvent<ParameterOrOverrideBase>>()
                 .Subscribe(this.HandleDifferentEvent);
-            
+
+
+            CDPMessageBus.Current.Listen<DifferenceEvent<ElementDefinition>>()
+                .Subscribe(this.HandleListOfDifferentEvent);
+
         }
 
         /// <summary>
@@ -102,17 +112,53 @@ namespace DEHPEcosimPro.ViewModel
         private void HandleDifferentEvent(DifferenceEvent<ParameterOrOverrideBase> parameterEvent)
         {
             
-            this.hubController.GetThingById(parameterEvent.Thing.Iid, this.hubController.OpenIteration, out Parameter oldThing);
+            this.hubController.GetThingById(parameterEvent.Thing.Iid, this.hubController.OpenIteration, out Parameter oldThing); 
+
             if (parameterEvent.HasTheselectionChanged)
             {
-                this.Parameters.Add(new ParameterDifferenceRowViewModel( oldThing, (Parameter)parameterEvent.Thing));
+                var newParameter = this.Parameters.FirstOrDefault(x => x.NewThing.Iid == parameterEvent.Thing.Iid);
+
+                if (newParameter == null)
+                {
+                    this.Parameters.Add(new ParameterDifferenceRowViewModel( oldThing, (Parameter)parameterEvent.Thing, this.dstController));
+                }
             }
             else
             {
                 this.Parameters.Remove(this.Parameters.FirstOrDefault(x => parameterEvent.Thing.Iid == x.NewThing.Iid && parameterEvent.Thing.ParameterType.ShortName == x.NewThing.ParameterType.ShortName) );
             }
         }
-        
+
+        private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> elementDefinition)
+        {
+            var listOfParameters = elementDefinition.Thing.Parameter;
+
+            foreach (var thing in listOfParameters)
+            {
+                this.hubController.GetThingById(thing.Iid, this.hubController.OpenIteration, out Parameter oldThing);
+
+                if (elementDefinition.HasTheselectionChanged)
+                {
+                    var newParameter = this.Parameters.FirstOrDefault(x => x.NewThing.Iid == thing.Iid);
+
+                    if (newParameter == null)
+                    {
+                        this.Parameters.Add(new ParameterDifferenceRowViewModel(oldThing, thing, this.dstController));
+                    }
+                }
+                else
+                {
+                    this.Parameters.Remove(this.Parameters.FirstOrDefault(x => thing.Iid == x.NewThing.Iid && thing.ParameterType.ShortName == x.NewThing.ParameterType.ShortName));
+                }
+
+            }
+        }
+
+
+        //compare the comparable 
+        //add column name, and calculate diff (+5 ; -6 )
+        //modelcode , option dependant : option a, option b; then mass.b = 8 ; mass.a = 12
+
 
 
     }

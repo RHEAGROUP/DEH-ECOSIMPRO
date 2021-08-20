@@ -2,7 +2,7 @@
 // <copyright file="DifferenceEvent.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -27,7 +27,7 @@ namespace DEHPEcosimPro.Events
     using CDP4Common.CommonData;
 
     /// <summary>
-    /// 
+    /// TODO
     /// </summary>
     /// <typeparam name="TThing"></typeparam>
     public class DifferenceEvent<TThing> where TThing : Thing
