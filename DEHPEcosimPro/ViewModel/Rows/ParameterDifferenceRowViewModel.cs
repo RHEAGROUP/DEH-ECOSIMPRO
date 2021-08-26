@@ -25,24 +25,16 @@
 namespace DEHPEcosimPro.ViewModel.Rows
 {
     using CDP4Common.EngineeringModelData;
-    using System;
-    using System.Linq;
-
-    using DEHPEcosimPro.DstController;
 
     using ReactiveUI;
 
     /// <summary>
-    /// TODO
+    /// Object to display on MainWindow, Value Diff
     /// </summary>
     public class ParameterDifferenceRowViewModel : ReactiveObject
     {
-
-        /// <summary>
-        /// The <see cref="IDstController"/>
-        /// </summary>
-        private readonly IDstController dstController;
-
+        #region Properties
+        
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
@@ -109,107 +101,42 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// 
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
         /// </summary>
-        protected object actualFiniteStateName;
+        private object percentDiff;
 
         /// <summary>
-        /// 
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
         /// </summary>
-        public object ActualFiniteStateName
+        public object PercentDiff
         {
-            get => this.actualFiniteStateName;
-            set => this.RaiseAndSetIfChanged(ref this.actualFiniteStateName, value);
+            get => this.percentDiff;
+            set => this.RaiseAndSetIfChanged(ref this.percentDiff, value);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        protected object optionName;
+        #endregion
 
         /// <summary>
-        /// 
+        /// Object to display on MainWindow, Value Diff
         /// </summary>
-        public object OptionName
+        /// <param name="OldThing"><see cref="OldThing"/></param>
+        /// <param name="NewThing"><see cref="NewThing"/></param>
+        /// <param name="Name">Name of the data, with options aand/or states if applicable</param>
+        /// <param name="OldValue">number or dataset</param>
+        /// <param name="NewValue">number or dataset</param>
+        /// <param name="Difference">number, positive or negative</param>
+        /// <param name="PercentDiff">percentage, positive or negative</param>
+        public ParameterDifferenceRowViewModel(Parameter OldThing, Parameter NewThing, object Name, object OldValue, object NewValue, object Difference, object PercentDiff)
         {
-            get => this.optionName;
-            set => this.RaiseAndSetIfChanged(ref this.optionName, value);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:DEHPEcosimPro.ViewModel.Rows.ParameterDifferenceRowViewModel" /> class.
-        /// </summary>
-        /// <param name="OldThing"><see cref="Parameter"/></param>
-        /// <param name="NewThing"><see cref="Parameter"/></param>
-        public ParameterDifferenceRowViewModel(Parameter OldThing, Parameter NewThing, IDstController dstController)
-        {
-            this.dstController = dstController;
-
             this.OldThing = OldThing;
             this.NewThing = NewThing;
-
-            this.ComputeParametersValues(NewThing, OldThing);
-
-            this.Name = this.NewThing.ParameterType.Name;
-            this.Difference = this.CalculateDiff();
-
+            this.Name = Name;
+            this.OldValue = OldValue;
+            this.NewValue = NewValue;
+            this.Difference = Difference;
+            this.PercentDiff = PercentDiff;
         }
-
-        /// <summary>
-        /// Calculate the difference between the old and new value, if possible
-        /// </summary>
-        /// <returns>a number, positive or negative (with + or - sign)</returns>
-        private string CalculateDiff()
-        {
-            string result = "0";
-
-            var isOldValueDecimal = decimal.TryParse(this.OldValue.ToString(), out decimal decimalOldValue);
-            var isNewValueDecimal = decimal.TryParse(this.NewValue.ToString(), out decimal decimalNewValue);
-
-            if (isOldValueDecimal && isNewValueDecimal)
-            {
-                var diff = decimalNewValue - decimalOldValue;
-                var sign = Math.Sign(diff);
-                var abs = Math.Abs(decimalNewValue - decimalOldValue);
-
-                if (sign > 0)
-                {
-                    result = $"+{abs}";
-                }
-                else if (sign < 0)
-                {
-                    result = $"-{abs}";
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Get the real values for <see cref="OldValue"/> and <see cref="NewValue"/>
-        /// </summary>
-        /// <param name="newParameterOrOverride"><see cref="ParameterOrOverrideBase"/></param>
-        /// <param name="oldParameterOrOverride"><see cref="ParameterOrOverrideBase"/></param>
-        public void ComputeParametersValues(ParameterOrOverrideBase newParameterOrOverride, ParameterOrOverrideBase oldParameterOrOverride)
-        {
-            var variableRowViewModel = this.dstController.ParameterVariable
-                .FirstOrDefault(x => x.Key.Iid == newParameterOrOverride.Iid
-                                     && x.Key.ParameterType.Iid == newParameterOrOverride.ParameterType.Iid).Value;
-
-            var (option, actualFiniteState) = newParameterOrOverride.IsOptionDependent switch
-            {
-                false when newParameterOrOverride.StateDependence == null => (null, null),
-                true when newParameterOrOverride.StateDependence == null => (variableRowViewModel.SelectedOption, null),
-                false when newParameterOrOverride.StateDependence != null => (null, variableRowViewModel.SelectedActualFiniteState),
-                true when newParameterOrOverride.StateDependence != null => (variableRowViewModel.SelectedOption, variableRowViewModel.SelectedActualFiniteState),
-                _ => default((Option option, ActualFiniteState actualFiniteState))
-            };
-
-            this.ActualFiniteStateName = variableRowViewModel?.SelectedActualFiniteState?.Name ?? null;
-            this.OptionName = variableRowViewModel?.SelectedOption?.Name ?? null;
-
-            this.NewValue = newParameterOrOverride.QueryParameterBaseValueSet(option, actualFiniteState).ActualValue.FirstOrDefault();
-            this.OldValue = oldParameterOrOverride.QueryParameterBaseValueSet(option, actualFiniteState).ActualValue.FirstOrDefault();
-        }
+    //refresh the view if session refresh
+        
     }
 }

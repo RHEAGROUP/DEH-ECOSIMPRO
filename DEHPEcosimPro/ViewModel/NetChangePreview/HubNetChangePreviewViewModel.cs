@@ -191,7 +191,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                     }
 
                     //used by the DifferenceViewModel
-                    var listofparameters = elementDefinitionRow.Thing.ContainerLists;
                     CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(elementDefinitionRow.IsSelectedForTransfer, elementDefinitionRow.Thing));
 
                         this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
