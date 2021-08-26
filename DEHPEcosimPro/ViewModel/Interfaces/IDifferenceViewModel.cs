@@ -29,12 +29,12 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     using ReactiveUI;
 
     /// <summary>
-    /// TODO
+    /// Interface of <see cref="ParameterDifferenceRowViewModel"/>
     /// </summary>
     public interface IDifferenceViewModel
     {
         /// <summary>
-        /// 
+        /// List of <see cref="ParameterDifferenceRowViewModel"/>
         /// </summary>
         ReactiveList<ParameterDifferenceRowViewModel> Parameters { get; set; }
     }

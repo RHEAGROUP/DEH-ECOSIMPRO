@@ -27,36 +27,20 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Reactive.Linq;
-    using System.Threading.Tasks;
-    using System.Windows.Input;
 
     using Autofac;
-
-    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
 
     using CDP4Dal;
-
-    using DEHPCommon;
-    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
-    using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.UserInterfaces.ViewModels;
-    using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
-    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
-    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
-    using DEHPEcosimPro.Views.Dialogs;
 
     using NLog;
-
-    using Opc.Ua;
 
     using ReactiveUI;
 
@@ -107,31 +91,16 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
-        /// Add or Remove the thing from Parameters list
+        /// Handle the parameter
         /// </summary>
         /// <param name="parameterEvent"><see cref="DifferenceEvent<ParameterOrOverrideBase>"/></param>
         private void HandleDifferentEvent(DifferenceEvent<ParameterOrOverrideBase> parameterEvent)
         {
-            
-            this.hubController.GetThingById(parameterEvent.Thing.Iid, this.hubController.OpenIteration, out Parameter oldThing); 
-
-            if (parameterEvent.HasTheselectionChanged)
-            {
-                var newParameter = this.Parameters.FirstOrDefault(x => x.NewThing.Iid == parameterEvent.Thing.Iid);
-
-                if (newParameter == null)
-                {
-                    this.Parameters.Add(new ParameterDifferenceRowViewModel( oldThing, (Parameter)parameterEvent.Thing, this.dstController));
-                }
-            }
-            else
-            {
-                this.Parameters.Remove(this.Parameters.FirstOrDefault(x => parameterEvent.Thing.Iid == x.NewThing.Iid && parameterEvent.Thing.ParameterType.ShortName == x.NewThing.ParameterType.ShortName) );
-            }
+            this.CreateNewParameter((Parameter)parameterEvent.Thing, parameterEvent.HasTheSelectionChanged);
         }
 
         /// <summary>
-        /// Add or Remove the list of thing from Parameters list
+        /// Handle the Parameters list
         /// </summary>
         /// <param name="elementDefinition"><see cref="DifferenceEvent<ElementDefinition>"/></param>
         private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> elementDefinition)
@@ -140,31 +109,38 @@ namespace DEHPEcosimPro.ViewModel
 
             foreach (var thing in listOfParameters)
             {
-                this.hubController.GetThingById(thing.Iid, this.hubController.OpenIteration, out Parameter oldThing);
-
-                if (elementDefinition.HasTheselectionChanged)
-                {
-                    var newParameter = this.Parameters.FirstOrDefault(x => x.NewThing.Iid == thing.Iid);
-
-                    if (newParameter == null)
-                    {
-                        this.Parameters.Add(new ParameterDifferenceRowViewModel(oldThing, thing, this.dstController));
-                    }
-                }
-                else
-                {
-                    this.Parameters.Remove(this.Parameters.FirstOrDefault(x => thing.Iid == x.NewThing.Iid && thing.ParameterType.ShortName == x.NewThing.ParameterType.ShortName));
-                }
-
+                this.CreateNewParameter(thing, elementDefinition.HasTheSelectionChanged);
             }
         }
 
+        /// <summary>
+        ///  Add or Remove the thing to Parameters list
+        /// </summary>
+        /// <param name="newParameter"><see cref="Parameter"/></param>
+        /// <param name="HasTheselectionChanged">From the parameter boolean HasTheSelectionChanged</param>
+        private void CreateNewParameter(Parameter newParameter, bool HasTheselectionChanged)
+        {
 
-        //compare the comparable 
-        //add column name, and calculate diff (+5 ; -6 )
-        //modelcode , option dependant : option a, option b; then mass.b = 8 ; mass.a = 12
+            this.hubController.GetThingById(newParameter.Iid, this.hubController.OpenIteration, out Parameter oldThing);
 
+            if (HasTheselectionChanged)
+            {
+                var IsParameterAlreadyExisting = this.Parameters.Any(x => x.NewThing.Iid == newParameter.Iid);
 
+                if (!IsParameterAlreadyExisting)
+                {
+
+                    this.Parameters.AddRange(new ParameterDifferenceViewModel(oldThing, (Parameter)newParameter, this.dstController).ListOfParameters);
+                }
+            }
+            else
+            {
+                var toRemove = (List<ParameterDifferenceRowViewModel>) this.Parameters
+                    .Where(x => newParameter.Iid == x.NewThing.Iid
+                                && newParameter.ParameterType.ShortName == x.NewThing.ParameterType.ShortName).ToList();
+                toRemove.ForEach(x => this.Parameters.Remove(x));
+            }
+        }
 
     }
 }

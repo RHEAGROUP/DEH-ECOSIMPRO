@@ -25,31 +25,32 @@
 namespace DEHPEcosimPro.Events
 {
     using CDP4Common.CommonData;
+    using CDP4Dal;
 
     /// <summary>
-    /// TODO
+    /// Event for displaying <see cref="ParameterDifferenceRowViewModel"/> on MainWindow, Value Diff, An event for <see cref="CDPMessageBus"/>
     /// </summary>
     /// <typeparam name="TThing"></typeparam>
     public class DifferenceEvent<TThing> where TThing : Thing
     {
         /// <summary>
-        /// 
+        /// Has selection been modified
         /// </summary>
-        public bool HasTheselectionChanged { get; private set; }
+        public bool HasTheSelectionChanged { get; private set; }
 
         /// <summary>
-        /// 
+        /// Generaly <see cref="ParameterOrOverrideBase"/>
         /// </summary>
         public TThing Thing { get; private set; }
 
         /// <summary>
-        /// 
+        /// Initialize a new <see cref="DifferenceEvent{TThing}"/>
         /// </summary>
-        /// <param name="HasTheselectionChanged"></param>
-        /// <param name="Thing"></param>
-        public DifferenceEvent(bool HasTheselectionChanged, TThing Thing)
+        /// <param name="hasTheSelectionChanged"><see cref="HasTheSelectionChanged"/></param>
+        /// <param name="Thing"><see cref="TThing"/></param>
+        public DifferenceEvent(bool hasTheSelectionChanged, TThing Thing)
         {
-            this.HasTheselectionChanged = HasTheselectionChanged;
+            this.HasTheSelectionChanged = hasTheSelectionChanged;
             this.Thing = Thing;
 
         }
