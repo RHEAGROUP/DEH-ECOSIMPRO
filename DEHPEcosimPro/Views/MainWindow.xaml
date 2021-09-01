@@ -147,8 +147,8 @@
                                     <TabItem>
                                         <TabItem.Header>
                                             <TextBlock Text="Value Diff" />
-                                        </TabItem.Header>
-                                        <dxg:GridControl ToolTip="Select some values" MaxHeight="210" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
+                                        </TabItem.Header> 
+                                        <dxg:GridControl ToolTip="Select some values" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
                                                          EnableSmartColumnsGeneration="False"
                                                          ItemsSource="{Binding DifferenceViewModel.Parameters}"
                                                          SelectedItems="{Binding SelectedThing.SelectedValues, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -163,6 +163,7 @@
                                                 <dxg:GridColumn FieldName="OldValue" />
                                                 <dxg:GridColumn FieldName="NewValue" />
                                                 <dxg:GridColumn FieldName="Difference" />
+                                                <dxg:GridColumn FieldName="PercentDiff" />
                                             </dxg:GridControl.Columns>
                                         </dxg:GridControl>
                                     </TabItem>
