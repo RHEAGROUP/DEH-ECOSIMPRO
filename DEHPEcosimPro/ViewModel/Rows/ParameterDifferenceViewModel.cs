@@ -25,13 +25,17 @@
 namespace DEHPEcosimPro.ViewModel.Rows
 {
     using System;
+
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
 
     using CDP4Common.EngineeringModelData;
+    using CDP4Common.Helpers;
 
     using DEHPEcosimPro.DstController;
+
+    using DevExpress.Mvvm.Native;
 
     /// <summary>
     /// Object ot use in MainWindow, Value DiffS
@@ -40,7 +44,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
     {
 
         #region Properties
-        
+
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
@@ -78,17 +82,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="OldThing"></param>
         /// <param name="NewThing"></param>
         /// <param name="dstController"></param>
-        public ParameterDifferenceViewModel(Parameter OldThing, Parameter NewThing, IDstController dstController )
+        public ParameterDifferenceViewModel(Parameter OldThing, Parameter NewThing, IDstController dstController)
         {
             this.OldThing = OldThing;
             this.NewThing = NewThing;
             this.dstController = dstController;
 
-            var isoptiondependant = NewThing.IsOptionDependent;
-            var statedependance = NewThing.StateDependence;
+            this.InitializeOptionAndStateDependency();
+        }
 
-            var alloptions = NewThing.ValueSets.Select(x => x.ActualOption).Distinct().ToList();
-            var allstates = NewThing.ValueSets.Select(x => x.ActualState).Distinct().ToList();
+        /// <summary>
+        /// Determine if Thing is Option and/or State Dependent and construct list of parameters accordingly
+        /// </summary>
+        private void InitializeOptionAndStateDependency()
+        {
+            var isoptiondependant = this.NewThing.IsOptionDependent;
+            var statedependance = this.NewThing.StateDependence;
+
+            var alloptions = this.NewThing.ValueSets.Select(x => x.ActualOption).Distinct().ToList();
+            var allstates = this.NewThing.ValueSets.Select(x => x.ActualState).Distinct().ToList();
 
             if (isoptiondependant && statedependance != null)
             {
@@ -154,7 +166,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
             object NewValue = "/";
             object OldValue = "/";
-            object Name = "/";
+            object Name = this.ModelCode();
 
             if (setOfNewValues.Count > 1)
             {
@@ -174,22 +186,51 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 OldValue = setOfOldValues.FirstOrDefault();
             }
 
-            
+
             if (isOptions && isState)
             {
-                Name = $"{this.NewThing.ModelCode()}\\{this.listofsetOfNewValues[index].ActualOption.ShortName}\\{this.listofsetOfNewValues[index].ActualState.ShortName}";
+                try
+                {
+                    Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}\\{this.listofsetOfNewValues[index].ActualState.ShortName}";
+
+                }
+                catch (Exception ex)
+                {
+                    var message = ex.Message;
+                }
             }
             else if (isOptions && !isState)
             {
-                Name = $"{this.NewThing.ModelCode()}\\{this.listofsetOfNewValues[index].ActualOption.ShortName}";
+                try
+                {
+                    Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}";
+                }
+                catch (Exception ex)
+                {
+                    var message = ex.Message;
+                }
             }
             else if (!isOptions && isState)
             {
-                Name = $"{this.NewThing.ModelCode()}\\{this.listofsetOfNewValues[index].ActualState.ShortName}";
+                try
+                {
+                    Name = Name + $"{this.listofsetOfNewValues[index].ActualState.ShortName}";
+                }
+                catch (Exception ex)
+                {
+                    var message = ex.Message;
+                }
             }
             else if (!isOptions && !isState)
             {
-                Name = this.NewThing.ModelCode();
+                try
+                {
+                    Name = this.ModelCode();
+                }
+                catch (Exception ex)
+                {
+                    var message = ex.Message;
+                }
             }
 
             this.CalculateDiff(OldValue, NewValue, out string Difference, out string PercentDiff);
@@ -205,8 +246,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="state"><see cref="ActualFiniteState"/></param>
         private void PopulateListOfSets(Option option, ActualFiniteState state)
         {
-            this.listofsetOfNewValues.Add(this.NewThing.QueryParameterBaseValueSet(option, state));
-            this.listofsetOfOldValues.Add(this.OldThing.QueryParameterBaseValueSet(option, state));
+            try
+            {
+                this.listofsetOfOldValues.Add(this.OldThing.QueryParameterBaseValueSet(option, state));
+                this.listofsetOfNewValues.Add(this.NewThing.QueryParameterBaseValueSet(option, state));
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         /// <summary>
@@ -249,6 +299,29 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 Difference = $"/";
                 PercentDiff = $"/";
+            }
+        }
+
+        /// <summary>
+        /// Construct a Name from its parameters
+        /// </summary>
+        /// <returns></returns>
+        private string ModelCode()
+        {
+            ElementDefinition container = (ElementDefinition)this.NewThing.Container;
+
+            if (container == null)
+            {
+                return "/";
+            }
+
+            if (this.NewThing.ParameterType != null)
+            {
+                return container.ShortName + "." + this.NewThing.ParameterType.ShortName;
+            }
+            else
+            {
+                return container.ShortName;
             }
         }
 

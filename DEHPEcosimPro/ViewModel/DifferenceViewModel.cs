@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Reactive.Linq;
 
@@ -122,6 +123,11 @@ namespace DEHPEcosimPro.ViewModel
         {
 
             this.hubController.GetThingById(newParameter.Iid, this.hubController.OpenIteration, out Parameter oldThing);
+
+            if (oldThing == null)
+            {
+                Debug.Write($"oldThing is null with {newParameter.UserFriendlyShortName}");
+            }
 
             if (HasTheselectionChanged)
             {
