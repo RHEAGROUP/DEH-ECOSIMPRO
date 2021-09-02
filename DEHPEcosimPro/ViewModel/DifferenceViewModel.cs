@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.ViewModel
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Reactive.Linq;
 
@@ -51,12 +50,6 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class DifferenceViewModel : ReactiveObject, IDifferenceViewModel
     {
-
-        /// <summary>
-        /// The <see cref="NLog"/> logger
-        /// </summary>
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-
         /// <summary>
         /// The <see cref="IHubController"/>
         /// </summary>
@@ -131,12 +124,12 @@ namespace DEHPEcosimPro.ViewModel
                 if (!IsParameterAlreadyExisting)
                 {
 
-                    this.Parameters.AddRange(new ParameterDifferenceViewModel(oldThing, (Parameter)newParameter, this.dstController).ListOfParameters);
+                    this.Parameters.AddRange(new ParameterDifferenceViewModel(oldThing, newParameter, this.dstController).ListOfParameters);
                 }
             }
             else
             {
-                var toRemove = (List<ParameterDifferenceRowViewModel>) this.Parameters
+                var toRemove = this.Parameters
                     .Where(x => newParameter.Iid == x.NewThing.Iid
                                 && newParameter.ParameterType.ShortName == x.NewThing.ParameterType.ShortName).ToList();
                 toRemove.ForEach(x => this.Parameters.Remove(x));

@@ -51,27 +51,52 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
-        public Parameter OldThing;
+        private Parameter oldThing;
+
+        /// <summary>
+        /// The Thing already on the data hub
+        /// </summary>
+        public Parameter OldThing
+        {
+            get => this.oldThing;
+            set => this.oldThing = value;
+        }
+
         /// <summary>
         /// The thing from Ecosimpro
         /// </summary>
-        public Parameter NewThing;
+        private Parameter newThing;
+
+        /// <summary>
+        /// The thing from Ecosimpro
+        /// </summary>
+        public Parameter NewThing
+        {
+            get => this.newThing;
+            set => this.newThing = value;
+        }
 
         /// <summary>
         /// List of value from <see cref="NewThing"/>, dependant of states and options
         /// </summary>
-        private List<IValueSet> listofsetOfNewValues = new List<IValueSet>();
+        private readonly List<IValueSet> listofsetOfNewValues = new List<IValueSet>();
 
         /// <summary>
         /// List of value from <see cref="OldThing"/>, dependant of states and options
         /// </summary>
-        private List<IValueSet> listofsetOfOldValues = new List<IValueSet>();
+        private readonly List<IValueSet> listofsetOfOldValues = new List<IValueSet>();
+
+        private List<ParameterDifferenceRowViewModel> listOfParameters = new List<ParameterDifferenceRowViewModel>();
 
         /// <summary>
         /// List of <see cref="ParameterDifferenceRowViewModel"/> to show in MainWindow,
         /// multiple item have the same Iid because the set of data can be different due to states and options
         /// </summary>
-        public List<ParameterDifferenceRowViewModel> ListOfParameters = new List<ParameterDifferenceRowViewModel>();
+        public List<ParameterDifferenceRowViewModel> ListOfParameters
+        {
+            get => this.listOfParameters;
+            set => this.listOfParameters = value;
+        }
 
         /// <summary>
         /// Evaluate if Things have Options or States, and compute data in List of <see cref="ParameterDifferenceRowViewModel"/>
@@ -161,8 +186,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
             var setOfNewValues = this.listofsetOfNewValues[index].ActualValue;
             var setOfOldValues = this.listofsetOfOldValues[index].ActualValue;
 
-            object NewValue = "/";
-            object OldValue = "/";
+            object NewValue;
+            object OldValue;
             object Name = this.ModelCode();
 
             if (setOfNewValues.Count > 1)
