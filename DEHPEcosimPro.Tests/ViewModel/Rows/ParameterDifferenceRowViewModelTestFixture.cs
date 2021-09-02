@@ -60,13 +60,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         private readonly Uri uri = new Uri("http://test.com");
         private ElementDefinition elementDefinition;
         private SimpleQuantityKind qqParamType;
-        private Guid Iid;
 
         [Test]
         public void VerifyParameterDifferenceRowViewModel()
         {
-
-            #region Both
             this.assembler = new Assembler(this.uri);
 
             this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) { Name = "active", ShortName = "active" };
@@ -82,31 +79,21 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 Owner = this.activeDomain,
                 ShortName = "Element"
             };
-            #endregion
-
-            #region OldThing
-
-            var valueset =
-                new ParameterValueSet()
-                {
-                    Computed = new ValueArray<string>(new[] { "21" }),
-                    ValueSwitch = ParameterSwitchKind.COMPUTED
-                };
-
+            
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "21" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
             this.elementDefinition.Parameter.Add(this.OldThing);
-
-            #endregion
-
-            #region NewThing
 
             this.NewThing = new Parameter(this.OldThing.Iid, this.assembler.Cache, this.uri)
             {
@@ -122,9 +109,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 }
             };
             this.elementDefinition.Parameter.Add(this.NewThing);
-            #endregion
-
-            #region ViewModel
+            
             object Name = this.elementDefinition.Name;
             object OldValue = this.OldThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
             object NewValue = this.NewThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
@@ -134,7 +119,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             var name = this.viewModel.Name;
             var percent = this.viewModel.PercentDiff;
             var diff = this.viewModel.Difference;
-            #endregion
 
             Assert.IsNotNull(this.viewModel);
             Assert.AreEqual("-9", this.viewModel.Difference);

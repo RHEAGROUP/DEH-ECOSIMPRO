@@ -42,9 +42,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     [TestFixture]
     public class ParameterDifferenceViewModelTestFixture
     {
-
         private Parameter OldThing;
-
         private Parameter NewThing;
 
         private Mock<IHubController> hubController;
@@ -70,8 +68,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         [Test]
         public void VerifyParameterDifferenceViewModel()
         {
-            #region Both
-
             this.assembler = new Assembler(this.uri);
 
             this.Iid = Guid.NewGuid();
@@ -84,49 +80,37 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri);
-            #endregion
-
-
-            #region Parameter1
-
-            var valueset = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "20" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
-
+            
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "20" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
             this.elementDefinition.Parameter.Add(this.OldThing);
 
-            #endregion
-
-            #region Parameter2
-
-            var valueset2 = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "12" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset2
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "12" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
 
             this.elementDefinition.Parameter.Add(this.NewThing);
 
-            #endregion
             this.viewModel = new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object);
 
             var listOfParameters = this.viewModel.ListOfParameters;
@@ -137,8 +121,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         [Test]
         public void VerifyParameterDifferenceViewModelWithStringValue()
         {
-            #region Both
-
             this.assembler = new Assembler(this.uri);
 
             this.Iid = Guid.NewGuid();
@@ -150,50 +132,38 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri);
-            #endregion
-
-
-            #region Parameter1
-
-            var valueset = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "12", "13", "14" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
-
+           
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "12", "13", "14" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
             this.elementDefinition.Parameter.Add(this.OldThing);
 
-            #endregion
-
-            #region Parameter2
-
-            var valueset2 = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "20", "21", "22" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset2
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "20", "21", "22" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
 
             this.elementDefinition.Parameter.Add(this.NewThing);
 
-            #endregion
             this.viewModel = new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object);
 
             var listOfParameters = this.viewModel.ListOfParameters;
@@ -203,8 +173,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         [Test]
         public void VerifyThrowEception()
         {
-            #region Both
-
             this.assembler = new Assembler(this.uri);
 
             this.Iid = Guid.NewGuid();
@@ -221,36 +189,26 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 Name = "PTName",
                 ShortName = "PTShortName"
             };
-            #endregion
-            #region Parameter1
-
-            var valueset = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "20" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
-
+            
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "20" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
             this.elementDefinition.Parameter.Add(this.OldThing);
-
-            #endregion
-
-            #region Parameter2
-
+            
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri);
 
             this.elementDefinition.Parameter.Add(this.NewThing);
-
-            #endregion
-
+            
             Assert.Throws<NullReferenceException>(() => new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object));
         }
 

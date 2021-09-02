@@ -33,8 +33,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
     /// </summary>
     public class ParameterDifferenceRowViewModel : ReactiveObject
     {
-        #region Properties
-        
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
@@ -113,9 +111,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             get => this.percentDiff;
             set => this.RaiseAndSetIfChanged(ref this.percentDiff, value);
         }
-
-        #endregion
-
+        
         /// <summary>
         /// Object to display on MainWindow, Value Diff
         /// </summary>
@@ -136,7 +132,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.Difference = Difference;
             this.PercentDiff = PercentDiff;
         }
-    //refresh the view if session refresh
         
     }
 }
