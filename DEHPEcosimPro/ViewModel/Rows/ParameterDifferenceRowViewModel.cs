@@ -36,19 +36,38 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
-        public Parameter OldThing;
+        private Parameter oldThing;
+
+        /// <summary>
+        /// The Thing already on the data hub
+        /// </summary>
+        public Parameter OldThing
+        {
+            get => this.oldThing;
+            set => this.oldThing = value;
+        }
+
         /// <summary>
         /// The thing from Ecosimpro
         /// </summary>
-        public Parameter NewThing;
+        private Parameter newThing;
 
         /// <summary>
-        /// The value the data hud had, string
+        /// The thing from Ecosimpro
+        /// </summary>
+        public Parameter NewThing
+        {
+            get => this.newThing;
+            set => this.newThing = value;
+        }
+
+        /// <summary>
+        /// The value the data hub had, string
         /// </summary>
         private object oldValue;
 
         /// <summary>
-        /// The value the data hud had, string
+        /// The value the data hub had, string
         /// </summary>
         public object OldValue
         {
