@@ -119,6 +119,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             var name = this.viewModel.Name;
             var percent = this.viewModel.PercentDiff;
             var diff = this.viewModel.Difference;
+            var oldthing = this.viewModel.OldThing;
+            var newthin = this.viewModel.NewThing;
 
             Assert.IsNotNull(this.viewModel);
             Assert.AreEqual("-9", this.viewModel.Difference);

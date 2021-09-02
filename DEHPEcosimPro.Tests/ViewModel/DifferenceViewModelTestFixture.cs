@@ -135,7 +135,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void Verify()
         {
             Assert.IsEmpty(this.viewModel.Parameters);
-            
+            this.viewModel.Parameters = new ReactiveList<ParameterDifferenceRowViewModel>();
+
             //One Parameter No Option No States
             this.parameter1 = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {

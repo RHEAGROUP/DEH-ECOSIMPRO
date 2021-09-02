@@ -25,7 +25,10 @@
 namespace DEHPEcosimPro.Tests.ViewModel.Rows
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
+
+    using Castle.Components.DictionaryAdapter;
 
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
@@ -60,8 +63,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         {
             this.hubController = new Mock<IHubController>();
             this.dstController = new Mock<IDstController>();
-
-
         }
 
 
@@ -114,6 +115,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             this.viewModel = new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object);
 
             var listOfParameters = this.viewModel.ListOfParameters;
+
             Assert.IsNotNull(listOfParameters);
             Assert.AreEqual("-8", listOfParameters.FirstOrDefault().Difference);
         }
@@ -173,6 +175,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         [Test]
         public void VerifyThrowEception()
         {
+            this.viewModel.ListOfParameters = new List<ParameterDifferenceRowViewModel>();
+            this.viewModel.ListOfParameters.Clear();
+
             this.assembler = new Assembler(this.uri);
 
             this.Iid = Guid.NewGuid();
