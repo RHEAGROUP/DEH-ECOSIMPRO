@@ -128,8 +128,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             object Name = this.elementDefinition.Name;
             object OldValue = this.OldThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
             object NewValue = this.NewThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
-            this.CalculateDiff( OldValue, NewValue, out string Difference, out string PercentDiff);
-            this.viewModel = new ParameterDifferenceRowViewModel(this.OldThing, this.NewThing, Name, OldValue, NewValue, Difference, PercentDiff);
+            this.viewModel = new ParameterDifferenceRowViewModel(this.OldThing, this.NewThing, Name, OldValue, NewValue, "-9", "42,86%");
+            var oldvalue = this.viewModel.OldValue;
+            var newvalue = this.viewModel.NewValue;
+            var name = this.viewModel.Name;
+            var percent = this.viewModel.PercentDiff;
+            var diff = this.viewModel.Difference;
             #endregion
 
             Assert.IsNotNull(this.viewModel);
@@ -137,47 +141,5 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         }
 
 
-        /// <summary>
-        /// Calculate the difference between the old and new value, if possible
-        /// </summary>
-        /// <param name="OldValue"></param>
-        /// <param name="NewValue"></param>
-        /// <param name="Difference">a number, positive or negative (with + or - sign)</param>
-        /// <param name="PercentDiff">a number in percent, positive or negative (with + or - sign)</param>
-        private void CalculateDiff(object OldValue, object NewValue, out string Difference, out string PercentDiff)
-        {
-            Difference = "0";
-            PercentDiff = "0";
-
-            NumberStyles style = NumberStyles.Number | NumberStyles.AllowDecimalPoint;
-            CultureInfo culture = CultureInfo.InvariantCulture;
-
-            var isOldValueDecimal = decimal.TryParse(OldValue.ToString(), style, culture, out decimal decimalOldValue);
-            var isNewValueDecimal = decimal.TryParse(NewValue.ToString(), style, culture, out decimal decimalNewValue);
-
-            if (isOldValueDecimal && isNewValueDecimal)
-            {
-                var diff = decimalNewValue - decimalOldValue;
-                var sign = Math.Sign(diff);
-                var abs = Math.Abs(diff);
-                var percentChange = Math.Round(Math.Abs(diff / Math.Abs(decimalOldValue) * 100), 2);
-
-                if (sign > 0)
-                {
-                    Difference = $"+{abs}";
-                    PercentDiff = $"+{percentChange}%";
-                }
-                else if (sign < 0)
-                {
-                    Difference = $"-{abs}";
-                    PercentDiff = $"-{percentChange}%";
-                }
-            }
-            else
-            {
-                Difference = $"/";
-                PercentDiff = $"/";
-            }
-        }
     }
 }
