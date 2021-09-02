@@ -193,7 +193,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                     //used by the DifferenceViewModel
                     CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(elementDefinitionRow.IsSelectedForTransfer, elementDefinitionRow.Thing));
 
-                        this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
+                    this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
                     break;
                 }
                 case ElementUsageRowViewModel elementUsageRow when IsThingTransferable(elementUsageRow):

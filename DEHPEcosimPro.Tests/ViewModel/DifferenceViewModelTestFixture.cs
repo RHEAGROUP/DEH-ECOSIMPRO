@@ -52,8 +52,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     [TestFixture]
     public class DifferenceViewModelTestFixture
     {
-
-        #region Properties
         private DifferenceViewModel viewModel;
         private Mock<IHubController> hubController;
         private Mock<IDstController> dstController;
@@ -77,7 +75,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private PossibleFiniteState possibleState1;
         private PossibleFiniteState possibleState2;
         private PossibleFiniteStateList possibleStateList;
-        #endregion
 
         [SetUp]
         public void SetUp()
@@ -86,14 +83,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController = new Mock<IDstController>();
             this.viewModel = new DifferenceViewModel(this.hubController.Object, this.dstController.Object);
 
-        }
-
-        [Test]
-        public void Verify()
-        {
-            Assert.IsEmpty(this.viewModel.Parameters);
-            
-            #region setup
 
             this.assembler = new Assembler(this.uri);
 
@@ -140,42 +129,39 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             this.option1 = new Option(Guid.NewGuid(), this.assembler.Cache, this.uri) { ShortName = "option1" };
             this.option2 = new Option(Guid.NewGuid(), this.assembler.Cache, this.uri) { ShortName = "option2" };
-            #endregion
+        }
 
-            #region One Parameter No Option No States
-
-            var valueset1 = new ParameterValueSet()
-            {
-                Computed = new ValueArray<string>(new[] { "12" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
-
+        [Test]
+        public void Verify()
+        {
+            Assert.IsEmpty(this.viewModel.Parameters);
+            
+            //One Parameter No Option No States
             this.parameter1 = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
                 Owner = this.activeDomain,
                 ValueSet =
                 {
-                    valueset1
+                    new ParameterValueSet()
+                    {
+                        Computed = new ValueArray<string>(new[] { "12" }),
+                        ValueSwitch = ParameterSwitchKind.COMPUTED
+                    }
                 }
             };
             this.elementDefinition.Parameter.Add(this.parameter1);
-
-            var valueset2 = new ParameterValueSet()
+            
+            this.parameter2 = this.parameter1.Clone(false);
+            this.parameter2.ValueSet.Clear();
+            this.parameter2.ValueSet.Add(new ParameterValueSet()
             {
                 Computed = new ValueArray<string>(new[] { "20" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
-            };
-
-            this.parameter2 = this.parameter1.Clone(false);
-            this.parameter2.ValueSet.Clear();
-            this.parameter2.ValueSet.Add(valueset2);
+            });
 
             this.elementDefinition.Parameter.Add(this.parameter2);
-
-            #endregion
             
-            #region One Parameter No Option No States
             this.hubController.Setup(x => x.GetThingById(this.parameter2.Iid, It.IsAny<Iteration>(), out parameter1)).Returns(true);
 
             CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(true, this.parameter2));
@@ -186,11 +172,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.AreEqual(1, listOfParameters1.Count);
             Assert.AreEqual("+8", listOfParameters1.FirstOrDefault()?.Difference);
 
-            #endregion
-            
             this.viewModel.Parameters.Clear();
 
-            #region Two States
+            //Two States
             
             this.parameter1.ValueSet.FirstOrDefault().ActualState = this.actualState1;
             this.parameter1.StateDependence = this.actualStateList;
@@ -210,9 +194,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
                 ActualState = this.actualState2
             });
 
-            #endregion
-
-            #region One Parameter No Option Two States
+            //One Parameter No Option Two States
 
             this.hubController.Setup(x => x.GetThingById(this.parameter2.Iid, It.IsAny<Iteration>(), out this.parameter1)).Returns(true);
 
@@ -224,11 +206,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.AreEqual(2, listOfParameters2.Count);
             Assert.AreEqual("+8", listOfParameters2.FirstOrDefault()?.Difference);
             Assert.AreEqual("-9", listOfParameters2.LastOrDefault()?.Difference);
-            #endregion
 
             this.viewModel.Parameters.Clear();
 
-            #region Two Option
+            //Two Option
 
             //get rid of states
             this.parameter1.ValueSet.FirstOrDefault().ActualState = null;
@@ -249,9 +230,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.parameter2.IsOptionDependent = true;
 
             
-            #endregion
-
-            #region One Parameter Two Option No States
+            //One Parameter Two Option No States
 
             this.hubController.Setup(x => x.GetThingById(this.parameter2.Iid, It.IsAny<Iteration>(), out this.parameter1)).Returns(true);
 
@@ -264,11 +243,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.AreEqual("+8", listOfParameters.FirstOrDefault()?.Difference);
             Assert.AreEqual("-9", listOfParameters.LastOrDefault()?.Difference);
 
-            #endregion
-
             this.viewModel.Parameters.Clear();
 
-            #region two Option two States
+            //two Option two States
             
             this.parameter1.StateDependence = this.actualStateList;
             this.parameter2.StateDependence = this.actualStateList;
@@ -335,9 +312,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
                 ActualOption = this.option2
             });
 
-            #endregion
-
-            #region One Parameter two Option two States
+            //One Parameter two Option two States
             this.hubController.Setup(x => x.GetThingById(this.parameter2.Iid, It.IsAny<Iteration>(), out this.parameter1)).Returns(true);
 
             CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(true, this.parameter2));
@@ -349,15 +324,14 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.AreEqual("-9", listOfParameters3[0]?.Difference);
             Assert.AreEqual("-9", listOfParameters3[1]?.Difference);
             Assert.AreEqual("-9", listOfParameters3[2]?.Difference);
-            //Assert.AreEqual("-9", listOfParameters3[3]?.Difference);
 
-
+            //remove from the parameters
             CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(false, this.parameter2));
-            #endregion
+            Assert.AreEqual(0, listOfParameters3.Count);
 
             this.viewModel.Parameters.Clear();
 
-            #region two Parameter No Option No States
+            //two Parameter No Option No States
             this.parameter1.ValueSet.Clear();
             this.parameter2.ValueSet.Clear();
             this.parameter1.StateDependence = null;
@@ -398,9 +372,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
 
-            #endregion
-
-            #region two Parameter No Option No States
+            //two Parameter No Option No States
 
             this.hubController.Setup(x => x.GetThingById(this.parameter1.Iid, It.IsAny<Iteration>(), out this.parameter2)).Returns(true);
             this.hubController.Setup(x => x.GetThingById(this.parameter3.Iid, It.IsAny<Iteration>(), out this.parameter4)).Returns(true);
@@ -420,9 +392,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.AreEqual(2, listOfParameters5.Count);
             Assert.AreEqual("+8", listOfParameters5.FirstOrDefault()?.Difference);
             Assert.AreEqual("+13", listOfParameters5.LastOrDefault()?.Difference);
-            #endregion
         }
-
 
         [Test]
         public void VerifyParameters()

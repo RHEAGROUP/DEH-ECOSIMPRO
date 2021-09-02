@@ -169,8 +169,8 @@
                                     </TabItem>
                                 </TabControl>
                                 <Button ToolTip="Open the history of transfer dialog" Command="{Binding OpenExchangeHistory}" Grid.Column="1" Margin="10" Background="Transparent" BorderBrush="Transparent">
-                                        <TextBlock FontSize="18" Text="🕑 Transfer History" TextWrapping="Wrap" TextAlignment="Center"/>
-                                        </Button>
+                                    <TextBlock FontSize="18" Text="🕑 Transfer History" TextWrapping="Wrap" TextAlignment="Center"/>
+                                    </Button>
                             </Grid>
                         </dxdo:LayoutPanel>
                     </dxdo:LayoutGroup>

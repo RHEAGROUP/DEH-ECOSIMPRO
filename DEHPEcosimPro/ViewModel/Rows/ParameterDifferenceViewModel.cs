@@ -43,8 +43,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
     public class ParameterDifferenceViewModel
     {
 
-        #region Properties
-
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
@@ -74,7 +72,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// multiple item have the same Iid because the set of data can be different due to states and options
         /// </summary>
         public List<ParameterDifferenceRowViewModel> ListOfParameters = new List<ParameterDifferenceRowViewModel>();
-        #endregion
 
         /// <summary>
         /// Evaluate if Things have Options or States, and compute data in List of <see cref="ParameterDifferenceRowViewModel"/>
