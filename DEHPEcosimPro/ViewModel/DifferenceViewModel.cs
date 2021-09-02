@@ -123,12 +123,7 @@ namespace DEHPEcosimPro.ViewModel
         {
 
             this.hubController.GetThingById(newParameter.Iid, this.hubController.OpenIteration, out Parameter oldThing);
-
-            if (oldThing == null)
-            {
-                Debug.Write($"oldThing is null with {newParameter.UserFriendlyShortName}");
-            }
-
+            
             if (HasTheselectionChanged)
             {
                 var IsParameterAlreadyExisting = this.Parameters.Any(x => x.NewThing.Iid == newParameter.Iid);

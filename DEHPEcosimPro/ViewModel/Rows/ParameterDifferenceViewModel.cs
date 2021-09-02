@@ -189,48 +189,19 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
             if (isOptions && isState)
             {
-                try
-                {
-                    Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}\\{this.listofsetOfNewValues[index].ActualState.ShortName}";
-
-                }
-                catch (Exception ex)
-                {
-                    var message = ex.Message;
-                }
+                Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}\\{this.listofsetOfNewValues[index].ActualState.ShortName}";
             }
             else if (isOptions && !isState)
             {
-                try
-                {
-                    Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}";
-                }
-                catch (Exception ex)
-                {
-                    var message = ex.Message;
-                }
+                Name = Name + $"\\{this.listofsetOfNewValues[index].ActualOption.ShortName}";
             }
             else if (!isOptions && isState)
             {
-                try
-                {
-                    Name = Name + $"{this.listofsetOfNewValues[index].ActualState.ShortName}";
-                }
-                catch (Exception ex)
-                {
-                    var message = ex.Message;
-                }
+                Name = Name + $"{this.listofsetOfNewValues[index].ActualState.ShortName}";
             }
             else if (!isOptions && !isState)
             {
-                try
-                {
-                    Name = this.ModelCode();
-                }
-                catch (Exception ex)
-                {
-                    var message = ex.Message;
-                }
+                Name = this.ModelCode();
             }
 
             this.CalculateDiff(OldValue, NewValue, out string Difference, out string PercentDiff);
@@ -250,7 +221,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.listofsetOfOldValues.Add(this.OldThing.QueryParameterBaseValueSet(option, state));
                 this.listofsetOfNewValues.Add(this.NewThing.QueryParameterBaseValueSet(option, state));
-
             }
             catch (Exception e)
             {
@@ -310,19 +280,22 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             ElementDefinition container = (ElementDefinition)this.NewThing.Container;
 
-            if (container == null)
-            {
-                return "/";
-            }
+            var name = "";
 
-            if (this.NewThing.ParameterType != null)
+            if (this.NewThing.ParameterType != null && !string.IsNullOrEmpty(this.NewThing.ParameterType.ShortName))
             {
-                return container.ShortName + "." + this.NewThing.ParameterType.ShortName;
+                name = name + container.ShortName + "." + this.NewThing.ParameterType.ShortName;
             }
             else
             {
-                return container.ShortName;
+                name = name + container.ShortName;
             }
+
+            if (string.IsNullOrWhiteSpace(name) || name.IsEmptyOrSingle() )
+            {
+                return "/";
+            }
+            return name;
         }
 
     }
