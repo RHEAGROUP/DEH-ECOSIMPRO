@@ -222,11 +222,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Calculate the difference between the old and new value, if possible
         /// </summary>
-        /// <param name="OldValue">can be a number, a set of value, or a string</param>
-        /// <param name="NewValue">can be a number, a set of value, or a string</param>
+        /// <param name="oldValue">can be a number, a set of value, or a string</param>
+        /// <param name="newValue">can be a number, a set of value, or a string</param>
         /// <param name="difference">a number, positive or negative (with + or - sign)</param>
         /// <param name="percentDiff">a number in percent, positive or negative (with + or - sign)</param>
-        private void CalculateDiff(object OldValue, object NewValue, out string difference, out string percentDiff)
+        private void CalculateDiff(object oldValue, object newValue, out string difference, out string percentDiff)
         {
             difference = "0";
             percentDiff = "0";
@@ -234,8 +234,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
             NumberStyles style = NumberStyles.Number | NumberStyles.AllowDecimalPoint;
             CultureInfo culture = CultureInfo.InvariantCulture;
 
-            var isOldValueDecimal = decimal.TryParse(OldValue.ToString(), style, culture, out decimal decimalOldValue);
-            var isNewValueDecimal = decimal.TryParse(NewValue.ToString(), style, culture, out decimal decimalNewValue);
+            var isOldValueDecimal = decimal.TryParse(oldValue.ToString(), style, culture, out decimal decimalOldValue);
+            var isNewValueDecimal = decimal.TryParse(newValue.ToString(), style, culture, out decimal decimalNewValue);
 
             if (isOldValueDecimal && isNewValueDecimal)
             {
