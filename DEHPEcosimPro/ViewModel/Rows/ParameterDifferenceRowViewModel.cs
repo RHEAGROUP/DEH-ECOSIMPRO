@@ -34,42 +34,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
     public class ParameterDifferenceRowViewModel : ReactiveObject
     {
         /// <summary>
-        /// The Thing already on the data hub
+        /// Difference, positive or negative, of the two value <see cref="NewValue" /> and <see cref="OldValue" />
         /// </summary>
-        public Parameter OldThing { get; set; }
-
-        /// <summary>
-        /// The thing from Ecosimpro
-        /// </summary>
-        public Parameter NewThing { get; set; }
-
-        /// <summary>
-        /// The value the data hub had
-        /// </summary>
-        private string oldValue;
-
-        /// <summary>
-        /// The value the data hub had
-        /// </summary>
-        public string OldValue
-        {
-            get => this.oldValue;
-            set => this.RaiseAndSetIfChanged(ref this.oldValue, value);
-        }
-
-        /// <summary>
-        /// The new value from Ecosimpro
-        /// </summary>
-        private string newValue;
-
-        /// <summary>
-        /// The new value from Ecosimpro
-        /// </summary>
-        public string NewValue
-        {
-            get => this.newValue;
-            set => this.RaiseAndSetIfChanged(ref this.newValue, value);
-        }
+        private string difference;
 
         /// <summary>
         /// Name of the Value
@@ -77,47 +44,29 @@ namespace DEHPEcosimPro.ViewModel.Rows
         private string name;
 
         /// <summary>
-        /// Name of the Value
+        /// The new value from Ecosimpro
         /// </summary>
-        public string Name
-        {
-            get => this.name;
-            set => this.RaiseAndSetIfChanged(ref this.name, value);
-        }
+        private string newValue;
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
+        /// The value the data hub had
         /// </summary>
-        private string difference;
+        private string oldValue;
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
-        /// </summary>
-        public string Difference
-        {
-            get => this.difference;
-            set => this.RaiseAndSetIfChanged(ref this.difference, value);
-        }
-
-        /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
+        /// Difference, positive or negative, of the two value <see cref="NewValue" /> and <see cref="OldValue" />
         /// </summary>
         private string percentDiff;
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
-        /// </summary>
-        public string PercentDiff
-        {
-            get => this.percentDiff;
-            set => this.RaiseAndSetIfChanged(ref this.percentDiff, value);
-        }
-
-        /// <summary>
         /// Object to display on MainWindow, Value Diff
         /// </summary>
-        /// <param name="OldThing"><see cref="OldThing"/></param>
-        /// <param name="NewThing"><see cref="NewThing"/></param>
+        /// <param name="OldThing">
+        ///     <see cref="OldThing" />
+        /// </param>
+        /// <param name="NewThing">
+        ///     <see cref="NewThing" />
+        /// </param>
         /// <param name="Name">Name of the data, with options aand/or states if applicable</param>
         /// <param name="OldValue">number or dataset</param>
         /// <param name="NewValue">number or dataset</param>
@@ -132,6 +81,61 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.NewValue = NewValue.ToString();
             this.Difference = Difference.ToString();
             this.PercentDiff = PercentDiff.ToString();
+        }
+
+        /// <summary>
+        /// The Thing already on the data hub
+        /// </summary>
+        public Parameter OldThing { get; set; }
+
+        /// <summary>
+        /// The thing from Ecosimpro
+        /// </summary>
+        public Parameter NewThing { get; set; }
+
+        /// <summary>
+        /// The value the data hub had
+        /// </summary>
+        public string OldValue
+        {
+            get => this.oldValue;
+            set => this.RaiseAndSetIfChanged(ref this.oldValue, value);
+        }
+
+        /// <summary>
+        /// The new value from Ecosimpro
+        /// </summary>
+        public string NewValue
+        {
+            get => this.newValue;
+            set => this.RaiseAndSetIfChanged(ref this.newValue, value);
+        }
+
+        /// <summary>
+        /// Name of the Value
+        /// </summary>
+        public string Name
+        {
+            get => this.name;
+            set => this.RaiseAndSetIfChanged(ref this.name, value);
+        }
+
+        /// <summary>
+        /// Difference, positive or negative, of the two value <see cref="NewValue" /> and <see cref="OldValue" />
+        /// </summary>
+        public string Difference
+        {
+            get => this.difference;
+            set => this.RaiseAndSetIfChanged(ref this.difference, value);
+        }
+
+        /// <summary>
+        /// Difference, positive or negative, of the two value <see cref="NewValue" /> and <see cref="OldValue" />
+        /// </summary>
+        public string PercentDiff
+        {
+            get => this.percentDiff;
+            set => this.RaiseAndSetIfChanged(ref this.percentDiff, value);
         }
     }
 }
