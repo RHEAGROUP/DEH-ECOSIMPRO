@@ -224,12 +224,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         /// <param name="OldValue">can be a number, a set of value, or a string</param>
         /// <param name="NewValue">can be a number, a set of value, or a string</param>
-        /// <param name="Difference">a number, positive or negative (with + or - sign)</param>
-        /// <param name="PercentDiff">a number in percent, positive or negative (with + or - sign)</param>
-        private void CalculateDiff(object OldValue, object NewValue, out string Difference, out string PercentDiff)
+        /// <param name="difference">a number, positive or negative (with + or - sign)</param>
+        /// <param name="percentDiff">a number in percent, positive or negative (with + or - sign)</param>
+        private void CalculateDiff(object OldValue, object NewValue, out string difference, out string percentDiff)
         {
-            Difference = "0";
-            PercentDiff = "0";
+            difference = "0";
+            percentDiff = "0";
 
             NumberStyles style = NumberStyles.Number | NumberStyles.AllowDecimalPoint;
             CultureInfo culture = CultureInfo.InvariantCulture;
@@ -242,13 +242,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 var diff = decimalNewValue - decimalOldValue;
                 var percentChange = Math.Round(Math.Abs(diff / Math.Abs(decimalOldValue) * 100), 2);
 
-                Difference = diff > 0 ? $"+{diff}" : diff.ToString();
-                PercentDiff = diff > 0 ? $"+{percentChange}%" : $"-{percentChange}%";
+                difference = diff > 0 ? $"+{diff}" : diff.ToString();
+                percentDiff = diff > 0 ? $"+{percentChange}%" : $"-{percentChange}%";
             }
             else
             {
-                Difference = $"N/A";
-                PercentDiff = $"N/A";
+                difference = $"N/A";
+                percentDiff = $"N/A";
             }
         }
 
