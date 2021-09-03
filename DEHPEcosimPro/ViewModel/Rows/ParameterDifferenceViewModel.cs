@@ -25,23 +25,27 @@
 namespace DEHPEcosimPro.ViewModel.Rows
 {
     using System;
-
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
 
     using CDP4Common.EngineeringModelData;
-    using CDP4Common.Helpers;
 
     using DEHPEcosimPro.DstController;
 
     using DevExpress.Mvvm.Native;
+
+    using NLog;
 
     /// <summary>
     /// Object ot use in MainWindow, Value DiffS
     /// </summary>
     public class ParameterDifferenceViewModel
     {
+        /// <summary>
+        /// The <see cref="NLog"/> logger
+        /// </summary>
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// The <see cref="IDstController"/>
@@ -51,30 +55,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
-        private Parameter oldThing;
-
-        /// <summary>
-        /// The Thing already on the data hub
-        /// </summary>
-        public Parameter OldThing
-        {
-            get => this.oldThing;
-            set => this.oldThing = value;
-        }
+        public Parameter OldThing { get; set; }
 
         /// <summary>
         /// The thing from Ecosimpro
         /// </summary>
-        private Parameter newThing;
-
-        /// <summary>
-        /// The thing from Ecosimpro
-        /// </summary>
-        public Parameter NewThing
-        {
-            get => this.newThing;
-            set => this.newThing = value;
-        }
+        public Parameter NewThing { get; set; }
 
         /// <summary>
         /// List of value from <see cref="NewThing"/>, dependant of states and options
@@ -86,24 +72,18 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         private readonly List<IValueSet> listofsetOfOldValues = new List<IValueSet>();
 
-        private List<ParameterDifferenceRowViewModel> listOfParameters = new List<ParameterDifferenceRowViewModel>();
-
         /// <summary>
         /// List of <see cref="ParameterDifferenceRowViewModel"/> to show in MainWindow,
         /// multiple item have the same Iid because the set of data can be different due to states and options
         /// </summary>
-        public List<ParameterDifferenceRowViewModel> ListOfParameters
-        {
-            get => this.listOfParameters;
-            set => this.listOfParameters = value;
-        }
+        public List<ParameterDifferenceRowViewModel> ListOfParameters { get; set; } = new List<ParameterDifferenceRowViewModel>();
 
         /// <summary>
         /// Evaluate if Things have Options or States, and compute data in List of <see cref="ParameterDifferenceRowViewModel"/>
         /// </summary>
-        /// <param name="OldThing"></param>
-        /// <param name="NewThing"></param>
-        /// <param name="dstController"></param>
+        /// <param name="OldThing"><see cref="OldThing"/>From the data hub</param>
+        /// <param name="NewThing"><see cref="NewThing"/>From Ecosimpro</param>
+        /// <param name="dstController"><see cref="IDstController"/></param>
         public ParameterDifferenceViewModel(Parameter OldThing, Parameter NewThing, IDstController dstController)
         {
             this.OldThing = OldThing;
@@ -121,8 +101,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
             var isoptiondependant = this.NewThing.IsOptionDependent;
             var statedependance = this.NewThing.StateDependence;
 
-            var alloptions = this.NewThing.ValueSets.Select(x => x.ActualOption).Distinct().ToList();
-            var allstates = this.NewThing.ValueSets.Select(x => x.ActualState).Distinct().ToList();
+            if (this.NewThing.ValueSets.Distinct().Where(x => x != null).ToList().Count == 0)
+            {
+                return;
+            }
+
+            var alloptions = this.NewThing.ValueSets.Select(x => x.ActualOption).Distinct().Where(x => x != null).ToList();
+            var allstates = this.NewThing.ValueSets.Select(x => x.ActualState).Distinct().Where(x => x != null).ToList();
 
             if (isoptiondependant && statedependance != null)
             {
@@ -186,28 +171,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
             var setOfNewValues = this.listofsetOfNewValues[index].ActualValue;
             var setOfOldValues = this.listofsetOfOldValues[index].ActualValue;
 
-            object NewValue;
-            object OldValue;
             object Name = this.ModelCode();
 
-            if (setOfNewValues.Count > 1)
-            {
-                NewValue = setOfNewValues.ToString();
-            }
-            else
-            {
-                NewValue = setOfNewValues.FirstOrDefault();
-            }
+            object NewValue = setOfNewValues.Count > 1 ? setOfNewValues.ToString() : setOfNewValues.FirstOrDefault();
 
-            if (setOfOldValues.Count > 1)
-            {
-                OldValue = setOfOldValues.ToString();
-            }
-            else
-            {
-                OldValue = setOfOldValues.FirstOrDefault();
-            }
-
+            object OldValue = setOfOldValues.Count > 1 ? setOfOldValues.ToString() : setOfOldValues.FirstOrDefault();
 
             if (isOptions && isState)
             {
@@ -229,14 +197,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.CalculateDiff(OldValue, NewValue, out string Difference, out string PercentDiff);
 
             return new ParameterDifferenceRowViewModel(this.OldThing, this.NewThing, Name, OldValue, NewValue, Difference, PercentDiff);
-
         }
 
         /// <summary>
         /// Add The valueSet to list
         /// </summary>
-        /// <param name="option"><see cref="Option"/></param>
-        /// <param name="state"><see cref="ActualFiniteState"/></param>
+        /// <param name="option"><see cref="Option"/> can be null, or the current option investigated</param>
+        /// <param name="state"><see cref="ActualFiniteState"/> can be null, or the current state investigated</param>
         private void PopulateListOfSets(Option option, ActualFiniteState state)
         {
             try
@@ -246,6 +213,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             }
             catch (Exception e)
             {
+                Logger.Error(e, "The parameter(s) cannot be null, or the valueset in the parameter(s) cannot be null");
                 Console.WriteLine(e);
                 throw;
             }
@@ -254,8 +222,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Calculate the difference between the old and new value, if possible
         /// </summary>
-        /// <param name="OldValue"></param>
-        /// <param name="NewValue"></param>
+        /// <param name="OldValue">can be a number, a set of value, or a string</param>
+        /// <param name="NewValue">can be a number, a set of value, or a string</param>
         /// <param name="Difference">a number, positive or negative (with + or - sign)</param>
         /// <param name="PercentDiff">a number in percent, positive or negative (with + or - sign)</param>
         private void CalculateDiff(object OldValue, object NewValue, out string Difference, out string PercentDiff)
@@ -272,35 +240,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
             if (isOldValueDecimal && isNewValueDecimal)
             {
                 var diff = decimalNewValue - decimalOldValue;
-                var sign = Math.Sign(diff);
-                var abs = Math.Abs(diff);
                 var percentChange = Math.Round(Math.Abs(diff / Math.Abs(decimalOldValue) * 100), 2);
 
-                if (sign > 0)
-                {
-                    Difference = $"+{abs}";
-                    PercentDiff = $"+{percentChange}%";
-                }
-                else if (sign < 0)
-                {
-                    Difference = $"-{abs}";
-                    PercentDiff = $"-{percentChange}%";
-                }
+                Difference = diff > 0 ? $"+{diff}" : diff.ToString();
+                PercentDiff = diff > 0 ? $"+{percentChange}%" : $"-{percentChange}%";
             }
             else
             {
-                Difference = $"/";
-                PercentDiff = $"/";
+                Difference = $"N/A";
+                PercentDiff = $"N/A";
             }
         }
 
         /// <summary>
         /// Construct a Name from its parameters
         /// </summary>
-        /// <returns></returns>
+        /// <returns>name of the element and his parameter type if available</returns>
         private string ModelCode()
         {
-            ElementDefinition container = (ElementDefinition)this.NewThing.Container;
+            var container = (ElementDefinition) this.NewThing.Container;
 
             var name = "";
 
@@ -313,12 +271,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 name = name + container.ShortName;
             }
 
-            if (string.IsNullOrWhiteSpace(name) || name.IsEmptyOrSingle() )
+            if (string.IsNullOrWhiteSpace(name) || name.IsEmptyOrSingle())
             {
-                return "/";
+                return "N/A";
             }
+
             return name;
         }
-
     }
 }

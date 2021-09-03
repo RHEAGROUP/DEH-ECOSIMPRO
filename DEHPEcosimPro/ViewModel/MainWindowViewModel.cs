@@ -2,7 +2,7 @@
 // <copyright file="MainWindowViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -52,6 +52,9 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private readonly INavigationService navigationService;
 
+        /// <summary>
+        /// Gets the view model that represents the difference table
+        /// </summary>
         public IDifferenceViewModel DifferenceViewModel { get; private set; }
 
         /// <summary>
@@ -98,7 +101,7 @@ namespace DEHPEcosimPro.ViewModel
         /// Gets the view model that represents the status bar
         /// </summary>
         public IStatusBarControlViewModel StatusBarControlViewModel { get; }
-        
+
         /// <summary>
         /// Gets or sets the <see cref="ICommand"/> that will change the mapping direction
         /// </summary>
@@ -131,9 +134,9 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="mappingViewModel">The <see cref="IMappingViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="differenceViewModel">The <see cref="IDifferenceViewModel"/></param>
-        public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
-            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
-            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, 
+        public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel,
+            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel,
+            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController,
             ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel,
             INavigationService navigationService, IDifferenceViewModel differenceViewModel)
         {
@@ -146,8 +149,8 @@ namespace DEHPEcosimPro.ViewModel
             this.DstNetChangePreviewViewModel = dstNetChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;
-            this.StatusBarControlViewModel = statusBarControlViewModel; 
-            
+            this.StatusBarControlViewModel = statusBarControlViewModel;
+
             this.InitializeCommands();
         }
 
@@ -169,11 +172,11 @@ namespace DEHPEcosimPro.ViewModel
         private void ChangeMappingDirectionExecute()
         {
             this.SwitchPanelBehavior?.Switch();
-            
-            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection 
+
+            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection
                                                   ?? DEHPCommon.Enumerators.MappingDirection.FromDstToHub;
 
-            this.MappingDirection = (int)this.dstController.MappingDirection;
+            this.MappingDirection = (int) this.dstController.MappingDirection;
         }
     }
 }

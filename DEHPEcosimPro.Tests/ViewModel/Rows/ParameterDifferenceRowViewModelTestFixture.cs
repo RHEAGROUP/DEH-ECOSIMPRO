@@ -25,25 +25,15 @@
 namespace DEHPEcosimPro.Tests.ViewModel.Rows
 {
     using System;
-    using System.Collections.Concurrent;
-    using System.Globalization;
     using System.Linq;
 
-    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
     using CDP4Common.Types;
 
     using CDP4Dal;
 
-    using DEHPCommon.HubController.Interfaces;
-
-    using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Events;
-    using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Rows;
-
-    using Moq;
 
     using NUnit.Framework;
 
@@ -54,7 +44,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         private Parameter OldThing;
 
         private Parameter NewThing;
-        
+
         private Assembler assembler;
         private DomainOfExpertise activeDomain;
         private readonly Uri uri = new Uri("http://test.com");
@@ -65,7 +55,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         public void VerifyParameterDifferenceRowViewModel()
         {
             this.assembler = new Assembler(this.uri);
-
             this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) { Name = "active", ShortName = "active" };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri)
@@ -77,9 +66,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             this.elementDefinition = new ElementDefinition(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain,
-                ShortName = "Element"
+                ShortName = "Element",
+                Name = "Element"
             };
-            
+
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
@@ -93,6 +83,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                     }
                 }
             };
+
             this.elementDefinition.Parameter.Add(this.OldThing);
 
             this.NewThing = new Parameter(this.OldThing.Iid, this.assembler.Cache, this.uri)
@@ -103,13 +94,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 {
                     new ParameterValueSet()
                     {
-                        Computed = new ValueArray<string>(new [] {"12"}),
+                        Computed = new ValueArray<string>(new[] { "12" }),
                         ValueSwitch = ParameterSwitchKind.COMPUTED
                     }
                 }
             };
+
             this.elementDefinition.Parameter.Add(this.NewThing);
-            
+
             object Name = this.elementDefinition.Name;
             object OldValue = this.OldThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
             object NewValue = this.NewThing.QueryParameterBaseValueSet(null, null).ActualValue.FirstOrDefault();
@@ -125,7 +117,5 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             Assert.IsNotNull(this.viewModel);
             Assert.AreEqual("-9", this.viewModel.Difference);
         }
-
-
     }
 }

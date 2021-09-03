@@ -22,31 +22,26 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Reactive.Linq;
 
-    using Autofac;
     using CDP4Common.EngineeringModelData;
 
     using CDP4Dal;
+
     using DEHPCommon.HubController.Interfaces;
+
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using NLog;
-
     using ReactiveUI;
 
-
     /// <summary>
-    /// The <see cref="DifferenceViewModel"/> is the view model for displaying diference betwen the values of the selection
+    /// The <see cref="DifferenceViewModel"/> is the view model for displaying difference betwen the values of the selection
     /// </summary>
     public class DifferenceViewModel : ReactiveObject, IDifferenceViewModel
     {
@@ -66,7 +61,7 @@ namespace DEHPEcosimPro.ViewModel
         public ReactiveList<ParameterDifferenceRowViewModel> Parameters { get; set; } = new ReactiveList<ParameterDifferenceRowViewModel>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:DEHPEcosimPro.ViewModel.DifferenceViewModel" /> class.
+        /// Initializes a new instance of the <see cref="DifferenceViewModel" /> class.
         /// </summary>
         /// <param name="hubController"><see cref="IHubController"/></param>
         /// <param name="dstController"><see cref="IDstController"/></param>
@@ -78,23 +73,24 @@ namespace DEHPEcosimPro.ViewModel
             CDPMessageBus.Current.Listen<DifferenceEvent<ParameterOrOverrideBase>>()
                 .Subscribe(this.HandleDifferentEvent);
 
-
             CDPMessageBus.Current.Listen<DifferenceEvent<ElementDefinition>>()
                 .Subscribe(this.HandleListOfDifferentEvent);
-
         }
 
         /// <summary>
-        /// Handle the parameter
+        /// Pass the parameter and his thing to the function <see cref="CreateNewParameter"/> to populate the <see cref="Parameters"/> list
         /// </summary>
         /// <param name="parameterEvent"><see cref="DifferenceEvent<ParameterOrOverrideBase>"/></param>
         private void HandleDifferentEvent(DifferenceEvent<ParameterOrOverrideBase> parameterEvent)
         {
-            this.CreateNewParameter((Parameter)parameterEvent.Thing, parameterEvent.HasTheSelectionChanged);
+            if (parameterEvent.Thing != null)
+            {
+                this.CreateNewParameter((Parameter) parameterEvent.Thing, parameterEvent.HasTheSelectionChanged);
+            }
         }
 
         /// <summary>
-        /// Handle the Parameters list
+        /// Pass multiple parameter and his thing to the function <see cref="CreateNewParameter"/> to populate the <see cref="Parameters"/> list
         /// </summary>
         /// <param name="elementDefinition"><see cref="DifferenceEvent<ElementDefinition>"/></param>
         private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> elementDefinition)
@@ -108,22 +104,20 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
-        ///  Add or Remove the thing to Parameters list
+        ///  Populate the <see cref="Parameters"/> liste from the <see cref="newParameter"/> parameter, or if it's already in the <see cref="Parameters"/> list, remove it
         /// </summary>
         /// <param name="newParameter"><see cref="Parameter"/></param>
         /// <param name="HasTheselectionChanged">From the parameter boolean HasTheSelectionChanged</param>
         private void CreateNewParameter(Parameter newParameter, bool HasTheselectionChanged)
         {
-
             this.hubController.GetThingById(newParameter.Iid, this.hubController.OpenIteration, out Parameter oldThing);
-            
+
             if (HasTheselectionChanged)
             {
                 var IsParameterAlreadyExisting = this.Parameters.Any(x => x.NewThing.Iid == newParameter.Iid);
 
                 if (!IsParameterAlreadyExisting)
                 {
-
                     this.Parameters.AddRange(new ParameterDifferenceViewModel(oldThing, newParameter, this.dstController).ListOfParameters);
                 }
             }
@@ -132,9 +126,9 @@ namespace DEHPEcosimPro.ViewModel
                 var toRemove = this.Parameters
                     .Where(x => newParameter.Iid == x.NewThing.Iid
                                 && newParameter.ParameterType.ShortName == x.NewThing.ParameterType.ShortName).ToList();
+
                 toRemove.ForEach(x => this.Parameters.Remove(x));
             }
         }
-
     }
 }

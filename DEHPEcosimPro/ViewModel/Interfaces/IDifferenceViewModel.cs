@@ -29,7 +29,7 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
     using ReactiveUI;
 
     /// <summary>
-    /// Interface of <see cref="ParameterDifferenceRowViewModel"/>
+    /// Definition of properties of <see cref="ParameterDifferenceRowViewModel"/> that display difference betwen the values of the selection
     /// </summary>
     public interface IDifferenceViewModel
     {

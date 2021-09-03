@@ -12,6 +12,7 @@
         xmlns:objectBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.ObjectBrowser;assembly=DEHPCommon"
         xmlns:publicationBrowser="clr-namespace:DEHPCommon.UserInterfaces.Views.PublicationBrowser;assembly=DEHPCommon"
         xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         Title="DEHP EcosimPro Adapter" WindowState="Maximized" 
         MinWidth="800" MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
@@ -71,15 +72,15 @@
                                     <Path Grid.Column="2" Stretch="Fill" Fill="DarkGray" Data="M 0,110 110,110 110,90 120,120 110,150 110,130 0,130 Z" HorizontalAlignment="Left" MaxHeight="30" RenderTransformOrigin=".5,.5"/>
                                 </Grid>
 
-                                <TabControl Name="HubEngineeringModelPreview" Grid.Row="1" 
+                                <dx:DXTabControl Name="HubEngineeringModelPreview" Grid.Row="1" 
                                             SelectedIndex="{Binding MappingDirection}">
-                                    <TabItem Header="Hub Engineering Model">
+                                    <dx:DXTabItem Header="Hub Engineering Model">
                                         <objectBrowser:ObjectBrowser DataContext="{Binding HubNetChangePreviewViewModel}" ></objectBrowser:ObjectBrowser>
-                                    </TabItem>
-                                    <TabItem Header="EcosimPro Variables">
+                                    </dx:DXTabItem>
+                                    <dx:DXTabItem Header="EcosimPro Variables">
                                         <views:DstNetChangePreview DataContext="{Binding DstNetChangePreviewViewModel}" ></views:DstNetChangePreview>
-                                    </TabItem>
-                                </TabControl>
+                                    </dx:DXTabItem>
+                                </dx:DXTabControl>
                             </Grid>
                         </dxdo:LayoutPanel>
                         <dxdo:LayoutPanel Name="HubPanel" AllowHide="False" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDrag="False" AllowFloat="False" AllowMove="False" Caption="Hub Data Source">
@@ -103,28 +104,28 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
                                     <common:HubBrowserHeader DataContext="{Binding HubDataSourceViewModel.HubBrowserHeader}" Grid.Row="1" />
-                                    <TabControl Grid.Row="2">
-                                        <TabItem>
-                                            <TabItem.Header>
+                                    <dx:DXTabControl Grid.Row="2">
+                                        <dx:DXTabItem>
+                                            <dx:DXTabItem.Header>
                                                 <TextBlock Text="Engineering Model" />
-                                            </TabItem.Header>
+                                            </dx:DXTabItem.Header>
                                             <objectBrowser:ObjectBrowser>
                                                 <objectBrowser:ObjectBrowser.DataContext>
                                                     <Binding Path="HubDataSourceViewModel.ObjectBrowser"></Binding>
                                                 </objectBrowser:ObjectBrowser.DataContext>
                                             </objectBrowser:ObjectBrowser>
-                                        </TabItem>
-                                        <TabItem>
-                                            <TabItem.Header>
+                                        </dx:DXTabItem>
+                                        <dx:DXTabItem>
+                                            <dx:DXTabItem.Header>
                                                 <TextBlock Text="Publications" />
-                                            </TabItem.Header>
+                                            </dx:DXTabItem.Header>
                                             <publicationBrowser:PublicationBrowser>
                                                 <publicationBrowser:PublicationBrowser.DataContext>
                                                     <Binding Path="HubDataSourceViewModel.PublicationBrowser"></Binding>
                                                 </publicationBrowser:PublicationBrowser.DataContext>
                                             </publicationBrowser:PublicationBrowser>
-                                        </TabItem>
-                                    </TabControl>
+                                        </dx:DXTabItem>
+                                    </dx:DXTabControl>
                                 </Grid>
                             </Grid>
                         </dxdo:LayoutPanel>
@@ -136,18 +137,18 @@
                                     <ColumnDefinition Width="9*" />
                                     <ColumnDefinition Width="1*" />
                                 </Grid.ColumnDefinitions>
-                                <TabControl >
-                                    <TabItem>
-                                        <TabItem.Header>
+                                <dx:DXTabControl>
+                                    <dx:DXTabItem>
+                                        <dx:DXTabItem.Header>
                                             <TextBlock Text="Mapping" />
-                                        </TabItem.Header>
+                                        </dx:DXTabItem.Header>
                                             <ListView x:Name="Mapping" SelectionMode="Extended" ItemsSource="{Binding MappingViewModel.MappingRows}" Grid.Column="0" HorizontalContentAlignment="Stretch" 
                                               ItemTemplate="{StaticResource MappedThingRowDataTemplate}" />
-                                    </TabItem>
-                                    <TabItem>
-                                        <TabItem.Header>
+                                    </dx:DXTabItem>
+                                    <dx:DXTabItem>
+                                        <dx:DXTabItem.Header>
                                             <TextBlock Text="Value Diff" />
-                                        </TabItem.Header> 
+                                        </dx:DXTabItem.Header> 
                                         <dxg:GridControl ToolTip="Select some values" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
                                                          EnableSmartColumnsGeneration="False"
                                                          ItemsSource="{Binding DifferenceViewModel.Parameters}"
@@ -166,8 +167,8 @@
                                                 <dxg:GridColumn FieldName="PercentDiff" />
                                             </dxg:GridControl.Columns>
                                         </dxg:GridControl>
-                                    </TabItem>
-                                </TabControl>
+                                    </dx:DXTabItem>
+                                </dx:DXTabControl>
                                 <Button ToolTip="Open the history of transfer dialog" Command="{Binding OpenExchangeHistory}" Grid.Column="1" Margin="10" Background="Transparent" BorderBrush="Transparent">
                                     <TextBlock FontSize="18" Text="🕑 Transfer History" TextWrapping="Wrap" TextAlignment="Center"/>
                                     </Button>
