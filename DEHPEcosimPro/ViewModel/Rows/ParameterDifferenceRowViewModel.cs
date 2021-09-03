@@ -36,101 +36,83 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// The Thing already on the data hub
         /// </summary>
-        private Parameter oldThing;
-
-        /// <summary>
-        /// The Thing already on the data hub
-        /// </summary>
-        public Parameter OldThing
-        {
-            get => this.oldThing;
-            set => this.oldThing = value;
-        }
+        public Parameter OldThing { get; set; }
 
         /// <summary>
         /// The thing from Ecosimpro
         /// </summary>
-        private Parameter newThing;
+        public Parameter NewThing { get; set; }
 
         /// <summary>
-        /// The thing from Ecosimpro
+        /// The value the data hub had
         /// </summary>
-        public Parameter NewThing
-        {
-            get => this.newThing;
-            set => this.newThing = value;
-        }
+        private string oldValue;
 
         /// <summary>
-        /// The value the data hub had, string
+        /// The value the data hub had
         /// </summary>
-        private object oldValue;
-
-        /// <summary>
-        /// The value the data hub had, string
-        /// </summary>
-        public object OldValue
+        public string OldValue
         {
             get => this.oldValue;
             set => this.RaiseAndSetIfChanged(ref this.oldValue, value);
         }
 
         /// <summary>
-        /// The new value from Ecosimpro, string
+        /// The new value from Ecosimpro
         /// </summary>
-        private object newValue;
+        private string newValue;
 
         /// <summary>
-        /// The new value from Ecosimpro, string
+        /// The new value from Ecosimpro
         /// </summary>
-        public object NewValue
+        public string NewValue
         {
             get => this.newValue;
             set => this.RaiseAndSetIfChanged(ref this.newValue, value);
         }
 
         /// <summary>
-        /// Name of the Value, string
+        /// Name of the Value
         /// </summary>
-        private object name;
+        private string name;
 
         /// <summary>
-        /// Name of the Value, string
+        /// Name of the Value
         /// </summary>
-        public object Name
+        public string Name
         {
             get => this.name;
             set => this.RaiseAndSetIfChanged(ref this.name, value);
         }
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
         /// </summary>
-        private object difference;
+        private string difference;
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
         /// </summary>
-        public object Difference
+        public string Difference
         {
             get => this.difference;
             set => this.RaiseAndSetIfChanged(ref this.difference, value);
         }
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
         /// </summary>
-        private object percentDiff;
+        private string percentDiff;
 
         /// <summary>
-        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>, string
+        /// Difference, positive or negative, of the two value <see cref="NewValue"/> and <see cref="OldValue"/>
         /// </summary>
-        public object PercentDiff
+        public string PercentDiff
         {
             get => this.percentDiff;
             set => this.RaiseAndSetIfChanged(ref this.percentDiff, value);
         }
-        
+
         /// <summary>
         /// Object to display on MainWindow, Value Diff
         /// </summary>
@@ -145,12 +127,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             this.OldThing = OldThing;
             this.NewThing = NewThing;
-            this.Name = Name;
-            this.OldValue = OldValue;
-            this.NewValue = NewValue;
-            this.Difference = Difference;
-            this.PercentDiff = PercentDiff;
+            this.Name = Name.ToString();
+            this.OldValue = OldValue.ToString();
+            this.NewValue = NewValue.ToString();
+            this.Difference = Difference.ToString();
+            this.PercentDiff = PercentDiff.ToString();
         }
-        
     }
 }

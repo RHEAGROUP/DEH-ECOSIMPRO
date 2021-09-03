@@ -28,8 +28,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     using System.Collections.Generic;
     using System.Linq;
 
-    using Castle.Components.DictionaryAdapter;
-
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
     using CDP4Common.Types;
@@ -37,9 +35,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     using CDP4Dal;
 
     using DEHPCommon.HubController.Interfaces;
+
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel.Rows;
+
     using Moq;
+
     using NUnit.Framework;
 
     [TestFixture]
@@ -65,7 +66,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             this.dstController = new Mock<IDstController>();
         }
 
-
         [Test]
         public void VerifyParameterDifferenceViewModel()
         {
@@ -74,6 +74,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             this.Iid = Guid.NewGuid();
 
             this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) { Name = "active", ShortName = "active" };
+
             this.elementDefinition = new ElementDefinition(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain,
@@ -81,7 +82,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri);
-            
+
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain,
@@ -94,6 +95,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                     }
                 }
             };
+
             this.elementDefinition.Parameter.Add(this.OldThing);
 
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri)
@@ -127,14 +129,15 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
 
             this.Iid = Guid.NewGuid();
 
-            this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) ;
+            this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri);
+
             this.elementDefinition = new ElementDefinition(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain
             };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri);
-           
+
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
@@ -148,6 +151,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                     }
                 }
             };
+
             this.elementDefinition.Parameter.Add(this.OldThing);
 
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri)
@@ -173,16 +177,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
         }
 
         [Test]
-        public void VerifyThrowEception()
+        public void VerifyThrowEceptionWhenOnlyOneThing()
         {
-            this.viewModel.ListOfParameters = new List<ParameterDifferenceRowViewModel>();
-            this.viewModel.ListOfParameters.Clear();
-
             this.assembler = new Assembler(this.uri);
 
             this.Iid = Guid.NewGuid();
 
             this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) { Name = "active", ShortName = "active" };
+
             this.elementDefinition = new ElementDefinition(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 Owner = this.activeDomain,
@@ -194,7 +196,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                 Name = "PTName",
                 ShortName = "PTShortName"
             };
-            
+
             this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
             {
                 ParameterType = this.qqParamType,
@@ -208,14 +210,52 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
                     }
                 }
             };
+
             this.elementDefinition.Parameter.Add(this.OldThing);
-            
+
             this.NewThing = new Parameter(this.Iid, this.assembler.Cache, this.uri);
 
             this.elementDefinition.Parameter.Add(this.NewThing);
-            
-            Assert.Throws<NullReferenceException>(() => new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object));
+
+            Assert.IsEmpty( new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object).ListOfParameters);
         }
 
+        [Test]
+        public void VerifyThrowEceptionWhenNoValueSet()
+        {
+            this.assembler = new Assembler(this.uri);
+
+            this.Iid = Guid.NewGuid();
+
+            this.activeDomain = new DomainOfExpertise(Guid.NewGuid(), this.assembler.Cache, this.uri) { Name = "active", ShortName = "active" };
+
+            this.elementDefinition = new ElementDefinition(Guid.NewGuid(), this.assembler.Cache, this.uri)
+            {
+                Owner = this.activeDomain,
+                ShortName = "Element"
+            };
+
+            this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), this.assembler.Cache, this.uri)
+            {
+                Name = "PTName",
+                ShortName = "PTShortName"
+            };
+
+            this.OldThing = new Parameter(Guid.NewGuid(), this.assembler.Cache, this.uri)
+            {
+                ParameterType = this.qqParamType,
+                Owner = this.activeDomain
+            };
+
+            this.elementDefinition.Parameter.Add(this.OldThing);
+
+            this.NewThing = this.OldThing.Clone(false);
+
+            this.elementDefinition.Parameter.Add(this.NewThing);
+
+            var newParameterDifference = new ParameterDifferenceViewModel(this.OldThing, this.NewThing, this.dstController.Object);
+            Assert.IsEmpty(newParameterDifference.ListOfParameters);
+            newParameterDifference.ListOfParameters = new List<ParameterDifferenceRowViewModel>();
+        }
     }
 }

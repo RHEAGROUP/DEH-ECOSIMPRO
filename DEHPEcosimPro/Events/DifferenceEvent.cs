@@ -25,12 +25,13 @@
 namespace DEHPEcosimPro.Events
 {
     using CDP4Common.CommonData;
+
     using CDP4Dal;
 
     /// <summary>
     /// Event for displaying <see cref="ParameterDifferenceRowViewModel"/> on MainWindow, Value Diff, An event for <see cref="CDPMessageBus"/>
     /// </summary>
-    /// <typeparam name="TThing"></typeparam>
+    /// <typeparam name="TThing">can be a ElementDefinition or a ParameterOrOverrideBase</typeparam>
     public class DifferenceEvent<TThing> where TThing : Thing
     {
         /// <summary>
@@ -52,7 +53,6 @@ namespace DEHPEcosimPro.Events
         {
             this.HasTheSelectionChanged = hasTheSelectionChanged;
             this.Thing = Thing;
-
         }
     }
 }
