@@ -2,7 +2,7 @@
 // <copyright file="IHubMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -40,7 +40,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
-        ReactiveList<VariableRowViewModel> AvailableVariables { get; set; }
+        ReactiveList<VariableBaseRowViewModel> AvailableVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of available variables
+        /// </summary>
+        VariableBaseRowViewModel SelectedAvailableVariables { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel"/> that hold parameter value to map
