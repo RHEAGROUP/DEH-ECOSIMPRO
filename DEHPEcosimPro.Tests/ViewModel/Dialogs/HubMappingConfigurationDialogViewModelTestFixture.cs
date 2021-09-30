@@ -416,6 +416,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+            var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
+            {
+                Owner = this.domain,
+                ShortName = "Element"
+            };
+            elementDefinition.Parameter.Add(parameter);
+
 
             parameter.ValueSet.Add(new ParameterValueSet
             {
@@ -509,6 +516,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Computed = new ValueArray<string>(new[] { "20", "21" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+            var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
+            {
+                Owner = this.domain,
+                ShortName = "Element"
+            };
+            elementDefinition.Parameter.Add(parameter);
 
             var choosingDialog = new ChooseMappingColumnsViewModel(array, parameter);
             var a = choosingDialog.ListOfVariableToMap;
@@ -715,6 +728,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "21" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+            var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
+            {
+                Owner = this.domain,
+                ShortName = "Element"
+            };
+            elementDefinition.Parameter.Add(parameter);
 
             var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
             this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;

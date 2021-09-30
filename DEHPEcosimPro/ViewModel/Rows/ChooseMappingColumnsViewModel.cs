@@ -33,6 +33,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
+    using DevExpress.Mvvm.Native;
+
     using ReactiveUI;
 
     /// <summary>
@@ -80,7 +82,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 }
             }
 
-            this.ParameterName = parameter.ModelCode();
+            this.ParameterName = ModelCode(parameter);
         }
 
         /// <summary>
@@ -135,6 +137,34 @@ namespace DEHPEcosimPro.ViewModel.Rows
             }
 
             return null;
+        }
+
+
+        /// <summary>
+        /// Construct a Name from its parameters
+        /// </summary>
+        /// <returns>name of the element and his parameter type if available</returns>
+        private string ModelCode(ParameterOrOverrideBase parameter)
+        {
+            var container = (ElementDefinition)parameter.Container;
+
+            var name = "";
+
+            if (parameter.ParameterType != null && !string.IsNullOrEmpty(parameter.ParameterType.ShortName))
+            {
+                name = name + container.ShortName + "." + parameter.ParameterType.ShortName;
+            }
+            else
+            {
+                name = name + container.ShortName;
+            }
+
+            if (string.IsNullOrWhiteSpace(name) || name.IsEmptyOrSingle())
+            {
+                return "N/A";
+            }
+
+            return name;
         }
     }
 }
