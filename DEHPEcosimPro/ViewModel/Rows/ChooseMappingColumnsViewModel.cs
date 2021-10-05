@@ -54,7 +54,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         public ChooseMappingColumnsViewModel(VariableBaseRowViewModel variable, ParameterOrOverrideBase parameter)
         {
-
             if (parameter.ParameterType is SampledFunctionParameterType parameterType)
             {
                 this.ListOfParameterToMatch.AddRange(parameterType.IndependentParameterType.Select(x => x.ParameterType.ShortName));
@@ -65,29 +64,27 @@ namespace DEHPEcosimPro.ViewModel.Rows
             {
                 this.VariableName = array.Name;
                 this.IsList = array.IsList;
-                List<IGrouping<string, VariableRowViewModel>> groupby;
 
                 if (array.IsList)
                 {
-                    groupby = array.Variables.GroupBy(x => x.Name).ToList();
+                    this.ListOfVariableToMap.Add(new ChooseMappingRowsViewModel(array.Variables.ToList(), array.IsList));
                 }
                 else
                 {
-                    groupby = array.Variables.GroupBy(x => this.GetColumnNumberFromValueName(x.Reference.DisplayName.Text)).ToList();
-                }
-
-                foreach (var group in groupby)
-                {
-                    this.ListOfVariableToMap.Add(new ChooseMappingRowsViewModel(group.ToList(), array.IsList));
+                    var groupby = array.Variables.GroupBy(this.GetColumnNumberFromVariableRow).ToList();
+                    foreach (var group in groupby)
+                    {
+                        this.ListOfVariableToMap.Add(new ChooseMappingRowsViewModel(group.ToList(), array.IsList));
+                    }
                 }
             }
 
-            this.ParameterName = ModelCode(parameter);
+            this.ParameterName = parameter.ModelCode();
         }
 
         /// <summary>
-        /// </summary>
         /// Name of the variable to map to
+        /// </summary>
         public string VariableName { get; set; }
 
         /// <summary>
@@ -114,57 +111,26 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// Interface to close the dialog
         /// </summary>
         public ICloseWindowBehavior CloseWindowBehavior { get; set; }
-
+        
         /// <summary>
-        /// Get the column number of the data from it's name
+        /// Get the column number of the data from its index list
         /// </summary>
-        /// <param name="argName">name of the sata, should contain [x] of [x,y]</param>
+        /// <param name="variable"><see cref="VariableRowViewModel"/></param>
         /// <returns>as a string, a number or a comma then a number</returns>
-        private string GetColumnNumberFromValueName(string argName)
+        private string GetColumnNumberFromVariableRow(VariableRowViewModel variable)
         {
-            var probableindex = argName.Split('[');
-
-            if (probableindex.Length > 1)
+            if (this.IsList || variable.IndexOfThisRow.Count == 1)
             {
-                var splitedName = probableindex[1].Split('x', ',', ']');
-
-                if (splitedName.Length == 3)
-                {
-                    var num = splitedName.Length - 2;
-                    var a = ',' + splitedName[num];
-                    return a;
-                }
-            }
-
-            return null;
-        }
-
-
-        /// <summary>
-        /// Construct a Name from its parameters
-        /// </summary>
-        /// <returns>name of the element and his parameter type if available</returns>
-        private string ModelCode(ParameterOrOverrideBase parameter)
-        {
-            var container = (ElementDefinition)parameter.Container;
-
-            var name = "";
-
-            if (parameter.ParameterType != null && !string.IsNullOrEmpty(parameter.ParameterType.ShortName))
-            {
-                name = name + container.ShortName + "." + parameter.ParameterType.ShortName;
+                return variable.IndexOfThisRow.FirstOrDefault();
             }
             else
             {
-                name = name + container.ShortName;
+                var copyOfList = new string[variable.IndexOfThisRow.Count];
+                variable.IndexOfThisRow.CopyTo(copyOfList);
+                var trimedList = copyOfList.ToList();
+                trimedList.RemoveAt(0);
+                return "," + string.Join(",", trimedList);
             }
-
-            if (string.IsNullOrWhiteSpace(name) || name.IsEmptyOrSingle())
-            {
-                return "N/A";
-            }
-
-            return name;
         }
     }
 }

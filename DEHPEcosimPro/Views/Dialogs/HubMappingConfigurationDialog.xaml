@@ -165,7 +165,7 @@
                             <dxdo:LayoutPanel Margin="5" Name="Panel2" MinWidth="200" VerticalAlignment="Stretch" dxdo:AutoHideGroup.AutoHideType="Left" AllowClose="False" AllowDock="True" AllowDrag="True"
                                               AllowFloat="False" AllowHide="False" AllowMove="True" Caption="Product Tree" ItemHeight="4*">
                                 <dxg:TreeListControl ItemsSource="{Binding AvailableVariables}"
-                                             SelectedItem="{Binding SelectedAvailableVariables}"
+                                             SelectedItem="{Binding SelectedVariable}"
                                              SelectionMode="Row">
                                     <dxg:TreeListControl.View>
                                         <dxg:TreeListView Name="VariableView"

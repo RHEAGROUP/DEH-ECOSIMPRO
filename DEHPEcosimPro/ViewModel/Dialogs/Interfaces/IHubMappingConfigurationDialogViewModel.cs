@@ -45,7 +45,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
-        VariableBaseRowViewModel SelectedAvailableVariables { get; set; }
+        VariableBaseRowViewModel SelectedVariable { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel"/> that hold parameter value to map

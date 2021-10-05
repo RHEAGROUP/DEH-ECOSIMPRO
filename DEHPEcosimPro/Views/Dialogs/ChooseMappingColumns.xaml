@@ -39,7 +39,7 @@
                     </Grid.ColumnDefinitions>
                     <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Mapping : " FontSize="12" />
                 </Grid>
-                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ListOfRowsToMap}" SelectedItem="{Binding SelectedListOfRowsToMap}">
+                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ListOfVariableToMap}" SelectedItem="{Binding SelectedListOfRowsToMap}">
                     <dxg:GridControl.View>
                         <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
                                        IsDetailButtonVisibleBinding="{x:Null}"
@@ -53,7 +53,7 @@
                                     <dxe:ComboBoxEdit Height="Auto"
                                                       Margin="5"
                                                       FontSize="12"
-                                                      ItemsSource="{Binding ElementName=Mapping,Path=DataContext.ListOfValueToMatch}"
+                                                      ItemsSource="{Binding ElementName=Mapping,Path=DataContext.ListOfParameterToMatch}"
                                                       SelectedItem="{Binding Path=RowData.Row.SelectedColumnMatched}"
                                                       ToolTip="Choose a column to match"
                                                       NullText="Choose a column to match" />

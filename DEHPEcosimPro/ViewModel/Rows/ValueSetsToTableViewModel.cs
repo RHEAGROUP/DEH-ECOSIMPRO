@@ -49,13 +49,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// Takes the valueset of a parameter and transform it into tables
         /// </summary>
         /// <param name="parameter">parameter that contain the valueset</param>
-        /// <param name="SelectedOption">option of the parameter to find the valueset</param>
-        /// <param name="SelectedState">state of the parameter to find the valueset</param>
-        public ValueSetsToTableViewModel(ParameterOrOverrideBase parameter, Option SelectedOption, ActualFiniteState SelectedState)
+        /// <param name="selectedOption">option of the parameter to find the valueset</param>
+        /// <param name="selectedState">state of the parameter to find the valueset</param>
+        public ValueSetsToTableViewModel(ParameterOrOverrideBase parameter, Option selectedOption, ActualFiniteState selectedState)
         {
             if (parameter.ParameterType is SampledFunctionParameterType parameterType)
             { 
-                this.ValueSet = parameter.QueryParameterBaseValueSet(SelectedOption, SelectedState);
+                this.ValueSet = parameter.QueryParameterBaseValueSet(selectedOption, selectedState);
                 this.ResetDataTables();
                 this.FeedDataTable(parameterType);
 
