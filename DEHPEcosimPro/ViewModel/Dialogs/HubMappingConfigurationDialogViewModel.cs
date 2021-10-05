@@ -347,17 +347,22 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType)
             {
                 bool? userSelectecValue = false;
-                var areArraysCompatible = this.AreArraysCompatible(variable, parameter);
+                var areArraysCompatible = false;
 
-                if (areArraysCompatible && variable is ArrayVariableRowViewModel array)
+                if (variable is ArrayVariableRowViewModel array)
                 {
-                    this.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel(array, parameter);
-                    var table = new ValueSetsToTableViewModel(parameter, this.SelectedOption, this.SelectedState);
-                    userSelectecValue = this.navigationService.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ParameterColumnToMapOnVariable);
+                    areArraysCompatible = this.AreArraysCompatible(array, parameter);
 
-                    if (userSelectecValue == true)
+                    if (areArraysCompatible)
                     {
-                        this.MapParameterToVariable(table.ListOfTuple, parameter);
+                        this.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel(array, parameter);
+                        var table = new ValueSetsToTableViewModel(parameter, this.SelectedOption, this.SelectedState);
+                        userSelectecValue = this.navigationService.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ParameterColumnToMapOnVariable);
+
+                        if (userSelectecValue == true)
+                        {
+                            this.MapParameterToVariable(table.ListOfTuple, parameter);
+                        }
                     }
                 }
                 else
