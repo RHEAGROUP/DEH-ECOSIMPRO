@@ -90,12 +90,15 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.Reference = referenceDescriptionValue;
             this.data = dataValue;
             this.SetProperties();
+            this.SetArrayIndexAndName(this.Name);
 
             CDPMessageBus.Current.Listen<DstHighlightEvent>()
                 .Where(x => x.TargetThingId == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.IsHighlighted = x.ShouldHighlight);
         }
+
+        public List<string> IndexOfThisRow { get; set; } = new List<string>();
 
         /// <summary>
         /// Gets or sets a value indicating whether this row is highlighted
@@ -191,6 +194,31 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
             }
+        }
+
+        /// <summary>
+        /// Set <see cref="IndexOfThisRow"/> and <see cref="Name"/> in case it's an array
+        /// </summary>
+        /// <param name="variable">variable name as Syst[x] or Syst[x,y]</param>
+        public void SetArrayIndexAndName(string variable)
+        {
+            if ( variable.Contains('['))
+            {
+                var splitedName = variable.Split('[', ']').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                splitedName.RemoveAt(0);
+
+                var numberAsString = splitedName.Count >= 1
+                    ? splitedName[0]
+                    : null;
+
+                this.IndexOfThisRow = numberAsString?.Length >= 1
+                    ? numberAsString.Split(',').ToList()
+                    : null;
+
+                return;
+            }
+
+            this.IndexOfThisRow = new List<string>();
         }
     }
 }

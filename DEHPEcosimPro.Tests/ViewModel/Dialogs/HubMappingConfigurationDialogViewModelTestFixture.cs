@@ -25,6 +25,7 @@
 namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 {
     using System;
+    using System.Collections;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data;
@@ -64,6 +65,55 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     [TestFixture]
     public class HubMappingConfigurationDialogViewModelTestFixture
     {
+        private HubMappingConfigurationDialogViewModel viewModel;
+        private Mock<IHubController> hubController;
+        private Mock<IDstController> dstController;
+        private Mock<IStatusBarControlViewModel> statusBar;
+        private Mock<INavigationService> navigation;
+        private List<ElementDefinitionRowViewModel> elementDefinitionRows;
+        private Mock<ISession> session;
+        private ElementDefinition element0;
+        private IterationSetup iterationSetup;
+        private EngineeringModelSetup engineeringSetup;
+        private Iteration iteration;
+        private DomainOfExpertise domain;
+        private Mock<IPermissionService> permissionService;
+        private SiteReferenceDataLibrary srdl;
+        private ModelReferenceDataLibrary mrdl;
+        private SiteDirectory sitedir;
+        private Option option1;
+        private ActualFiniteStateList stateList;
+        private PossibleFiniteState state1;
+        private PossibleFiniteState state2;
+        private PossibleFiniteStateList posStateList;
+        private DomainOfExpertise domain2;
+        private SimpleQuantityKind qqParamType;
+        private ArrayParameterType apType;
+        private CompoundParameterType cptType;
+        private ElementDefinition element0ForUsage1;
+        private ElementDefinition element0ForUsage2;
+        private ElementUsage elementUsage1;
+        private ElementUsage elementUsage2;
+        private ParameterGroup parameterGroup1;
+        private ParameterGroup parameterGroup2;
+        private ParameterGroup parameterGroup3;
+        private ParameterGroup parameterGroup1ForUsage1;
+        private ParameterGroup parameterGroup2ForUsage2;
+        private ParameterGroup parameterGroup3ForUsage1;
+        private Parameter parameter1;
+        private Parameter parameter4;
+        private Parameter parameterCompoundForSubscription;
+        private ParameterSubscription parameterSubscriptionCompound;
+        private IList<(ReferenceDescription Reference, DataValue Node)> variables;
+        private MeasurementScale measurementScale;
+        private Mock<IMappingConfigurationService> mappingConfigurationService;
+        private ActualFiniteStateList actualStateList;
+        private ActualFiniteState actualState1;
+        private PossibleFiniteStateList possibleStateList;
+        private PossibleFiniteState possibleState1;
+        private Uri uri;
+        private Assembler assembler;
+
         [SetUp]
         public void Setup()
         {
@@ -84,6 +134,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.navigation = new Mock<INavigationService>();
+
+            this.uri = new Uri("http://test.com");
+            this.assembler = new Assembler(this.uri);
 
             this.sitedir = new SiteDirectory(Guid.NewGuid(), null, null);
             this.srdl = new SiteReferenceDataLibrary(Guid.NewGuid(), null, null);
@@ -138,56 +191,12 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     new KeyValuePair<Iteration, Tuple<DomainOfExpertise, Participant>>(this.iteration, new Tuple<DomainOfExpertise, Participant>(this.domain, new Participant()))
                 }));
 
-            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.mappingConfigurationService.Object, this.navigation.Object);
+            this.viewModel = new HubMappingConfigurationDialogViewModel(this.hubController.Object, this.dstController.Object, this.statusBar.Object, this.navigation.Object);
 
             var browser = new ElementDefinitionsBrowserViewModel(this.iteration, this.session.Object);
             this.elementDefinitionRows = new List<ElementDefinitionRowViewModel>();
             this.elementDefinitionRows.AddRange(browser.ContainedRows.OfType<ElementDefinitionRowViewModel>());
         }
-
-        private HubMappingConfigurationDialogViewModel viewModel;
-        private Mock<IHubController> hubController;
-        private Mock<IDstController> dstController;
-        private Mock<IStatusBarControlViewModel> statusBar;
-        private Mock<INavigationService> navigation;
-        private List<ElementDefinitionRowViewModel> elementDefinitionRows;
-        private Mock<ISession> session;
-        private ElementDefinition element0;
-        private IterationSetup iterationSetup;
-        private EngineeringModelSetup engineeringSetup;
-        private Iteration iteration;
-        private DomainOfExpertise domain;
-        private Mock<IPermissionService> permissionService;
-        private SiteReferenceDataLibrary srdl;
-        private ModelReferenceDataLibrary mrdl;
-        private SiteDirectory sitedir;
-        private Option option1;
-        private ActualFiniteStateList stateList;
-        private PossibleFiniteState state1;
-        private PossibleFiniteState state2;
-        private PossibleFiniteStateList posStateList;
-        private DomainOfExpertise domain2;
-        private SimpleQuantityKind qqParamType;
-        private ArrayParameterType apType;
-        private CompoundParameterType cptType;
-        private ElementDefinition element0ForUsage1;
-        private ElementDefinition element0ForUsage2;
-        private ElementUsage elementUsage1;
-        private ElementUsage elementUsage2;
-        private ParameterGroup parameterGroup1;
-        private ParameterGroup parameterGroup2;
-        private ParameterGroup parameterGroup3;
-        private ParameterGroup parameterGroup1ForUsage1;
-        private ParameterGroup parameterGroup2ForUsage2;
-        private ParameterGroup parameterGroup3ForUsage1;
-        private Parameter parameter1;
-        private Parameter parameter4;
-        private Parameter parameterCompoundForSubscription;
-        private ParameterSubscription parameterSubscriptionCompound;
-        private IList<(ReferenceDescription Reference, DataValue Node)> variables;
-        private MeasurementScale measurementScale;
-        private Mock<IMappingConfigurationService> mappingConfigurationService;
-
         private void SetupDstData()
         {
             this.variables = new List<(ReferenceDescription, DataValue)>
@@ -206,7 +215,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 {
                     DisplayName = LocalizedText.ToLocalizedText("c"),
                     NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
-                }, new DataValue(new Variant(74088)))
+                }, new DataValue(new Variant(74088))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Kettle[1]"),
+                    BrowseName = new QualifiedName("Kettle[1]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(42)))
             };
         }
 
@@ -239,7 +254,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.session = new Mock<ISession>();
 
             this.measurementScale = new RatioScale(Guid.NewGuid(), null, null)
-                { Name = "a", ShortName = "a", NumberSet = NumberSetKind.REAL_NUMBER_SET };
+                { Name = "data[1]", ShortName = "data[1]", NumberSet = NumberSetKind.REAL_NUMBER_SET };
 
             this.qqParamType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
             {
@@ -289,17 +304,24 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.element0 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
-                Owner = this.domain
+                Owner = this.domain,
+                Name = "Name",
+                ShortName = "Name"
             };
 
             this.element0ForUsage1 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
-                Owner = this.domain2
+                Owner = this.domain2,
+                Name = "Name",
+                ShortName = "Name"
+
             };
 
             this.element0ForUsage2 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
-                Owner = this.domain2
+                Owner = this.domain2,
+                Name = "Name",
+                ShortName = "Name"
             };
 
             this.elementUsage1 = new ElementUsage(Guid.NewGuid(), null, null)
@@ -309,7 +331,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.elementUsage2 = new ElementUsage(Guid.NewGuid(), null, null)
             {
-                Owner = this.domain2
+                Owner = this.domain2,
+                Name = "Name",
+                ShortName = "Name"
             };
 
             this.elementUsage1.ElementDefinition = this.element0ForUsage1;
@@ -393,7 +417,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Iid = Guid.NewGuid(),
                 ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
                 {
-                    Name = "a",
+                    Name = "Kettle[1]",
                     IndependentParameterType =
                     {
                         new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
@@ -416,13 +440,15 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
             {
                 Owner = this.domain,
-                ShortName = "Element"
+                ShortName = "Element",
+                Name = "Element"
             };
-            elementDefinition.Parameter.Add(parameter);
 
+            elementDefinition.Parameter.Add(parameter);
 
             parameter.ValueSet.Add(new ParameterValueSet
             {
@@ -433,16 +459,16 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var empTychoosingDialog = new ChooseMappingColumnsViewModel();
             var choosingDialog = new ChooseMappingColumnsViewModel(array, parameter);
 
-            var b = choosingDialog.ListOfParameterToMatch;
-            var c = choosingDialog.ListOfVariableToMap;
-            var d = choosingDialog.VariableName;
-            var e = choosingDialog.ParameterName;
-            var a = choosingDialog.IsList;
+            var listOfParameterToMatch = choosingDialog.ListOfParameterToMatch;
+            var listOfVariableToMap = choosingDialog.ListOfVariableToMap;
+            var variableName = choosingDialog.VariableName;
+            var parameterName = choosingDialog.ParameterName;
+            var isList = choosingDialog.IsList;
             choosingDialog.VariableName = "";
             choosingDialog.ParameterName = "";
             choosingDialog.IsList = false;
             choosingDialog.ListOfParameterToMatch = new ReactiveList<string>();
-            Assert.IsNotNull(c);
+            Assert.IsNotNull(listOfVariableToMap);
         }
 
         [Test]
@@ -467,7 +493,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 new VariableRowViewModel((
                     new ReferenceDescription
                     {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a[2,2]"),
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[1,2]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
                     new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue })),
@@ -480,14 +506,45 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     new DataValue { Value = 7, ServerTimestamp = DateTime.MinValue }))
             };
 
+            var variables = new List<(ReferenceDescription, DataValue)>
+            {
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Mos.a[1,1]"),
+                    BrowseName = new QualifiedName("Mos.a[1,1]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(42))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Mos.a[2,1]"),
+                    BrowseName = new QualifiedName("Mos.a[2,1]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(1764))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Mos.a[1,2]"),
+                    BrowseName = new QualifiedName("Mos.a[1,2]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(74088))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Mos.a[2,2]"),
+                    BrowseName = new QualifiedName("Mos.a[2,2]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(42)))
+            };
+
             var array = new ArrayVariableRowViewModel("", listOfVariableRow);
+
+            this.dstController = new Mock<IDstController>();
+            this.dstController.Setup(x => x.Variables).Returns(variables);
 
             var parameter = new Parameter
             {
                 Iid = Guid.NewGuid(),
                 ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
                 {
-                    Name = "a",
+                    Name = "Kettle[1]",
                     IndependentParameterType =
                     {
                         new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
@@ -516,22 +573,24 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Computed = new ValueArray<string>(new[] { "20", "21" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
             {
                 Owner = this.domain,
                 ShortName = "Element"
             };
+
             elementDefinition.Parameter.Add(parameter);
 
             var choosingDialog = new ChooseMappingColumnsViewModel(array, parameter);
-            var a = choosingDialog.ListOfVariableToMap;
+            var choosingDialogListOfVariableToMap = choosingDialog.ListOfVariableToMap;
 
-            var b = a.FirstOrDefault().Index;
-            a.FirstOrDefault().Index = "[1]";
-            var c = a.FirstOrDefault().SelectedColumnMatched;
-            a.FirstOrDefault().SelectedColumnMatched = "Timestamp";
+            var index = choosingDialogListOfVariableToMap.FirstOrDefault().Index;
+            choosingDialogListOfVariableToMap.FirstOrDefault().Index = "[1]";
+            var selectedColumnMatched = choosingDialogListOfVariableToMap.FirstOrDefault().SelectedColumnMatched;
+            choosingDialogListOfVariableToMap.FirstOrDefault().SelectedColumnMatched = "Timestamp";
 
-            Assert.IsNotNull(a);
+            Assert.IsNotNull(choosingDialogListOfVariableToMap);
         }
 
         [Test]
@@ -545,28 +604,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                         DisplayName = new LocalizedText(string.Empty, "Mos.a[1,1]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
-                    new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })),
+                    new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })) { IndexOfThisRow = new  List<string>(){"1","1" } } ,
                 new VariableRowViewModel((
                     new ReferenceDescription
                     {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a[2,1]"),
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[1,2]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
-                    new DataValue { Value = 5, ServerTimestamp = DateTime.MinValue })),
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a[2,2]"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue })),
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a[2,2]"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = 7, ServerTimestamp = DateTime.MinValue }))
+                    new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue })) { IndexOfThisRow = new  List<string>(){"1","2" } } 
             };
 
             var choosingRowEmpty = new ChooseMappingRowsViewModel();
@@ -603,11 +648,149 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         }
 
         [Test]
+        public void VerifyMapParameterToVariable()
+        {
+            this.variables = new List<(ReferenceDescription, DataValue)>
+            {
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Kettle[1]"),
+                    BrowseName = new QualifiedName("Kettle[1]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(42))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Kettle[2]"),
+                    BrowseName = new QualifiedName("Kettle[2]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(1764))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("Kettle[3]"),
+                    BrowseName = new QualifiedName("Kettle[3]"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(74088))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("a"),
+                    BrowseName = new QualifiedName("a"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(1764))),
+                (new ReferenceDescription
+                {
+                    DisplayName = LocalizedText.ToLocalizedText("b"),
+                    BrowseName = new QualifiedName("b"),
+                    NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
+                }, new DataValue(new Variant(1764)))
+            };
+
+            this.dstController.Setup(x => x.Variables).Returns(this.variables);
+
+            this.viewModel.SelectedOption = this.option1;
+            this.viewModel.SelectedState = this.actualState1;
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+                {
+                    Name = "Kettle",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+
+            this.parameter1.Scale = this.measurementScale;
+
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21" }),
+                ValueSwitch = ParameterSwitchKind.COMPUTED,
+                ActualOption = this.viewModel.SelectedOption,
+                ActualState = this.viewModel.SelectedState
+            });
+
+            var mappedElement = new MappedElementDefinitionRowViewModel
+            {
+                SelectedParameter = parameter,
+                SelectedValue = new ValueSetValueRowViewModel(parameter.ValueSet.FirstOrDefault(), "20", this.measurementScale)
+            };
+
+            this.viewModel.MappedElements.Add(mappedElement);
+
+            this.viewModel.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel
+            {
+                VariableName = "Kettle",
+                ParameterName = "Kettle",
+                ListOfParameterToMatch = new ReactiveList<string> { "temp", "time", "mass" }
+            };
+
+            this.viewModel.ParameterColumnToMapOnVariable.ListOfVariableToMap.Add(new ChooseMappingRowsViewModel
+                {
+                    Index = "[1]",
+                    SelectedColumnMatched = "temp"
+                }
+            );
+
+            var listOfTemp = new List<string> { "12", "13", "14" };
+            (string name, List<string> list) oneTuple = ("temp", listOfTemp);
+
+            var listOfTuple = new List<(string name, List<string> list)>();
+            listOfTuple.Add(oneTuple);
+
+            Assert.DoesNotThrow(() => this.viewModel.MapParameterToVariable(listOfTuple, parameter));
+        }
+
+        [Test]
         public void VerifyMappedElements()
         {
             this.viewModel.Elements.AddRange(this.elementDefinitionRows);
             Assert.DoesNotThrow(() => this.viewModel.CreateMappedElements());
             Assert.IsEmpty(this.viewModel.MappedElements);
+        }
+
+        [Test]
+        public void VerifyParameters()
+        {
+            this.parameter1.Scale = this.measurementScale;
+            this.viewModel.Parameters = new ReactiveList<ParameterOrOverrideBase>();
+            var parameters = this.viewModel.Parameters;
+            this.viewModel.SelectedParameter = this.parameter1;
+            var selectedParameters = this.viewModel.Parameters;
+
+            this.viewModel.Elements = new ReactiveList<ElementDefinitionRowViewModel>
+            {
+                new ElementDefinitionRowViewModel(this.element0, this.domain, this.session.Object, null)
+            };
+
+            var element = this.viewModel.Elements;
+            var elementDef = this.viewModel.ElementDefinitions;
+            this.viewModel.SelectedElementDefinition = elementDef.FirstOrDefault();
+            var selectedElementDef = this.viewModel.SelectedElementDefinition;
+
+            this.viewModel.AvailableVariables = new ReactiveList<VariableBaseRowViewModel>();
+            var availableVariables = this.viewModel.AvailableVariables;
+            this.viewModel.ElementUsages = new ReactiveList<ElementUsage>();
+            var elementUsage = this.viewModel.ElementUsages;
+            Assert.IsEmpty(selectedParameters);
         }
 
         [Test]
@@ -618,7 +801,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNotEmpty(this.viewModel.Elements);
             Assert.IsEmpty(this.viewModel.Values);
             Assert.IsEmpty(this.viewModel.MappedElements);
-            Assert.AreEqual(3, this.viewModel.AvailableVariables.Count);
+            Assert.AreEqual(4, this.viewModel.AvailableVariables.Count);
             Assert.IsEmpty(this.viewModel.ElementUsages);
             Assert.IsNull(this.viewModel.SelectedElementUsage);
             Assert.IsNull(this.viewModel.SelectedElementDefinition);
@@ -632,7 +815,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Iid = Guid.NewGuid(),
                 ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
                 {
-                    Name = "a",
+                    Name = "Kettle[1]",
                     IndependentParameterType =
                     {
                         new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
@@ -665,9 +848,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             var empty = new ValueSetsToTableViewModel();
             var table = new ValueSetsToTableViewModel(parameter, this.option1, null);
-            var a = table.PublishedValueTable;
+            var publishedValue = table.PublishedValueTable;
             table.PublishedValueTable = new DataTable();
-            var b = table.ListOfTuple;
+            var listOfTuple = table.ListOfTuple;
             table.ListOfTuple = new EditableList<(string name, List<string> list)>();
         }
 
@@ -699,7 +882,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Iid = Guid.NewGuid(),
                 ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
                 {
-                    Name = "a",
+                    Name = "Kettle[1]",
                     IndependentParameterType =
                     {
                         new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
@@ -728,41 +911,43 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "21" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             var elementDefinition = new ElementDefinition(Guid.NewGuid(), null, null)
             {
                 Owner = this.domain,
                 ShortName = "Element"
             };
+
             elementDefinition.Parameter.Add(parameter);
 
             var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
             this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
             this.viewModel.SelectedMappedElement.SelectedParameter = parameter;
-            this.viewModel.SelectedAvailableVariables = array;
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            this.viewModel.SelectedVariable = array;
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
         }
 
         [Test]
         public void VerifyVerifyVariableTypesAreCompatible()
         {
             this.viewModel.SelectedMappedElement = null;
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
 
             var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
             this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
 
-            this.viewModel.SelectedAvailableVariables = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            this.viewModel.SelectedVariable = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
 
             this.viewModel.SelectedMappedElement.SelectedParameter = this.parameter1;
-            this.viewModel.SelectedAvailableVariables = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            this.viewModel.SelectedVariable = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
 
             this.parameter1.Scale = this.measurementScale;
             this.viewModel.SelectedMappedElement.SelectedParameter = this.parameter1;
-            this.viewModel.SelectedAvailableVariables = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            this.viewModel.SelectedVariable = (VariableRowViewModel) this.viewModel.AvailableVariables.First();
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
 
             this.statusBar.Verify(x => x.Append(It.IsAny<string>(), StatusBarMessageSeverity.Error), Times.Exactly(1));
         }
@@ -770,19 +955,40 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void VerifyVerifyVariableTypesAsArrayAreCompatible()
         {
+            this.viewModel.SelectedOption = this.option1;
+            this.viewModel.SelectedState = this.actualState1;
+
+            this.possibleStateList = new PossibleFiniteStateList(Guid.NewGuid(), null, null) { Name = "possibleStateList", ShortName = "possibleStateList" };
+
+            this.possibleState1 = new PossibleFiniteState(Guid.NewGuid(), null, null) { ShortName = "possibleState1", Name = "possibleState1" };
+
+            this.possibleStateList.PossibleState.Add(this.possibleState1);
+
+            this.actualStateList = new ActualFiniteStateList(Guid.NewGuid(), null, null);
+
+            this.actualStateList.PossibleFiniteStateList.Add(this.possibleStateList);
+
+            this.actualState1 = new ActualFiniteState(Guid.NewGuid(), null, null)
+            {
+                PossibleState = new List<PossibleFiniteState> { this.possibleState1 },
+                Kind = ActualFiniteStateKind.MANDATORY
+            };
+
+            this.actualStateList.ActualState.Add(this.actualState1);
+
             var listOfVariableRow = new List<VariableRowViewModel>
             {
                 new VariableRowViewModel((
                     new ReferenceDescription
                     {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[1]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
                     new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })),
                 new VariableRowViewModel((
                     new ReferenceDescription
                     {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[2]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
                     new DataValue { Value = 5, ServerTimestamp = DateTime.MinValue }))
@@ -795,7 +1001,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Iid = Guid.NewGuid(),
                 ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
                 {
-                    Name = "a",
+                    Name = "Kettle[1]",
                     IndependentParameterType =
                     {
                         new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
@@ -819,18 +1025,458 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 }
             };
 
+            this.parameter1.Scale = this.measurementScale;
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
+                ValueSwitch = ParameterSwitchKind.COMPUTED,
+                ActualOption = this.viewModel.SelectedOption,
+                ActualState = this.viewModel.SelectedState
             });
 
             var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
             this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
             this.viewModel.SelectedMappedElement.SelectedParameter = parameter;
-            this.viewModel.SelectedAvailableVariables = array;
+            this.viewModel.SelectedVariable = array;
             this.viewModel.Values = new ReactiveList<ValueSetValueRowViewModel>();
-            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesAreCompatible());
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
+        }
+        
+        [Test]
+        public void TestAreArraysCompatible_1x1()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[1x1]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_2x1()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[2x1]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+        
+        [Test]
+        public void TestAreArraysCompatible_1x2()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[1x2]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_3x2()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[3x2]", ServerTimestamp = DateTime.MinValue }));
+            
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible( variable,  parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_2x3()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[2x3]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        },new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Mass"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_3x3()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        },
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20", "21", "20", "19" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_3x3vs3x2()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20"}), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void TestAreArraysCompatible_3x3vs4x3()
+        {
+            var variable =
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                IsOptionDependent = false,
+                StateDependence = null,
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null) //columns
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        },
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20", "21", "20", "19", "21", "20", "19" }), //all values in all rows
+                ValueSwitch = ParameterSwitchKind.COMPUTED
+            });
+            this.element0.Parameter.Add(parameter);
+
+            Assert.IsFalse(this.viewModel.AreArraysCompatible(variable, parameter));
+        }
+
+        [Test]
+        public void SetDimensionlist()
+        {
+            var array = new ArrayVariableRowViewModel();
+            var enume = new List<string>() { "Syst[1]", "Syst[2]", "Syst[3]", "Syst[4]", "Syst[5]", };
+
+            array.SetDimension(enume);
+        }
+
+        [Test]
+        public void SetDimension_2x3()
+        {
+            var array = new ArrayVariableRowViewModel();
+            var enume = new List<string>() { "Syst[1,1]", "Syst[2,1]", "Syst[1,2]", "Syst[2,2]", "Syst[1,3]", "Syst[2,3]", };
+
+            array.SetDimension(enume);
+        }
+
+        [Test]
+        public void SetDimension_2x2x2()
+        {
+            var array = new ArrayVariableRowViewModel();
+            var enume = new List<string>() { "Syst[1,1,1]", "Syst[2,1,1]", "Syst[1,2,1]", "Syst[2,2,1]", "Syst[1,1,2]", "Syst[2,1,2]", "Syst[1,2,2]", "Syst[2,2,2]", };
+
+            array.SetDimension(enume);
         }
     }
 }

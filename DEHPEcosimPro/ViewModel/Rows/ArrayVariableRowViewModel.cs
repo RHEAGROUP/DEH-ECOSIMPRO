@@ -52,6 +52,22 @@ namespace DEHPEcosimPro.ViewModel.Rows
         private string name;
 
         /// <summary>
+        /// list of int that gave the maximum dimension of the array, like [3], [2x2], [2x2x3], ...
+        /// </summary>
+        public List<int> DimensionOfTheArray { get; set; } = new List<int>();
+
+        /// <summary>
+        /// Number of dimension of the array, 1 for a list, 2 for a table, 3 for x,y,x, etc
+        /// </summary>
+        public int Dimensions { get; set; }
+
+        /// <summary>
+        /// Constructor of <see cref="ArrayVariableRowViewModel" />
+        /// </summary>
+        public ArrayVariableRowViewModel()
+        { }
+
+        /// <summary>
         /// Constructor of <see cref="ArrayVariableRowViewModel" />
         /// </summary>
         /// <param name="key">indice of the array</param>
@@ -69,6 +85,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         public ReactiveList<VariableRowViewModel> Variables { get; set; } = new ReactiveList<VariableRowViewModel>();
 
+        /// <summary>
+        /// Is the array a table with multiple columns or is it a list (a table with only one column)
+        /// </summary>
         public bool IsList { get; private set; }
 
         /// <summary>
@@ -86,15 +105,16 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <returns>string presented like [AxB]</returns>
         private string GetDimension()
         {
-            var arrayName = this.Variables.Select(x => x.Name);
+            var arrayName = this.Variables.Select(x => x.Name).ToList();
 
-            if (arrayName != null)
+            if (arrayName.Count() != 0)
             {
-                var isDimension = this.SetDimension(arrayName, out var result);
+                var isDimension = this.SetDimension(arrayName);
 
                 if (isDimension)
                 {
-                    return result;
+                    this.IsList = this.DimensionOfTheArray.Count == 1 ;
+                    return "[" + string.Join("x", this.DimensionOfTheArray) + "]" ;
                 }
             }
 
@@ -105,53 +125,36 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// If the Variable row is an array, return the dimension of the array
         /// </summary>
         /// <param name="arrayName">list of name of the data, should have [x] or [x,y]</param>
-        /// <param name="result">a string of the dimension, like [AxB]</param>
-        /// <returns></returns>
-        private bool SetDimension(IEnumerable<string> arrayName, out string result)
+        /// <returns>the variable is an array</returns>
+        public bool SetDimension(List<string> arrayName)
         {
-            if (arrayName.FirstOrDefault().Contains('['))
+            if (arrayName.FirstOrDefault() != null && arrayName.FirstOrDefault().Contains('['))
             {
-                var rowMax = 0;
-                var colMax = 0;
+                var dim1 = arrayName.FirstOrDefault().Split('[', ']').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                dim1.RemoveAt(0);
+                var dim2 = dim1[0].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                
+                foreach (var dim in dim2)
+                {
+                    this.DimensionOfTheArray.Add(0);
+                }
+
+                this.Dimensions = this.DimensionOfTheArray.Count;
 
                 foreach (var variable in arrayName)
                 {
-                    var splitedName = variable.Split('[', ']');
+                    var isArray = this.GetIndexFromName(variable);
 
-                    var numberAsString = splitedName.Length != 2 && splitedName.Length >= 1
-                        ? splitedName[1]
-                        : null;
-
-                    var isArray = numberAsString?.Length >= 1
-                        ? numberAsString.Split(',')
-                        : null;
-
-                    if (isArray != null && isArray.Length == 1)
+                    if (isArray != null && isArray.Length >= 1)
                     {
-                        colMax = 1;
-
-                        rowMax = this.IsMax(rowMax, isArray[0]);
-                    }
-                    else if (isArray != null && isArray.Length > 1)
-                    {
-                        rowMax = this.IsMax(rowMax, isArray[0]);
-                        colMax = this.IsMax(colMax, isArray[1]);
+                        for(var i = 0; i < isArray.Length; i++)
+                        {
+                            this.DimensionOfTheArray[i] = this.IsMax(this.DimensionOfTheArray[i], isArray[i]);
+                        }
                     }
                 }
-
-                if (colMax == 1)
-                {
-                    this.IsList = true;
-                }
-
-                if (rowMax > 0 && colMax > 0)
-                {
-                    result = $"[{rowMax}x{colMax}]";
-                    return true;
-                }
+                return true;
             }
-
-            result = "";
             return false;
         }
 
@@ -174,8 +177,29 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             foreach (var row in this.Variables)
             {
-                row.Name = this.GetDimension();
+                row.SetArrayIndexAndName(row.Name);
+                row.Name = "[" + string.Join("x", row.IndexOfThisRow) + "]";
             }
+        }
+
+        /// <summary>
+        /// Get the rows and column from the variable name
+        /// </summary>
+        /// <param name="variable">variable name as Syst[x] or Syst[x,y]</param>
+        /// <returns>a list of string with number as the rows and columns</returns>
+        private string[] GetIndexFromName(string variable)
+        {
+
+            var splitedName = variable.Split('[', ']').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            splitedName.RemoveAt(0);
+
+            var numberAsString = splitedName.Count >= 1
+                ? splitedName[0]
+                : null;
+
+            return numberAsString?.Length >= 1
+                ? numberAsString.Split(',')
+                : null;
         }
     }
 }

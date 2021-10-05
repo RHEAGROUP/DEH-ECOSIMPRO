@@ -54,6 +54,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
     using ReactiveUI;
 
+    using Splat;
+
     /// <summary>
     /// The <see cref="HubMappingConfigurationDialogViewModel"/> is the view model to let the user configure the mapping to the Ecosim source
     /// </summary>
@@ -62,33 +64,35 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// The <see cref="INavigationService" />
         /// </summary>
-        private readonly INavigationService navigation;
-        
-        /// <summary>
-        /// </summary>
-        public ChooseMappingColumnsViewModel ListOfRowsToMap { get; set; } = new ChooseMappingColumnsViewModel();
+        private readonly INavigationService navigationService;
 
         /// <summary>
-        /// 
+        /// View Model of the Dialog <see cref="ChooseMappingColumnsViewModel"/>
+        /// </summary>
+        public ChooseMappingColumnsViewModel ParameterColumnToMapOnVariable { get; set; } = new ChooseMappingColumnsViewModel();
+
+        /// <summary>
+        /// Get the Selected Option of the parameter
         /// </summary>
         public Option SelectedOption { get; set; }
 
         /// <summary>
-        /// 
+        /// Get the Selected State of the parameter
         /// </summary>
         public ActualFiniteState SelectedState { get; set; }
 
         /// <summary>
+        /// Gets or sets the collection of available variables
         /// </summary>
-        private VariableBaseRowViewModel selectedAvailableVariables;
+        private VariableBaseRowViewModel selectedVariable;
 
         /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
-        public VariableBaseRowViewModel SelectedAvailableVariables
+        public VariableBaseRowViewModel SelectedVariable
         {
-            get => this.selectedAvailableVariables;
-            set => this.RaiseAndSetIfChanged(ref this.selectedAvailableVariables, value);
+            get => this.selectedVariable;
+            set => this.RaiseAndSetIfChanged(ref this.selectedVariable, value);
         }
 
         /// <summary>
@@ -202,7 +206,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private bool canContinue;
 
-        private IStatusBarControlViewModel statusBar;
+        /// <summary>
+        /// The <see cref="IStatusBarControlViewModel" />
+        /// </summary>
+        private IStatusBarControlViewModel statusBarService;
 
         /// <summary>
         /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
@@ -218,13 +225,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="statusBarService">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="navigationService">The <see cref="INavigationService" /></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
-            IDstController dstController, IStatusBarControlViewModel statusBar, IMappingConfigurationService mappingService, INavigationService navigation) :
-            base(hubController, dstController, statusBar)
+            IDstController dstController, IStatusBarControlViewModel statusBarService, INavigationService navigationService) :
+            base(hubController, dstController, statusBarService)
         {
-            this.navigation = navigation;
-            this.statusBar = statusBar;
+            this.navigationService = navigationService;
+            this.statusBarService = statusBarService;
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
         }
@@ -243,7 +251,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                         this.MappedElements.Where(x => x.IsValid).ToList();
 
                     this.DstController.Map(mappedElement);
-                    this.StatusBar.Append($"Mapping in progress of {mappedElement.Count} value(s)...");
+                    this.statusBarService.Append($"Mapping in progress of {mappedElement.Count} value(s)...");
                 }));
             this.WhenAnyValue(x => x.Elements)
                 .ObserveOn(RxApp.MainThreadScheduler)
@@ -257,7 +265,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.SelectedParameterChanged));
 
-            this.WhenAnyValue(x => x.SelectedAvailableVariables)
+            this.WhenAnyValue(x => x.SelectedVariable)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.SelectedAvailableVariablesChanged));
 
@@ -324,15 +332,17 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>
-        public void AreVariableTypesAreCompatible()
+        public void AreVariableTypesCompatible()
         {
-            if (!(this.SelectedAvailableVariables is {} variable && this.SelectedMappedElement?.SelectedParameter is {} parameter))
+            if (!(this.SelectedVariable is {} variable && this.SelectedMappedElement?.SelectedParameter is {} parameter))
             {
                 return;
             }
-            
-            ValidationResult validationResult;
-            validationResult.Message = string.Empty;
+
+            var validationResult = new ValidationResult
+            {
+                Message = string.Empty
+            };
 
             if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType)
             {
@@ -341,9 +351,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
                 if (areArraysCompatible && variable is ArrayVariableRowViewModel array)
                 {
-                    this.ListOfRowsToMap = new ChooseMappingColumnsViewModel(array, parameter);
+                    this.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel(array, parameter);
                     var table = new ValueSetsToTableViewModel(parameter, this.SelectedOption, this.SelectedState);
-                    userSelectecValue = this.navigation.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ListOfRowsToMap);
+                    userSelectecValue = this.navigationService.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ParameterColumnToMapOnVariable);
 
                     if (userSelectecValue == true)
                     {
@@ -353,23 +363,23 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 else
                 {
                     //not compatible, show error to user
+                    this.statusBarService.Append("You can't map these data together", StatusBarMessageSeverity.Warning);
                 }
 
                 validationResult.ResultKind = userSelectecValue == true && areArraysCompatible
                     ? ValidationResultKind.Valid
                     : ValidationResultKind.Invalid;
-                 
             }
             else
             {
                 validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
-                this.SelectedMappedElement.SelectedVariable = (VariableRowViewModel) this.SelectedAvailableVariables;
+                this.SelectedMappedElement.SelectedVariable = (VariableRowViewModel) this.SelectedVariable;
                 this.SelectedMappedElement.VerifyValidity();
             }
 
             if (validationResult.ResultKind != ValidationResultKind.Valid)
             {
-                this.StatusBar.Append(
+                this.statusBarService.Append(
                     $"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}",
                     StatusBarMessageSeverity.Error);
 
@@ -409,9 +419,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterState.Thing.Iid);
                         }
 
-                        if (this.SelectedAvailableVariables != null)
+                        if (this.SelectedVariable != null)
                         {
-                            this.AreVariableTypesAreCompatible();
+                            this.AreVariableTypesCompatible();
                         }
 
                         break;
@@ -420,6 +430,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     {
                         this.SelectedOption = parameterOption.ActualOption;
                         this.SelectedState = parameterOption.ActualState;
+
                         this.SelectedMappedElement = this.MappedElements
                             .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOption.Thing.Iid);
 
@@ -431,9 +442,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOption.Thing.Iid);
                         }
 
-                        if (this.SelectedAvailableVariables != null)
+                        if (this.SelectedVariable != null)
                         {
-                            this.AreVariableTypesAreCompatible();
+                            this.AreVariableTypesCompatible();
                         }
 
                         break;
@@ -442,9 +453,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     {
                         this.SelectedMappedElement = this.MappedElements
                             .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOrOverrideRow.Thing.Iid);
+
                         if (this.SelectedMappedElement == null)
                         {
-                            this.MappedElements.Add(this.CreateMappedElement((ParameterOrOverrideBase) parameterOrOverrideRow.Thing));
+                            this.MappedElements.Add(this.CreateMappedElement(parameterOrOverrideRow.Thing));
 
                             this.SelectedMappedElement = this.MappedElements
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOrOverrideRow.Thing.Iid);
@@ -454,7 +466,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                         {
                             this.ComputesAvailableValues();
                         }
-                        this.SelectedMappedElement.SelectedValue = this.Values.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Value) && x.Value != "-") ?? this.Values.First();
+
+                        this.SelectedMappedElement.SelectedValue = this.SelectedMappedElement != null
+                                 ? this.Values.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Value) && x.Value != "-") : this.Values.First();
                         break;
                     }
                 default:
@@ -528,19 +542,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 }
                 this.CheckCanExecute();
             }
-            //foreach (var thing in this.ElementDefinitions.SelectMany(x => x.Parameter))
-            //{
-            //    this.MappedElements.Add(this.CreateMappedElement(thing));
-            //}
-
-            //foreach (var parameterOverride in this.ElementDefinitions
-            //    .SelectMany(x => x.ReferencingElementUsages()
-            //        .SelectMany(p => p.ParameterOverride)))
-            //{
-            //    this.MappedElements.Add(this.CreateMappedElement(parameterOverride));
-            //}
-
-            //this.CheckCanExecute();
         }
 
         /// <summary>
@@ -596,9 +597,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     return new VariableRowViewModel((reference, this.DstController.ReadNode(x.Reference)));
                 }));
 
-            var grouby = arrayVariables.GroupBy(x => this.GetNameFromArrayReference(x.Reference));
+            var groupingOfReferencesFromVariables = arrayVariables.GroupBy(x => this.GetNameFromArrayReference(x.Reference));
 
-            foreach (var arrayVariablesGrouped in grouby)
+            foreach (var arrayVariablesGrouped in groupingOfReferencesFromVariables)
             {
                 if (arrayVariablesGrouped.Key == null)
                 {
@@ -628,16 +629,18 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
+        /// Invoked when the <see cref="SelectedVariable"/> has changed
         /// </summary>
         public void SelectedAvailableVariablesChanged()
         {
-            this.AreVariableTypesAreCompatible();
+            this.AreVariableTypesCompatible();
         }
 
         /// <summary>
+        /// Take a name of thing and trim the brackets and index
         /// </summary>
         /// <param name="reference"></param>
-        /// <returns></returns>
+        /// <returns>a name without the index of the data</returns>
         private string GetNameFromArrayReference(ReferenceDescription reference)
         {
             var splitedName = reference.BrowseName.Name.Split('[', ']');
@@ -656,40 +659,25 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// 
+        /// Compre the rows of the arays and if they are the same, arrays are comptabible
         /// </summary>
-        /// <param name="variable"></param>
-        /// <param name="parameter"></param>
-        /// <param name="compatibilityOfColumns"></param>
-        /// <returns></returns>
-        private bool AreArraysCompatible(VariableBaseRowViewModel variable, ParameterOrOverrideBase parameter)
+        /// <param name="variable">variable to map to</param>
+        /// <param name="parameter">parameter to map from</param>
+        /// <returns>arrays' row are comptatible or not</returns>
+        public bool AreArraysCompatible(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
         {
-            var rowsAndColumnsOfVariable = variable.ActualValue.ToString().Split('[', 'x', ']');
-
             var columnsOfParameter = parameter.ParameterType.NumberOfValues;
 
             var columnByRowsOfParameter = parameter.QueryParameterBaseValueSet
                 (this.SelectedOption, this.SelectedState).ActualValue.Count ;
 
-            string rowsOfVariable = "", columnsOfVariable = "";
-
-            if (rowsAndColumnsOfVariable.Length >= 2)
-            {
-                rowsOfVariable = rowsAndColumnsOfVariable[1];
-                columnsOfVariable = rowsAndColumnsOfVariable[2];
-            }
-            else
-            {
-                return false;
-            }
-
-            var isNumberOfRowsOfVariable = int.TryParse(rowsOfVariable, out var numberOfRowsOfVariable);
-
             var numberOfRowsOfParameter = columnByRowsOfParameter / columnsOfParameter;
 
-            bool areRowsCompatibles = false ; 
+            var numberOfRowsOfVariable = variable.DimensionOfTheArray.First();
 
-            if (isNumberOfRowsOfVariable && numberOfRowsOfParameter != 0 && numberOfRowsOfVariable != 0)
+            var areRowsCompatibles = false ; 
+
+            if (numberOfRowsOfParameter != 0 && numberOfRowsOfVariable != 0)
             {
                 areRowsCompatibles = numberOfRowsOfParameter == numberOfRowsOfVariable;
             }
@@ -698,14 +686,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// 
+        /// From the dialog where the User chhosed the columns to map, we assign the values to the corresponding variables
         /// </summary>
-        /// <param name="tableListOfTuple"></param>
-        /// <param name="parameter"></param>
-        private void MapParameterToVariable(List<(string name, List<string> list)> tableListOfTuple, ParameterOrOverrideBase parameter)
+        /// <param name="tableListOfTuple">Tuples that contain the name of the column and the datas of the column of the variable</param>
+        /// <param name="parameter">parameter to map on variable</param>
+        public void MapParameterToVariable(List<(string name, List<string> list)> tableListOfTuple, ParameterOrOverrideBase parameter)
         {
-            var lisOfMappedElement = new List<MappedElementDefinitionRowViewModel>();
-            var variableName = this.ListOfRowsToMap.VariableName;
+            var variableName = this.ParameterColumnToMapOnVariable.VariableName;
 
             var listOfValueByRowsAndColumns = this.DstController.Variables
                 .Where(x => this.DstController.IsVariableWritable(x.Reference)
@@ -716,71 +703,42 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 var (reference, _) = x;
                 return new VariableRowViewModel((reference, this.DstController.ReadNode(x.Reference)));
             }).ToList();
-            for (int i = 0; i < listOfVariableRowViewModel.Count(); i++)
-            {
-                foreach (var parameterChoosen in this.ListOfRowsToMap.ListOfVariableToMap)
-                {
-                    this.GetRowAndColumnNumberFromName(listOfVariableRowViewModel[i].Name, out int rowNumber, out int colNumber);
-                    
-                    if (parameterChoosen.SelectedColumnMatched != null && (colNumber == 0 || parameterChoosen.Index.Contains(colNumber.ToString())))
-                    {
-                        var columnOfParameter = parameterChoosen.SelectedColumnMatched;
-                        var colData = tableListOfTuple.FirstOrDefault(x => x.name == columnOfParameter);
 
-                        var variableRowViewModel = listOfVariableRowViewModel.FirstOrDefault(x => x.Name == listOfVariableRowViewModel[i].Name);
+            foreach (var parameterChoosen in this.ParameterColumnToMapOnVariable.ListOfVariableToMap) 
+            {
+                if (parameterChoosen.SelectedColumnMatched != null) 
+                {
+                    var colNumber = parameterChoosen.Index.Substring(1);
+                    colNumber = colNumber.TrimEnd(colNumber[colNumber.Length - 1]); 
+
+                    if (this.ParameterColumnToMapOnVariable.ListOfVariableToMap.Count > 1)
+                    {
+                        colNumber = "," + colNumber;
+                    }
+                    var variablesChoosen = listOfVariableRowViewModel.Where(x => x.Name
+                        .Contains(colNumber));
+
+                    foreach (var variableChoosen in variablesChoosen)
+                    {
+                        var data = tableListOfTuple.FirstOrDefault(x => x.name == parameterChoosen.SelectedColumnMatched);
+
+                        var rowNumberMinusOne = int.Parse(variableChoosen.IndexOfThisRow[0]) - 1;
 
                         var element = new MappedElementDefinitionRowViewModel()
                         {
                             SelectedParameter = parameter,
-                            SelectedValue = new ValueSetValueRowViewModel(parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState), colData.list[rowNumber - 1], null),
-                            SelectedVariable = variableRowViewModel,
+                            SelectedValue = new ValueSetValueRowViewModel(parameter.QueryParameterBaseValueSet
+                                (this.SelectedOption, this.SelectedState), data.list[rowNumberMinusOne], null),
+                            SelectedVariable = variableChoosen,
                         };
 
                         element.VerifyValidity();
 
                         if (element.IsValid)
                         {
-                            lisOfMappedElement.Add(element);
                             this.MappedElements.Add(element);
                         }
-
                     }
-                    var result = lisOfMappedElement.Select(x => x.SelectedVariable.Name).ToList();
-                }
-
-            }
-        }
-
-        /// <summary>
-        /// Get as a number the row and the colomn out of the name
-        /// </summary>
-        /// <param name="name">name of a value, should include [x] or [x,y]</param>
-        /// <param name="rowNumber">the row of the value</param>
-        /// <param name="colNumber">the column of the value</param>
-        private void GetRowAndColumnNumberFromName(string name, out int rowNumber, out int colNumber)
-        {
-            rowNumber = 0;
-            colNumber = 0;
-
-            var splitedName = name.Split('[', ']');
-
-            var numbersStripped = splitedName.Length != 2 && splitedName.Length >= 1
-                ? splitedName[1]
-                : null;
-
-            var array = numbersStripped?.Length >= 1
-                ? numbersStripped.Split(',')
-                : null;
-            
-            if (array != null )
-            {
-                var isNumberRow = int.TryParse(array[0], out int numberRow);
-                rowNumber = isNumberRow && numberRow > rowNumber ? numberRow : rowNumber;
-
-                if (array.Length > 1)
-                {
-                    var isNumberCol = int.TryParse(array[1], out int numberCol);
-                    colNumber = isNumberCol && numberCol > colNumber ? numberCol : colNumber;
                 }
             }
         }

@@ -85,34 +85,22 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         /// <param name="list">list of variable </param>
         /// <param name="isList">is the array a table with only one column, so a list ? like data[x] and not value[x,y]</param>
-        /// <returns>a string like [x] that represent the index of the column we want to map</returns>
+        /// <returns>a string like [x] or [x,y] that represent the index of the column we want to map</returns>
         private string GetIndexOfRow(List<VariableRowViewModel> list, bool isList = false)
         {
-            if (isList)
+            var firstVariable = list.FirstOrDefault();
+            if (isList || (firstVariable != null && firstVariable.IndexOfThisRow.Count == 1))
             {
                 return "[1]";
             }
-
-            if (list.FirstOrDefault().Name.Contains('['))
+            
+            if (firstVariable != null && firstVariable.IndexOfThisRow.Count > 1)
             {
-                var colMax = 0;
-
-                foreach (var variable in list)
-                {
-                    var splitedName = variable.Name.Split('[', ',', ']');
-
-                    if (splitedName.Length >= 3)
-                    {
-                        var num = splitedName.Length - 2;
-                        var isNumberRow = int.TryParse(splitedName[num], out var numberRow);
-                        colMax = isNumberRow && numberRow > colMax ? numberRow : colMax;
-                    }
-                }
-
-                if (colMax > 0)
-                {
-                    return $"[{colMax}]";
-                }
+                var copyOfList = new string[firstVariable.IndexOfThisRow.Count];
+                firstVariable.IndexOfThisRow.CopyTo(copyOfList);
+                var trimedList = copyOfList.ToList();
+                trimedList.RemoveAt(0);
+                return "[" + string.Join(",", trimedList) + "]";
             }
 
             return "";
