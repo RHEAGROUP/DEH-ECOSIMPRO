@@ -1046,14 +1046,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_1x1()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[1x1]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 1,1}
+            };
 
             var parameter = new Parameter
             {
@@ -1087,14 +1084,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_2x1()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[2x1]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 2, 1 }
+            };
 
             var parameter = new Parameter
             {
@@ -1128,14 +1122,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_1x2()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[1x2]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 1, 2 }
+            };
 
             var parameter = new Parameter
             {
@@ -1179,14 +1170,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_3x2()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[3x2]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 3, 2 }
+            };
             
             var parameter = new Parameter
             {
@@ -1230,14 +1218,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_2x3()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[2x3]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 2, 3 }
+            };
 
             var parameter = new Parameter
             {
@@ -1287,14 +1272,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_3x3()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 3, 3 }
+            };
 
             var parameter = new Parameter
             {
@@ -1345,14 +1327,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_3x3vs3x2()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 3, 3 }
+            };
 
             var parameter = new Parameter
             {
@@ -1396,14 +1375,11 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         [Test]
         public void TestAreArraysCompatible_3x3vs4x3()
         {
-            var variable =
-                new VariableRowViewModel((
-                    new ReferenceDescription
-                    {
-                        DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                        NodeId = new NodeId(Guid.NewGuid())
-                    },
-                    new DataValue { Value = "[3x3]", ServerTimestamp = DateTime.MinValue }));
+            var variable = new ArrayVariableRowViewModel()
+            {
+                Name = "Mos.a",
+                DimensionOfTheArray = new List<int>() { 3, 3 }
+            };
 
             var parameter = new Parameter
             {
