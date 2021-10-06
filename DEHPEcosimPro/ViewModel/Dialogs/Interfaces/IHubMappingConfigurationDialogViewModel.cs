@@ -58,11 +58,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         ReactiveList<ElementDefinition> ElementDefinitions { get; }
 
         /// <summary>
-        /// Gets or sets the collection of <see cref="ElementDefinition"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ElementUsage> ElementUsages { get; set; }
-
-        /// <summary>
         /// Gets or sets the collection of <see cref="Parameter"/> that hold parameter value to map
         /// </summary>
         ReactiveList<ParameterOrOverrideBase> Parameters { get; set; }

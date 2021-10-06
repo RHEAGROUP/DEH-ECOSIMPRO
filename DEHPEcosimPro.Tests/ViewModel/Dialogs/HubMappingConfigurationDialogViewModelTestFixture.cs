@@ -788,8 +788,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             this.viewModel.AvailableVariables = new ReactiveList<VariableBaseRowViewModel>();
             var availableVariables = this.viewModel.AvailableVariables;
-            this.viewModel.ElementUsages = new ReactiveList<ElementUsage>();
-            var elementUsage = this.viewModel.ElementUsages;
             Assert.IsEmpty(selectedParameters);
         }
 
@@ -802,8 +800,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsEmpty(this.viewModel.Values);
             Assert.IsEmpty(this.viewModel.MappedElements);
             Assert.AreEqual(4, this.viewModel.AvailableVariables.Count);
-            Assert.IsEmpty(this.viewModel.ElementUsages);
-            Assert.IsNull(this.viewModel.SelectedElementUsage);
             Assert.IsNull(this.viewModel.SelectedElementDefinition);
         }
 
@@ -1435,6 +1431,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1]", "Syst[2]", "Syst[3]", "Syst[4]", "Syst[5]", };
 
             array.SetDimension(enume);
+            Assert.AreEqual(array.DimensionOfTheArray.Count, 1); 
         }
 
         [Test]
@@ -1444,6 +1441,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1,1]", "Syst[2,1]", "Syst[1,2]", "Syst[2,2]", "Syst[1,3]", "Syst[2,3]", };
 
             array.SetDimension(enume);
+            Assert.AreEqual(array.DimensionOfTheArray.Count, 2);
         }
 
         [Test]
@@ -1453,6 +1451,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1,1,1]", "Syst[2,1,1]", "Syst[1,2,1]", "Syst[2,2,1]", "Syst[1,1,2]", "Syst[2,1,2]", "Syst[1,2,2]", "Syst[2,2,2]", };
 
             array.SetDimension(enume);
+            Assert.AreEqual(array.DimensionOfTheArray.Count, 3);
         }
     }
 }
