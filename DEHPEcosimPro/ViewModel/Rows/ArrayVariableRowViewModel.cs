@@ -37,14 +37,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
     public class ArrayVariableRowViewModel : VariableBaseRowViewModel
     {
         /// <summary>
-        /// The represented <see cref="ReferenceDescription" /> corresponding <see cref="DataValue" />
-        /// </summary>
-        private readonly DataValue data;
-
-        /// <summary>
         /// The represented <see cref="ReferenceDescription" />
         /// </summary>
-        public readonly ReferenceDescription Reference;
+        private readonly ReferenceDescription Reference;
 
         /// <summary>
         /// Backing field for <see cref="Name" />
@@ -70,7 +65,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Constructor of <see cref="ArrayVariableRowViewModel" />
         /// </summary>
-        /// <param name="key">indice of the array</param>
+        /// <param name="key">key of the grouping, correspond to the name of the variable</param>
         /// <param name="enumerable">list of <see cref="VariableRowViewModel" /> to add</param>
         public ArrayVariableRowViewModel(string key, IEnumerable<VariableRowViewModel> enumerable)
         {

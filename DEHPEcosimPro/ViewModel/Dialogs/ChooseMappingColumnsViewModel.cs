@@ -22,7 +22,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace DEHPEcosimPro.ViewModel.Rows
+namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -32,6 +32,8 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+
+    using DEHPEcosimPro.ViewModel.Rows;
 
     using DevExpress.Mvvm.Native;
 

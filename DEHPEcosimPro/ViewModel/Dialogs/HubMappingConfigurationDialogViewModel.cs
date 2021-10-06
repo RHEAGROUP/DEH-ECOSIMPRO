@@ -26,7 +26,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -47,8 +46,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
-
-    using DevExpress.Data.Helpers;
 
     using Opc.Ua;
 
@@ -112,11 +109,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             new ReactiveList<ElementDefinition>(this.Elements.Select(x => x.Thing));
 
         /// <summary>
-        /// Gets or sets the collection of <see cref="ElementUsages"/> that hold parameter value to map
-        /// </summary>
-        public ReactiveList<ElementUsage> ElementUsages { get; set; } = new ReactiveList<ElementUsage>();
-
-        /// <summary>
         /// Gets or sets the collection of <see cref="Parameter"/> that hold parameter value to map
         /// </summary>
         public ReactiveList<ParameterOrOverrideBase> Parameters { get; set; } = new ReactiveList<ParameterOrOverrideBase>();
@@ -171,20 +163,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             get => this.selectedParameter;
             set => this.RaiseAndSetIfChanged(ref this.selectedParameter, value);
-        }
-
-        /// <summary>
-        /// Backing field for <see cref="SelectedElementUsage"/>
-        /// </summary>
-        private ElementUsage selectedElementUsage;
-
-        /// <summary>
-        /// Gets or sets the source <see cref="ElementDefinition"/>
-        /// </summary>
-        public ElementUsage SelectedElementUsage
-        {
-            get => this.selectedElementUsage;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementUsage, value);
         }
 
         /// <summary>
@@ -276,7 +254,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.WhenAnyValue(x => x.SelectedThing)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.SelectedThingChanged));
-
         }
 
         /// <summary>
@@ -290,7 +267,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             }
 
             this.SelectedElementDefinition = this.SelectedMappedElement.SelectedParameter?.GetContainerOfType<ElementDefinition>();
-            this.SelectedElementUsage = this.SelectedMappedElement.SelectedParameter?.GetContainerOfType<ElementUsage>();
 
             this.ComputesAvailableValues();
         }
@@ -314,19 +290,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedElementUsage?.ElementDefinition.Iid != this.SelectedElementDefinition?.Iid)
-            {
-                this.ElementUsages.Clear();
-                this.ElementUsages.AddRange(this.SelectedElementDefinition.ReferencingElementUsages());
-            }
-
             this.Parameters.Clear();
             this.Parameters.AddRange(this.SelectedElementDefinition.Parameter);
-
-            if (this.SelectedElementUsage?.ParameterOverride is {} parameterOverrides)
-            {
-                this.Parameters.AddRange(parameterOverrides);
-            }
         }
 
         /// <summary>
@@ -367,7 +332,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 }
                 else
                 {
-                    //not compatible, show error to user
                     this.statusBarService.Append("You can't map these data together", StatusBarMessageSeverity.Warning);
                 }
 
@@ -401,13 +365,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             switch (this.SelectedThing)
             {
-                case IRowViewModelBase<ElementDefinition> elementDefinition:
-                    {
-                        this.SelectedElementDefinition = elementDefinition.Thing; 
-                        var a = this.Values.Where(x => !string.IsNullOrWhiteSpace(x.Value) && x.Value != "-");
-                        this.SelectedMappedElement.SelectedValue = a != null ? a.FirstOrDefault() : null ;
-                        break;
-                    }
                 case ParameterStateRowViewModel parameterState:
                     {
                         this.SelectedOption = parameterState.ActualOption;
@@ -534,7 +491,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Creates all <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>
+        /// Creates all <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>. Use to add the already saved mapping.
         /// </summary>
         public void CreateMappedElements()
         {
@@ -650,17 +607,19 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             var splitedName = reference.BrowseName.Name.Split('[', ']');
 
-            if (splitedName.Length >= 1 && splitedName.Length <= 2)
+            switch (splitedName.Length)
             {
-                return splitedName[0];
+                case int n when n is 1 || n is 2:
+                    {
+                    return splitedName[0];
+                }
+                case int n when n >= 3:
+                {
+                    return splitedName[0] + splitedName[2];
+                }
+                default:
+                    return null;
             }
-
-            if (splitedName.Length > 2)
-            {
-                return splitedName[0] + splitedName[2];
-            }
-
-            return null;
         }
 
         /// <summary>
