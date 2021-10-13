@@ -309,7 +309,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 Message = string.Empty
             };
 
-            if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType)
+            if (this.SelectedVariable is ArrayVariableRowViewModel && !(parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameter))
+            {
+                validationResult.ResultKind = ValidationResultKind.Invalid;
+            }
+            else if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType)
             {
                 bool? userSelectecValue = false;
                 var areArraysCompatible = false;
@@ -342,6 +346,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             else
             {
                 validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
+                this.SelectedMappedElement.SelectedParameter = parameter;
                 this.SelectedMappedElement.SelectedVariable = (VariableRowViewModel) this.SelectedVariable;
                 this.SelectedMappedElement.VerifyValidity();
             }
@@ -355,6 +360,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.SelectedMappedElement.SelectedVariable = null;
             }
 
+            this.SelectedParameter = null;
+            this.SelectedVariable = null;
             this.CheckCanExecute();
         }
 
@@ -380,6 +387,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                             this.SelectedMappedElement = this.MappedElements
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterState.Thing.Iid);
                         }
+                        this.SelectedMappedElement.SelectedParameter = (ParameterOrOverrideBase)parameterState.Thing;
 
                         if (this.SelectedVariable != null)
                         {
@@ -403,6 +411,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                             this.SelectedMappedElement = this.MappedElements
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOption.Thing.Iid);
                         }
+                        this.SelectedMappedElement.SelectedParameter = (ParameterOrOverrideBase)parameterOption.Thing;
 
                         if (this.SelectedVariable != null)
                         {
@@ -424,13 +433,10 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                                 .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOrOverrideRow.Thing.Iid);
                         }
 
-                        if (this.Values.Count == 0)
-                        {
-                            this.ComputesAvailableValues();
-                        }
+                        this.SelectedMappedElement.SelectedParameter = parameterOrOverrideRow.Thing;
 
-                        this.SelectedMappedElement.SelectedValue = this.SelectedMappedElement != null
-                                 ? this.Values.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Value) && x.Value != "-") : this.Values.First();
+                        this.ComputesAvailableValues();
+                        
                         break;
                     }
                 default:
@@ -495,12 +501,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         public void CreateMappedElements()
         {
-            if (this.DstController.HubMapResult != null)
+            if (this.DstController.HubMapResult != null) 
             {
                 foreach (var element in this.DstController.HubMapResult)
                 {
-                    element.VerifyValidity();
-                    this.MappedElements.Add(element);
+                    if (this.Elements.Any(y => element.SelectedParameter.ModelCode().Contains(y.ModelCode))
+                    && this.MappedElements.All(x => x != element))
+                    {
+                        element.VerifyValidity();
+                        this.MappedElements.Add(element);
+                    }
                 }
                 this.CheckCanExecute();
             }
@@ -514,11 +524,24 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <returns>A new <see cref="MappedElementDefinitionRowViewModel"/></returns>
         private MappedElementDefinitionRowViewModel CreateMappedElement(ParameterOrOverrideBase thing)
         {
-            var selectedElement = this.DstController.HubMapResult
+            var selectedElement = new MappedElementDefinitionRowViewModel();
+            if (this.DstController.HubMapResult
                     .FirstOrDefault(x => x.SelectedParameter.Iid == thing.Iid)
-                is { } existinMappedElement
-                ? existinMappedElement
-                : new MappedElementDefinitionRowViewModel() { SelectedParameter = thing };
+                is { } existinMappedElement)
+            {
+                selectedElement = existinMappedElement;
+            }
+            else
+            {
+                var selectedValue = thing.ParameterType is SampledFunctionParameterType
+                    ? null
+                    : thing.ValueSets.SelectMany(x => this.ComputesValueRow(x, x.ActualValue, null)).FirstOrDefault();
+                selectedElement = new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = thing,
+                    SelectedValue = selectedValue
+                };
+            }
 
             selectedElement.WhenAnyValue(x => x.IsValid).Subscribe(_ => this.CheckCanExecute());
             return selectedElement;
@@ -656,6 +679,8 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="parameter">parameter to map on variable</param>
         public void MapParameterToVariable(List<(string name, List<string> list)> tableListOfTuple, ParameterOrOverrideBase parameter)
         {
+            this.MappedElements.Remove(this.MappedElements.FirstOrDefault(x => x.SelectedParameter == parameter));
+
             var variableName = this.ParameterColumnToMapOnVariable.VariableName;
 
             var listOfValueByRowsAndColumns = this.DstController.Variables
