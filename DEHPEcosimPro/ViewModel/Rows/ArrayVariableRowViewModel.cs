@@ -37,11 +37,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
     public class ArrayVariableRowViewModel : VariableBaseRowViewModel
     {
         /// <summary>
-        /// The represented <see cref="ReferenceDescription" />
-        /// </summary>
-        private readonly ReferenceDescription Reference;
-
-        /// <summary>
         /// Backing field for <see cref="Name" />
         /// </summary>
         private string name;
@@ -102,7 +97,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             var arrayName = this.Variables.Select(x => x.Name).ToList();
 
-            if (arrayName.Count() != 0)
+            if (arrayName.Count != 0)
             {
                 var isDimension = this.SetDimension(arrayName);
 

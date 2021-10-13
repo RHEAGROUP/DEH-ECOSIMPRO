@@ -614,8 +614,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue })) { IndexOfThisRow = new  List<string>(){"1","2" } } 
             };
 
-            var choosingRowEmpty = new ChooseMappingRowsViewModel();
-            var choosingRow = new ChooseMappingRowsViewModel(listOfVariableRow);
+            Assert.IsNotNull(new ChooseMappingRowsViewModel(listOfVariableRow));
         }
 
         [Test]
@@ -844,6 +843,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             var empty = new ValueSetsToTableViewModel();
             var table = new ValueSetsToTableViewModel(parameter, this.option1, null);
+            Assert.IsNotNull(table.ListOfTuple);
             var publishedValue = table.PublishedValueTable;
             table.PublishedValueTable = new DataTable();
             var listOfTuple = table.ListOfTuple;
@@ -1431,7 +1431,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1]", "Syst[2]", "Syst[3]", "Syst[4]", "Syst[5]", };
 
             array.SetDimension(enume);
-            Assert.AreEqual(array.DimensionOfTheArray.Count, 1); 
+            Assert.AreEqual(1,array.DimensionOfTheArray.Count); 
         }
 
         [Test]
@@ -1441,7 +1441,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1,1]", "Syst[2,1]", "Syst[1,2]", "Syst[2,2]", "Syst[1,3]", "Syst[2,3]", };
 
             array.SetDimension(enume);
-            Assert.AreEqual(array.DimensionOfTheArray.Count, 2);
+            Assert.AreEqual(2, array.DimensionOfTheArray.Count);
         }
 
         [Test]
@@ -1451,7 +1451,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var enume = new List<string>() { "Syst[1,1,1]", "Syst[2,1,1]", "Syst[1,2,1]", "Syst[2,2,1]", "Syst[1,1,2]", "Syst[2,1,2]", "Syst[1,2,2]", "Syst[2,2,2]", };
 
             array.SetDimension(enume);
-            Assert.AreEqual(array.DimensionOfTheArray.Count, 3);
+            Assert.AreEqual(3, array.DimensionOfTheArray.Count);
         }
     }
 }
