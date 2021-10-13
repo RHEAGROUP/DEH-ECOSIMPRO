@@ -50,7 +50,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// The represented <see cref="ReferenceDescription" />
         /// </summary>
-        public readonly ReferenceDescription Reference;
+        public new readonly ReferenceDescription Reference;
 
         /// <summary>
         /// Backing field for <see cref="Name" />

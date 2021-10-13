@@ -187,7 +187,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// The <see cref="IStatusBarControlViewModel" />
         /// </summary>
-        private IStatusBarControlViewModel statusBarService;
+        private readonly IStatusBarControlViewModel statusBarService;
 
         /// <summary>
         /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
@@ -315,31 +315,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             }
             else if (parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameterType)
             {
-                bool? userSelectecValue = false;
-                var areArraysCompatible = false;
-
-                if (variable is ArrayVariableRowViewModel array)
-                {
-                    areArraysCompatible = this.AreArraysCompatible(array, parameter);
-
-                    if (areArraysCompatible)
-                    {
-                        this.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel(array, parameter);
-                        var table = new ValueSetsToTableViewModel(parameter, this.SelectedOption, this.SelectedState);
-                        userSelectecValue = this.navigationService.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ParameterColumnToMapOnVariable);
-
-                        if (userSelectecValue == true)
-                        {
-                            this.MapParameterToVariable(table.ListOfTuple, parameter);
-                        }
-                    }
-                }
-                else
-                {
-                    this.statusBarService.Append("You can't map these data together", StatusBarMessageSeverity.Warning);
-                }
-
-                validationResult.ResultKind = userSelectecValue == true && areArraysCompatible
+                validationResult.ResultKind = this.ChooseFromCompatibleArrays(variable, parameter)
                     ? ValidationResultKind.Valid
                     : ValidationResultKind.Invalid;
             }
@@ -363,6 +339,43 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             this.SelectedParameter = null;
             this.SelectedVariable = null;
             this.CheckCanExecute();
+        }
+
+        /// <summary>
+        /// Determine if arrays selected as variable and parameters are compatibles and show a dialog to let the user choose which parameter columns should be mapped to variable column
+        /// </summary>
+        /// <param name="variable">selected variable that is <see cref="ArrayVariableRowViewModel"/></param>
+        /// <param name="parameter">selected parameter that is <see cref="SampledFunctionParameterType"/></param>
+        /// <returns>arrays are compatibles and the user selected to column to map</returns>
+        private bool ChooseFromCompatibleArrays(VariableBaseRowViewModel variable, ParameterOrOverrideBase parameter)
+        {
+            bool? userSelectecValue = false;
+            var areArraysCompatible = false;
+            var isSelectingAndMappingOk = false;
+
+            if (variable is ArrayVariableRowViewModel array)
+            {
+                areArraysCompatible = this.AreArraysCompatible(array, parameter);
+
+                if (areArraysCompatible)
+                {
+                    this.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel(array, parameter);
+                    var table = new ValueSetsToTableViewModel(parameter, this.SelectedOption, this.SelectedState);
+                    userSelectecValue = this.navigationService.ShowDxDialog<ChooseMappingColumns, ChooseMappingColumnsViewModel>(this.ParameterColumnToMapOnVariable);
+
+                    if (userSelectecValue == true)
+                    {
+                        this.MapParameterToVariable(table.ListOfTuple, parameter);
+                        isSelectingAndMappingOk = true;
+                    }
+                }
+            }
+            else
+            {
+                this.statusBarService.Append("You can't map these data together", StatusBarMessageSeverity.Warning);
+            }
+
+            return userSelectecValue == isSelectingAndMappingOk && areArraysCompatible;
         }
 
         /// <summary>
