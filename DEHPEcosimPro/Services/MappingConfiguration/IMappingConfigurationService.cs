@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
     using System;
     using System.Collections.Generic;
 
+    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
 
     using CDP4Dal.Operations;

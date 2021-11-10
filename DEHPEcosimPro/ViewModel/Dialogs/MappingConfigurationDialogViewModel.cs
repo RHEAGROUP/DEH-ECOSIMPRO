@@ -47,7 +47,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// The <see cref="NLog"/> logger
         /// </summary>
-        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+        protected readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         /// <summary>
         /// The <see cref="IHubController"/>
@@ -117,7 +117,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             }
             catch (Exception exception)
             {
-                this.logger.Error(exception);
+                this.Logger.Error(exception);
             }
             finally
             {

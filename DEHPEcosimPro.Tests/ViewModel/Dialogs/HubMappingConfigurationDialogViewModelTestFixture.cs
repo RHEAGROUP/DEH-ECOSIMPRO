@@ -125,6 +125,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.dstController = new Mock<IDstController>();
             this.SetupDstData();
             this.dstController.Setup(x => x.Variables).Returns(this.variables);
+            this.dstController.Setup(x => x.HubMapResult).Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
 
             this.dstController.Setup(x => x.ReadNode(It.IsAny<ReferenceDescription>()))
                 .Returns(new DataValue(new Variant(42)));
@@ -455,19 +456,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 Computed = new ValueArray<string>(new[] { "20", "21" }),
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
-
-            var empTychoosingDialog = new ChooseMappingColumnsViewModel();
-            var choosingDialog = new ChooseMappingColumnsViewModel(array, parameter);
-
-            var listOfParameterToMatch = choosingDialog.ListOfParameterToMatch;
-            var listOfVariableToMap = choosingDialog.ListOfVariableToMap;
-            var variableName = choosingDialog.VariableName;
-            var parameterName = choosingDialog.ParameterName;
-            var isList = choosingDialog.IsList;
-            choosingDialog.VariableName = "";
+            
+            var choosingDialog = new ArrayParameterMappingConfigurationDialogViewModel(array, parameter);
+            
+            var listOfVariableToMap = choosingDialog.MappingRows;
             choosingDialog.ParameterName = "";
-            choosingDialog.IsList = false;
-            choosingDialog.ListOfParameterToMatch = new ReactiveList<string>();
+            choosingDialog.hasOnlyOneDimension = false;
+            choosingDialog.ParameterNames = new ReactiveList<string>();
             Assert.IsNotNull(listOfVariableToMap);
         }
 
@@ -582,14 +577,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
 
             elementDefinition.Parameter.Add(parameter);
 
-            var choosingDialog = new ChooseMappingColumnsViewModel(array, parameter);
-            var choosingDialogListOfVariableToMap = choosingDialog.ListOfVariableToMap;
-
-            var index = choosingDialogListOfVariableToMap.FirstOrDefault().Index;
-            choosingDialogListOfVariableToMap.FirstOrDefault().Index = "[1]";
-            var selectedColumnMatched = choosingDialogListOfVariableToMap.FirstOrDefault().SelectedColumnMatched;
-            choosingDialogListOfVariableToMap.FirstOrDefault().SelectedColumnMatched = "Timestamp";
-
+            var choosingDialog = new ArrayParameterMappingConfigurationDialogViewModel(array, parameter);
+            var choosingDialogListOfVariableToMap = choosingDialog.MappingRows;
+            
             Assert.IsNotNull(choosingDialogListOfVariableToMap);
         }
 
@@ -604,17 +594,17 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                         DisplayName = new LocalizedText(string.Empty, "Mos.a[1,1]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
-                    new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })) { IndexOfThisRow = new  List<string>(){"1","1" } } ,
+                    new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })),
                 new VariableRowViewModel((
                     new ReferenceDescription
                     {
                         DisplayName = new LocalizedText(string.Empty, "Mos.a[1,2]"),
                         NodeId = new NodeId(Guid.NewGuid())
                     },
-                    new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue })) { IndexOfThisRow = new  List<string>(){"1","2" } } 
+                    new DataValue { Value = 4, ServerTimestamp = DateTime.MinValue }))
             };
 
-            Assert.IsNotNull(new ChooseMappingRowsViewModel(listOfVariableRow));
+            Assert.IsNotNull(new ArrayParameterMappingConfigurationRowViewModel(new List<int>() {1,2}, listOfVariableRow));
         }
 
         [Test]
@@ -672,13 +662,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 (new ReferenceDescription
                 {
                     DisplayName = LocalizedText.ToLocalizedText("a"),
-                    BrowseName = new QualifiedName("a"),
+                    BrowseName = new QualifiedName("Kettle[4]"),
                     NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
                 }, new DataValue(new Variant(1764))),
                 (new ReferenceDescription
                 {
                     DisplayName = LocalizedText.ToLocalizedText("b"),
-                    BrowseName = new QualifiedName("b"),
+                    BrowseName = new QualifiedName("Kettle[5]"),
                     NodeId = new ExpandedNodeId(Guid.NewGuid(), 4), NodeClass = NodeClass.Variable
                 }, new DataValue(new Variant(1764)))
             };
@@ -727,129 +717,45 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                 ActualState = this.viewModel.SelectedState
             });
 
+            _ = new ElementDefinition()
+            {
+                Name = "element",
+                ShortName = "e",
+                Parameter = { parameter }
+            };
+
             var mappedElement = new MappedElementDefinitionRowViewModel
             {
                 SelectedParameter = parameter,
                 SelectedValue = new ValueSetValueRowViewModel(parameter.ValueSet.FirstOrDefault(), "20", this.measurementScale)
             };
-
+            
             this.viewModel.MappedElements.Add(mappedElement);
+            
+            var arrayVariableRowViewModel = new ArrayVariableRowViewModel("Name",
+                this.variables.Select(x => new VariableRowViewModel(x, false)));
 
-            this.viewModel.ParameterColumnToMapOnVariable = new ChooseMappingColumnsViewModel
-            {
-                VariableName = "Kettle",
-                ParameterName = "Kettle",
-                ListOfParameterToMatch = new ReactiveList<string> { "temp", "time", "mass" }
-            };
-
-            this.viewModel.ParameterColumnToMapOnVariable.ListOfVariableToMap.Add(new ChooseMappingRowsViewModel
-                {
-                    Index = "[1]",
-                    SelectedColumnMatched = "temp"
-                }
-            );
-
-            var listOfTemp = new List<string> { "12", "13", "14" };
-            (string name, List<string> list) oneTuple = ("temp", listOfTemp);
-
-            var listOfTuple = new List<(string name, List<string> list)>();
-            listOfTuple.Add(oneTuple);
-
-            Assert.DoesNotThrow(() => this.viewModel.MapParameterToVariable(listOfTuple, parameter));
+            Assert.DoesNotThrow(() => this.viewModel.MapParameterToVariable(
+                new ArrayParameterMappingConfigurationDialogViewModel(arrayVariableRowViewModel, parameter), parameter));
         }
 
         [Test]
         public void VerifyMappedElements()
         {
             this.viewModel.Elements.AddRange(this.elementDefinitionRows);
-            Assert.DoesNotThrow(() => this.viewModel.CreateMappedElements());
+            Assert.DoesNotThrow(() => this.viewModel.LoadExistingMappedElement());
             Assert.IsEmpty(this.viewModel.MappedElements);
-        }
-
-        [Test]
-        public void VerifyParameters()
-        {
-            this.parameter1.Scale = this.measurementScale;
-            this.viewModel.Parameters = new ReactiveList<ParameterOrOverrideBase>();
-            var parameters = this.viewModel.Parameters;
-            this.viewModel.SelectedParameter = this.parameter1;
-            var selectedParameters = this.viewModel.Parameters;
-
-            this.viewModel.Elements = new ReactiveList<ElementDefinitionRowViewModel>
-            {
-                new ElementDefinitionRowViewModel(this.element0, this.domain, this.session.Object, null)
-            };
-
-            var element = this.viewModel.Elements;
-            var elementDef = this.viewModel.ElementDefinitions;
-            this.viewModel.SelectedElementDefinition = elementDef.FirstOrDefault();
-            var selectedElementDef = this.viewModel.SelectedElementDefinition;
-
-            this.viewModel.AvailableVariables = new ReactiveList<VariableBaseRowViewModel>();
-            var availableVariables = this.viewModel.AvailableVariables;
-            Assert.IsEmpty(selectedParameters);
         }
 
         [Test]
         public void VerifyProperties()
         {
             this.viewModel.Elements.AddRange(this.elementDefinitionRows);
-            Assert.IsNotEmpty(this.viewModel.ElementDefinitions);
             Assert.IsNotEmpty(this.viewModel.Elements);
-            Assert.IsEmpty(this.viewModel.Values);
             Assert.IsEmpty(this.viewModel.MappedElements);
             Assert.AreEqual(4, this.viewModel.AvailableVariables.Count);
-            Assert.IsNull(this.viewModel.SelectedElementDefinition);
         }
-
-        [Test]
-        public void VerifyTuples()
-        {
-            var parameter = new Parameter
-            {
-                Iid = Guid.NewGuid(),
-                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
-                {
-                    Name = "Kettle[1]",
-                    IndependentParameterType =
-                    {
-                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
-                        {
-                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
-                            {
-                                ShortName = "Timestamp"
-                            }
-                        }
-                    },
-                    DependentParameterType =
-                    {
-                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
-                        {
-                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
-                            {
-                                ShortName = "Value"
-                            }
-                        }
-                    }
-                }
-            };
-
-            parameter.ValueSet.Add(new ParameterValueSet
-            {
-                Published = new ValueArray<string>(new[] { "20", "21" }),
-                Computed = new ValueArray<string>(new[] { "20", "21" }),
-                ValueSwitch = ParameterSwitchKind.COMPUTED
-            });
-
-            var empty = new ValueSetsToTableViewModel();
-            var table = new ValueSetsToTableViewModel(parameter, this.option1, null);
-            Assert.IsNotNull(table.ListOfTuple);
-            var publishedValue = table.PublishedValueTable;
-            table.PublishedValueTable = new DataTable();
-            var listOfTuple = table.ListOfTuple;
-            table.ListOfTuple = new EditableList<(string name, List<string> list)>();
-        }
-
+        
         [Test]
         public void VerifyVariableTypesAsArrayAreCompatible()
         {
@@ -1035,7 +941,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
             this.viewModel.SelectedMappedElement.SelectedParameter = parameter;
             this.viewModel.SelectedVariable = array;
-            this.viewModel.Values = new ReactiveList<ValueSetValueRowViewModel>();
             Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
         }
         
@@ -1045,7 +950,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 1,1}
+                Dimensions = new List<int>() { 1,1}
             };
 
             var parameter = new Parameter
@@ -1083,7 +988,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 2, 1 }
+                Dimensions = new List<int>() { 2, 1 }
             };
 
             var parameter = new Parameter
@@ -1106,11 +1011,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
             Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
         }
@@ -1121,7 +1028,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 1, 2 }
+                Dimensions = new List<int>() { 1, 2 }
             };
 
             var parameter = new Parameter
@@ -1154,13 +1061,15 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
-            Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
+            Assert.IsFalse(this.viewModel.AreArraysCompatible(variable, parameter));
         }
 
         [Test]
@@ -1169,7 +1078,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 3, 2 }
+                Dimensions = new List<int>() { 1, 3 }
             };
             
             var parameter = new Parameter
@@ -1202,11 +1111,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
             Assert.IsTrue(this.viewModel.AreArraysCompatible( variable,  parameter));
         }
@@ -1217,7 +1128,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 2, 3 }
+                Dimensions = new List<int>() { 3 }
             };
 
             var parameter = new Parameter
@@ -1246,7 +1157,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                             {
                                 Name = "Value"
                             }
-                        },new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        },
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
                         {
                             ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
                             {
@@ -1256,11 +1168,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
-                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20" }), //all values in all rows
+                Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20", "5", "86", ".5" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
             Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
         }
@@ -1271,7 +1185,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 3, 3 }
+                Dimensions = new List<int>() { 3, 1 }
             };
 
             var parameter = new Parameter
@@ -1311,11 +1225,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20", "21", "20", "19" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
             Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
         }
@@ -1326,7 +1242,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 3, 3 }
+                Dimensions = new List<int>() { 3, 1 }
             };
 
             var parameter = new Parameter
@@ -1359,11 +1275,13 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20"}), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
             Assert.IsTrue(this.viewModel.AreArraysCompatible(variable, parameter));
         }
@@ -1374,7 +1292,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             var variable = new ArrayVariableRowViewModel()
             {
                 Name = "Mos.a",
-                DimensionOfTheArray = new List<int>() { 3, 3 }
+                Dimensions = new List<int>() { 3, 3 }
             };
 
             var parameter = new Parameter
@@ -1414,44 +1332,16 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
                     }
                 }
             };
+
             parameter.ValueSet.Add(new ParameterValueSet
             {
                 Computed = new ValueArray<string>(new[] { "20", "21", "20", "19", "21", "20", "21", "20", "19", "21", "20", "19" }), //all values in all rows
                 ValueSwitch = ParameterSwitchKind.COMPUTED
             });
+
             this.element0.Parameter.Add(parameter);
 
             Assert.IsFalse(this.viewModel.AreArraysCompatible(variable, parameter));
-        }
-
-        [Test]
-        public void SetDimensionlist()
-        {
-            var array = new ArrayVariableRowViewModel();
-            var enume = new List<string>() { "Syst[1]", "Syst[2]", "Syst[3]", "Syst[4]", "Syst[5]", };
-
-            array.SetDimension(enume);
-            Assert.AreEqual(1,array.DimensionOfTheArray.Count); 
-        }
-
-        [Test]
-        public void SetDimension_2x3()
-        {
-            var array = new ArrayVariableRowViewModel();
-            var enume = new List<string>() { "Syst[1,1]", "Syst[2,1]", "Syst[1,2]", "Syst[2,2]", "Syst[1,3]", "Syst[2,3]", };
-
-            array.SetDimension(enume);
-            Assert.AreEqual(2, array.DimensionOfTheArray.Count);
-        }
-
-        [Test]
-        public void SetDimension_2x2x2()
-        {
-            var array = new ArrayVariableRowViewModel();
-            var enume = new List<string>() { "Syst[1,1,1]", "Syst[2,1,1]", "Syst[1,2,1]", "Syst[2,2,1]", "Syst[1,1,2]", "Syst[2,1,2]", "Syst[1,2,2]", "Syst[2,2,2]", };
-
-            array.SetDimension(enume);
-            Assert.AreEqual(3, array.DimensionOfTheArray.Count);
         }
     }
 }

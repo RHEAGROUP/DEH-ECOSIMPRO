@@ -51,22 +51,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// The represented <see cref="ReferenceDescription" />
         /// </summary>
         public new readonly ReferenceDescription Reference;
-
-        /// <summary>
-        /// Backing field for <see cref="Name" />
-        /// </summary>
-        private string index;
-
+        
         /// <summary>
         /// Backing field for <see cref="IsHighlighted" />
         /// </summary>
         private bool isHiglighted;
-
-        /// <summary>
-        /// Backing field for <see cref="Name" />
-        /// </summary>
-        private string name;
-
+        
         /// <summary>
         /// Backing field for <see cref="SelectedTimeStep" />
         /// </summary>
@@ -84,21 +74,24 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
         /// <param name="shouldListenToChangeMessage">A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/></param>
-        public VariableRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData, bool shouldListenToChangeMessage = true) : base(referenceDescriptionAndData, shouldListenToChangeMessage)
+        public VariableRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData, bool shouldListenToChangeMessage = true)
+            : base(referenceDescriptionAndData, shouldListenToChangeMessage)
         {
             var (referenceDescriptionValue, dataValue) = referenceDescriptionAndData;
             this.Reference = referenceDescriptionValue;
             this.data = dataValue;
             this.SetProperties();
-            this.SetArrayIndexAndName(this.Name);
 
-            CDPMessageBus.Current.Listen<DstHighlightEvent>()
+            _ = CDPMessageBus.Current.Listen<DstHighlightEvent>()
                 .Where(x => x.TargetThingId == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.IsHighlighted = x.ShouldHighlight);
         }
 
-        public List<string> IndexOfThisRow { get; set; } = new List<string>();
+        /// <summary>
+        /// Gets the index of the represented variable if it is part of an array
+        /// </summary>
+        public List<int> Index { get; } = new();
 
         /// <summary>
         /// Gets or sets a value indicating whether this row is highlighted
@@ -117,32 +110,14 @@ namespace DEHPEcosimPro.ViewModel.Rows
             get => this.selectedTimeStep;
             set => this.RaiseAndSetIfChanged(ref this.selectedTimeStep, value);
         }
-
-        /// <summary>
-        /// Gets the name of the represented reference
-        /// </summary>
-        public override string Name
-        {
-            get => this.name;
-            set => this.RaiseAndSetIfChanged(ref this.name, value);
-        }
-
-        /// <summary>
-        /// Gets the name of the represented reference
-        /// </summary>
-        public string Index
-        {
-            get => this.index;
-            set => this.RaiseAndSetIfChanged(ref this.index, value);
-        }
-
+        
         /// <summary>
         /// Gets or sets the collection of value collection to display in the chart view
         /// </summary>
         public ReactiveList<object> ChartValues { get; private set; }
 
         /// <summary>
-        /// Updates the <see cref="SelectedValues" /> based on <see cref="SelectedTimeStep" />
+        /// Updates the <see cref="SelectedValues"/> based on <see cref="SelectedTimeStep" />
         /// and <see cref="SelectedTimeStep" />
         /// </summary>
         public void ApplyTimeStep()
@@ -197,28 +172,27 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
-        /// Set <see cref="IndexOfThisRow"/> and <see cref="Name"/> in case it's an array
+        /// Sets the <see cref="Name"/> of the represented variable to reflect it's own indice in the array it belongs to,
+        /// Also sets the <see cref="Index"/>
         /// </summary>
-        /// <param name="variable">variable name as Syst[x] or Syst[x,y]</param>
-        public void SetArrayIndexAndName(string variable)
+        public void SetsArrayItemProperties()
         {
-            if ( variable.Contains('['))
+            if (!this.Name.Contains('['))
             {
-                var splitedName = variable.Split('[', ']').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-                splitedName.RemoveAt(0);
-
-                var numberAsString = splitedName.Count >= 1
-                    ? splitedName[0]
-                    : null;
-
-                this.IndexOfThisRow = numberAsString?.Length >= 1
-                    ? numberAsString.Split(',').ToList()
-                    : null;
-
                 return;
             }
 
-            this.IndexOfThisRow = new List<string>();
+            foreach (var x in this.Name.Split('[', ']', ',')
+                .Skip(1)
+                .Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                if (int.TryParse(x, out var number))
+                {
+                    this.Index.Add(number);
+                }
+            }
+
+            this.Name = "[" + string.Join("x", this.Index) + "]";
         }
     }
 }

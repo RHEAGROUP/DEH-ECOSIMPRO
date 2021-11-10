@@ -1,4 +1,4 @@
-﻿<dx:DXDialogWindow x:Class="DEHPEcosimPro.Views.Dialogs.ChooseMappingColumns" 
+﻿<dx:DXDialogWindow x:Class="DEHPEcosimPro.Views.Dialogs.ArrayParameterMappingConfigurationDialog" 
                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,12 +8,8 @@
                    xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
-                   xmlns:system="clr-namespace:System;assembly=mscorlib"
                    d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True"
-                   xmlns:local="clr-namespace:DEHPEcosimPro.Views.Dialogs"
                    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
-                   xmlns:engineeringModelData="clr-namespace:CDP4Common.EngineeringModelData;assembly=CDP4Common"
-                   xmlns:rows="clr-namespace:DEHPEcosimPro.ViewModel.Rows"
                    mc:Ignorable="d"
                    Title="ChooseMappingColumns" Height="450">
     <dxmvvm:Interaction.Behaviors>
@@ -39,22 +35,22 @@
                     </Grid.ColumnDefinitions>
                     <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Mapping : " FontSize="12" />
                 </Grid>
-                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ListOfVariableToMap}" SelectedItem="{Binding SelectedListOfRowsToMap}">
+                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding MappingRows}" SelectedItem="{Binding SelectedListOfRowsToMap}">
                     <dxg:GridControl.View>
                         <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
                                        IsDetailButtonVisibleBinding="{x:Null}"
                                        RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="false" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
                     </dxg:GridControl.View>
                     <dxg:GridControl.Columns>
-                        <dxg:GridColumn Header="{Binding VariableName}" FieldName="Index" />
-                        <dxg:GridColumn Header="{Binding ParameterName}" FieldName="SelectedColumnMatched">
+                        <dxg:GridColumn Header="{Binding Name}" FieldName="IndexRepresentation" />
+                        <dxg:GridColumn Header="{Binding ParameterName}" FieldName="SelectedParameterType">
                             <dxg:ColumnBase.CellTemplate>
                                 <DataTemplate>
                                     <dxe:ComboBoxEdit Height="Auto"
                                                       Margin="5"
                                                       FontSize="12"
-                                                      ItemsSource="{Binding ElementName=Mapping,Path=DataContext.ListOfParameterToMatch}"
-                                                      SelectedItem="{Binding Path=RowData.Row.SelectedColumnMatched}"
+                                                      ItemsSource="{Binding ElementName=Mapping, Path=DataContext.ParameterNames}"
+                                                      SelectedItem="{Binding Path=RowData.Row.SelectedParameterType}"
                                                       ToolTip="Choose a column to match"
                                                       NullText="Choose a column to match" />
                                 </DataTemplate>

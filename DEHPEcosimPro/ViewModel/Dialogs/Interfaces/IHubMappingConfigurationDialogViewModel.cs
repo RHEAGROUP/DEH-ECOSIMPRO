@@ -51,22 +51,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel"/> that hold parameter value to map
         /// </summary>
         ReactiveList<ElementDefinitionRowViewModel> Elements { get; set; }
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="ElementDefinition"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ElementDefinition> ElementDefinitions { get; }
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="Parameter"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ParameterOrOverrideBase> Parameters { get; set; }
-
-        /// <summary>
-        /// Gets or sets the collection of string value
-        /// </summary>
-        ReactiveList<ValueSetValueRowViewModel> Values { get; set; }
-
+        
         /// <summary>
         /// Gets the collection of <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>

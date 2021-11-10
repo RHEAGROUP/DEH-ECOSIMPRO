@@ -120,7 +120,9 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.MappingRows.RemoveAll(this.MappingRows
                 .Where(m => m.HubThing.Name == mappedElement.SelectedParameter.ModelCode()
+                            && m.DstThing.Name == mappedElement.SelectedVariable.Name
                             && m.Direction == MappingDirection.FromHubToDst).ToList());
+
             this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, mappedElement));
         }
 
