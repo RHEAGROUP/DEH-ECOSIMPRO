@@ -208,6 +208,7 @@
                                                     <ColumnDefinition></ColumnDefinition>
                                                     <ColumnDefinition></ColumnDefinition>
                                                     <ColumnDefinition></ColumnDefinition>
+                                                    <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border BorderBrush="DarkGray" BorderThickness="1">
                                                     <Grid Background="AliceBlue">
@@ -253,6 +254,14 @@
                                                     <TextBlock Grid.Column="0" Grid.Row="1"  Height="Auto" Margin="3" FontSize="10" FontWeight="Bold" Text="Value to replace: " />
                                                     <TextBlock Grid.Row="1" Grid.Column="1" Height="Auto" Margin="3" FontSize="10" Text="{Binding SelectedVariable.ActualValue}" TextTrimming="CharacterEllipsis" />
                                                 </Grid>
+                                                <Button ToolTip="Delete this mapping row" Command="{Binding ElementName=Mapping, Path=DataContext.DeleteMappedRowCommand}" CommandParameter="{Binding SelectedParameter.Iid}" 
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="3" Height="30" Width="30">
+                                                    <Button.Template>
+                                                        <ControlTemplate>
+                                                            <Image Source="{dx:DXImage 'SvgImages/HybridDemoIcons/BottomPanel/HybridDemo_Delete.svg'}"/>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>

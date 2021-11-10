@@ -550,6 +550,14 @@ namespace DEHPEcosimPro.DstController
         {
             if (mappedElement.Any())
             {
+                var toRemove = this.HubMapResult
+                    .Where(x => mappedElement.Any(m =>
+                        m.SelectedParameter.Iid == x.SelectedParameter.Iid
+                        && m.SelectedVariable.Reference.NodeId.Identifier
+                            .Equals(x.SelectedVariable.Reference.NodeId.Identifier)))
+                    .ToList();
+
+                this.HubMapResult.RemoveAll(toRemove);
                 this.HubMapResult.AddRange(mappedElement);
             }
 

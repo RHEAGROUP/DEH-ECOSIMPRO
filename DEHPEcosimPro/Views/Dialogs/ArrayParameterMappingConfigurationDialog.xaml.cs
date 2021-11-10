@@ -22,20 +22,6 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-
 namespace DEHPEcosimPro.Views.Dialogs
 {
     using DevExpress.Xpf.Core;
@@ -43,14 +29,14 @@ namespace DEHPEcosimPro.Views.Dialogs
     /// <summary>
     /// Interaction logic for ChooseMappingColumns.xaml
     /// </summary>
-    public partial class ChooseMappingColumns : DXDialogWindow
+    public partial class ArrayParameterMappingConfigurationDialog : DXDialogWindow
     {
         /// <summary>
-        /// Initializes a new <see cref="ChooseMappingColumns"/>
+        /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialog"/>
         /// </summary>
-        public ChooseMappingColumns()
+        public ArrayParameterMappingConfigurationDialog()
         {
-            InitializeComponent();
+            this.InitializeComponent();
         }
     }
 }

@@ -66,12 +66,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Backing field for <see cref="SelectedVariable"/>
         /// </summary>
-        private VariableRowViewModel selectedVariable;
+        private VariableBaseRowViewModel selectedVariable;
 
         /// <summary>
         /// Gets or sets the <see cref="VariableRowViewModel"/> holding the destination <see cref="Opc.Ua.ReferenceDescription"/>
         /// </summary>
-        public VariableRowViewModel SelectedVariable
+        public VariableBaseRowViewModel SelectedVariable
         {
             get => this.selectedVariable;
             set => this.RaiseAndSetIfChanged(ref this.selectedVariable, value);

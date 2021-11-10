@@ -66,7 +66,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Gets the name of the represented reference
         /// </summary>
-        public virtual string Name
+        public string Name
         {
             get => this.name;
             set => this.RaiseAndSetIfChanged(ref this.name, value);
@@ -280,7 +280,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
         /// <param name="shouldListenToChangeMessage">A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/></param>
-        public VariableBaseRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData, bool shouldListenToChangeMessage = true)
+        protected VariableBaseRowViewModel((ReferenceDescription, DataValue) referenceDescriptionAndData, bool shouldListenToChangeMessage = true)
         {
             var (referenceDescriptionValue, dataValue) = referenceDescriptionAndData;
             this.Reference = referenceDescriptionValue;
@@ -297,9 +297,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Initializes a new <see cref="VariableBaseRowViewModel"/>
         /// </summary>
-        /// <param name="referenceDescriptionAndData">The represented <see cref="ReferenceDescription"/> and its <see cref="DataValue"/></param>
-        /// <param name="shouldListenToChangeMessage">A value indicating whether this view model should subscribe for <see cref="OpcVariableChangedEvent"/></param>
-        public VariableBaseRowViewModel()
+        protected VariableBaseRowViewModel()
         {
         }
 

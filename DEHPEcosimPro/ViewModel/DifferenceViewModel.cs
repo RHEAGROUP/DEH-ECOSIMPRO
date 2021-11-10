@@ -80,7 +80,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Pass the parameter and his thing to the function <see cref="CreateNewParameter"/> to populate the <see cref="Parameters"/> list
         /// </summary>
-        /// <param name="parameterEvent"><see cref="DifferenceEvent<ParameterOrOverrideBase>"/></param>
+        /// <param name="parameterEvent">The <see cref="DifferenceEvent{T}"/></param>
         private void HandleDifferentEvent(DifferenceEvent<ParameterOrOverrideBase> parameterEvent)
         {
             if (parameterEvent.Thing != null)
@@ -92,14 +92,14 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Pass multiple parameter and his thing to the function <see cref="CreateNewParameter"/> to populate the <see cref="Parameters"/> list
         /// </summary>
-        /// <param name="elementDefinition"><see cref="DifferenceEvent<ElementDefinition>"/></param>
-        private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> elementDefinition)
+        /// <param name="differenceEvent">The <see cref="DifferenceEvent{T}"/></param>
+        private void HandleListOfDifferentEvent(DifferenceEvent<ElementDefinition> differenceEvent)
         {
-            var listOfParameters = elementDefinition.Thing.Parameter;
+            var listOfParameters = differenceEvent.Thing.Parameter;
 
             foreach (var thing in listOfParameters)
             {
-                this.CreateNewParameter(thing, elementDefinition.HasTheSelectionChanged);
+                this.CreateNewParameter(thing, differenceEvent.HasTheSelectionChanged);
             }
         }
 
