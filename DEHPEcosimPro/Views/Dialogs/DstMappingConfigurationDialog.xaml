@@ -6,16 +6,14 @@
                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core" 
                    xmlns:dxc="http://schemas.devexpress.com/winfx/2008/xaml/charts"
-                   xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking" 
                    xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
                    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid" 
                    xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
                    xmlns:system="clr-namespace:System;assembly=mscorlib"
-                   xmlns:hitTest="http://schemas.devexpress.com/winfx/2008/xaml/grid/internal"
-                   xmlns:dxgt="http://schemas.devexpress.com/winfx/2008/xaml/grid/themekeys"
                    xmlns:dialogs="clr-namespace:DEHPEcosimPro.Views.Dialogs"
                    Title="Mapping Configuration Dialog" MinWidth="800"
+                   WindowStartupLocation="CenterScreen"
                    MinHeight="600" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
@@ -87,7 +85,7 @@
                     </dxg:TreeListControl.Columns>
                 </dxg:TreeListControl>
             </GroupBox>
-            <GroupBox Grid.Row="1" Header="Select value set" Margin="10" Padding="10">
+            <GroupBox Grid.Row="1" Header="Select Value Set" Margin="10" Padding="10">
                 <Grid Height="250">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
@@ -97,10 +95,16 @@
                     <dxc:ChartControl ToolTip="Preview of the value changes over time" Margin="5" 
                                       AnimationMode="OnDataChanged" SelectedItems="{Binding SelectedThing.SelectedValues}" 
                                       SelectionMode="Multiple">
+                        <dxc:ChartControl.Legends>
+                            <dxc:Legend HorizontalPosition="RightOutside" VerticalPosition="Center"/>
+                        </dxc:ChartControl.Legends>
                         <dxc:ChartControl.Diagram>
                             <dxc:XYDiagram2D SeriesItemsSource="{Binding SelectedThing.ChartValues}">
                                 <dxc:XYDiagram2D.AxisX>
                                     <dxc:AxisX2D GridLinesMinorVisible="True" GridLinesVisible="True">
+                                        <dxc:AxisX2D.Title>
+                                            <dxc:AxisTitle Content="Time [s]"/>
+                                        </dxc:AxisX2D.Title>
                                         <dxc:AxisX2D.DateTimeScaleOptions>
                                             <dxc:ManualDateTimeScaleOptions AggregateFunction="Maximum" AutoGrid="False" GridAlignment="Second" GridOffset="1" GridSpacing="3" MeasureUnit="Millisecond" />
                                         </dxc:AxisX2D.DateTimeScaleOptions>
@@ -129,8 +133,9 @@
                         <Grid Margin="1" HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="6*" />
-                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="4*" />
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="3*" />
                             </Grid.ColumnDefinitions>
                             <Label Content="Timestep: " />
                             <dxe:SpinEdit Grid.Column="1" Margin="2" HorizontalAlignment="Stretch" CausesValidation="False"
@@ -138,7 +143,8 @@
                                                   EditValueType="{x:Type system:Double}" ToolTip="Defines the time step"
                                                   MinValue="0" ValidateOnEnterKeyPressed="False" ValidateOnTextInput="False" />
                             
-                            <Button ToolTip="Applies the defined step and time unit" Grid.Column="2" Margin="2,2,0,2" HorizontalAlignment="Stretch" Command="{Binding ApplyTimeStepOnSelectionCommand}">Apply</Button>
+                            <Button ToolTip="Applies the defined step and time unit" Grid.Column="3" Margin="2,2,10,2" HorizontalAlignment="Stretch" Command="{Binding ApplyTimeStepOnSelectionCommand}">Apply</Button>
+                            <dxe:CheckEdit Grid.Column="2" Content="Average" IsChecked="{Binding SelectedThing.IsAveraged, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></dxe:CheckEdit>
                         </Grid>
                         <dxg:GridControl ToolTip="Select some values" MaxHeight="210" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Stretch" AllowUpdateTwoWayBoundPropertiesOnSynchronization="False" AutoGenerateColumns="None"
                                                  EnableSmartColumnsGeneration="False"
@@ -165,6 +171,7 @@
                             <dxg:GridControl.Columns>
                                 <dxg:GridColumn FieldName="TimeStep" />
                                 <dxg:GridColumn FieldName="Value" />
+                                <dxg:GridColumn FieldName="AveragedValue" Visible="{Binding SelectedThing.IsAveraged}" />
                             </dxg:GridControl.Columns>
                         </dxg:GridControl>
                     </Grid>
@@ -222,7 +229,7 @@
                                 <ColumnDefinition Width="4*"></ColumnDefinition>
                                 <ColumnDefinition Width="2*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                        <Label Content="Parameter type:" />
+                        <Label Content="Parameter Type:" />
 
                         <dxg:LookUpEdit Grid.Column="1" Margin="2" AllowNullInput="True" ClearSelectionOnBackspace="True"
                                       DisplayMember="Name"

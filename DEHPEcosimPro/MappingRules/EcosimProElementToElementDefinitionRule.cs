@@ -259,13 +259,16 @@ namespace DEHPEcosimPro.MappingRules
         private void AssignNewValues(VariableRowViewModel variable, ParameterValueSetBase valueSet, ParameterType independantParameterType)
         {
             var values = new List<string>();
-            
+
             if (independantParameterType.IsQuantityKindOrText())
             {
                 foreach (var value in variable.SelectedValues)
                 {
                     values.Add(FormattableString.Invariant($"{value.TimeStep}"));
-                    values.Add(FormattableString.Invariant($"{value.Value}"));
+
+                    var valueToAdd = variable.IsAveraged ? value.AveragedValue : value.Value;
+
+                    values.Add(FormattableString.Invariant($"{valueToAdd}"));
                 }
             }
 

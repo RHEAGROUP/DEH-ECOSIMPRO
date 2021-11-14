@@ -12,7 +12,8 @@
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:viewModels="clr-namespace:DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;assembly=DEHPCommon"
                    xmlns:dxdo="http://schemas.devexpress.com/winfx/2008/xaml/docking"
-                   Title="Mapping Configuration Dialog" MinWidth="800" 
+                   Title="Mapping Configuration Dialog" MinWidth="800"
+                   WindowStartupLocation="CenterScreen"
                    MinHeight="450" mc:Ignorable="d">
     <Window.Resources>
         <ResourceDictionary>
