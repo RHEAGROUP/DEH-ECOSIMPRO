@@ -24,6 +24,9 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
+    using System.Reactive.Linq;
+    using System.Windows.Input;
+
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
@@ -41,6 +44,11 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
         /// </summary>
         VariableRowViewModel SelectedThing { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
+        /// </summary>
+        bool CanContinue { get; set; }
 
         /// <summary>
         /// Gets the collection of the available <see cref="Option"/> from the connected Hub Model
@@ -76,11 +84,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
         ReactiveList<VariableRowViewModel> Variables { get; }
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
-        /// </summary>
-        bool CanContinue { get; set; }
 
         /// <summary>
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
@@ -91,7 +94,38 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// Initializes this view model properties
         /// </summary>
         void Initialize();
-        
+
+        /// <summary>
+        /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
+        /// </summary>
+        void InitializesCommandsAndObservableSubscriptions();
+
+        /// <summary>
+        /// Verify that the selected <see cref="ParameterType"/> is compatible with the selected variable value type
+        /// </summary>
+        void NotifyIfParameterTypeIsNotAllowed();
+
+        /// <summary>
+        /// Sets the <see cref="DstMappingConfigurationDialogViewModel.SelectedThing"/> <see cref="ParameterType"/> according to the selected <see cref="Parameter"/>
+        /// </summary>
+        void UpdateSelectedParameterType();
+
+        /// <summary>
+        /// Sets the <see cref="DstMappingConfigurationDialogViewModel.SelectedThing"/> <see cref="MeasurementScale"/> according to the selected <see cref="Parameter"/> and the selected <see cref="ParameterType"/>
+        /// </summary>
+        void UpdateSelectedScale();
+
+        /// <summary>
+        /// Sets the <see cref="DstMappingConfigurationDialogViewModel.SelectedThing"/> <see cref="Parameter"/> according to the selected <see cref="ParameterType"/>
+        /// </summary>
+        void UpdateSelectedParameter();
+
+        /// <summary>
+        /// Updates the <see cref="DstMappingConfigurationDialogViewModel.AvailableParameterTypes"/>
+        /// </summary>
+        /// <param name="allowScalarParameterType">A value indicating whether the <see cref="ScalarParameterType"/>s should be included in the <see cref="DstMappingConfigurationDialogViewModel.AvailableParameterTypes"/></param>
+        void UpdateAvailableParameterType(bool? allowScalarParameterType = null);
+
         /// <summary>
         /// Updates the mapping based on the available 10-25 elements
         /// </summary>

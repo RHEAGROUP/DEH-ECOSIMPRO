@@ -47,9 +47,9 @@ namespace DEHPEcosimPro.DstController
     public interface IDstController
     {
         /// <summary>
-        /// Gets this running tool name
+        /// A value indicating whether the selected values saved in the mapping can be loaded
         /// </summary>
-        string ThisToolName { get; }
+        bool CanLoadSelectedValues { get; set; }
 
         /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
@@ -112,14 +112,25 @@ namespace DEHPEcosimPro.DstController
         ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; }
 
         /// <summary>
-        /// Gets or sets the <see cref="ExternalIdentifierMap"/>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        ExternalIdentifierMap ExternalIdentifierMap { get; set; }
+        ReactiveList<VariableRowViewModel> VariableRowViewModels { get; }
 
         /// <summary>
         /// Gets the OPC Time <see cref="NodeId"/>
         /// </summary>
         NodeId TimeNodeId { get; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the experiment is running
+        /// </summary>
+        bool IsExperimentRunning { get; set; }
+
+        /// <summary>
+        /// Loads the saved mapping and applies the mapping rule to the <see cref="VariableRowViewModel"/>
+        /// </summary>
+        /// <returns>The number of mapped things loaded</returns>
+        int LoadMapping();
 
         /// <summary>
         /// Connects to the provided endpoint
@@ -194,7 +205,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        void TransferMappedThingsToDst();
+        Task TransferMappedThingsToDst();
 
         /// <summary>
         /// Gets a value indicating if the <paramref name="reference"/> value can be overridden 
@@ -245,19 +256,5 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         Task UpdateParametersValueSets();
-
-        /// <summary>
-        /// Creates and sets the <see cref="DstController.ExternalIdentifierMap"/>
-        /// </summary>
-        /// <param name="newName">The model name to use for creating the new <see cref="DstController.ExternalIdentifierMap"/></param>
-        /// <returns>A newly created <see cref="DstController.ExternalIdentifierMap"/></returns>
-        ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
-
-        /// <summary>
-        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
-        /// </summary>
-        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
-        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
-        void AddToExternalIdentifierMap(Guid internalId, string externalId);
     }
 }

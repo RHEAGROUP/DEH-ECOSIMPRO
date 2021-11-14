@@ -43,6 +43,8 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.Events;
 
+    using NLog;
+
     using ReactiveUI;
 
     /// <summary>
@@ -50,6 +52,11 @@ namespace DEHPEcosimPro.ViewModel
     /// </summary>
     public class EcosimProTransferControlViewModel : TransferControlViewModel
     {
+        /// <summary>
+        /// The <see cref="NLog.Logger"/>
+        /// </summary>
+        private readonly Logger logger = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
@@ -104,15 +111,7 @@ namespace DEHPEcosimPro.ViewModel
             this.dstController = dstController;
             this.statusBar = statusBar;
             this.exchangeHistoryService = exchangeHistoryService;
-
-            CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
-                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateCanTransfer);
-
-            CDPMessageBus.Current.Listen<UpdateDstVariableTreeEvent>()
-                .Select(x => !x.Reset).ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.UpdateCanTransfer);
-
+            
             this.dstController.SelectedDstMapResultToTransfer.CountChanged.Subscribe(_ => this.UpdateNumberOfThingsToTransfer());
             this.dstController.SelectedHubMapResultToTransfer.CountChanged.Subscribe(_ => this.UpdateNumberOfThingsToTransfer());
 
@@ -126,9 +125,10 @@ namespace DEHPEcosimPro.ViewModel
 
             this.TransferCommand.ThrownExceptions
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(e =>
+                .Subscribe(exception =>
                 {
-                    this.statusBar.Append($"{e.Message}", StatusBarMessageSeverity.Error);
+                    this.statusBar.Append($"{exception.Message}", StatusBarMessageSeverity.Error);
+                    this.logger.Error(exception);
                 });
             
             var canCancel = this.WhenAnyValue(x => x.AreThereAnyTransferInProgress);
@@ -141,7 +141,7 @@ namespace DEHPEcosimPro.ViewModel
         /// <summary>
         /// Updates the <see cref="TransferControlViewModel.NumberOfThing"/>
         /// </summary>
-        private void UpdateNumberOfThingsToTransfer()
+        public void UpdateNumberOfThingsToTransfer()
         {
             this.NumberOfThing = this.dstController.MappingDirection switch
             {
@@ -153,8 +153,7 @@ namespace DEHPEcosimPro.ViewModel
 
             this.UpdateCanTransfer(this.NumberOfThing > 0);
         }
-
-
+        
         /// <summary>
         /// Updates the <see cref="CanTransfer"/>
         /// </summary>
@@ -198,7 +197,7 @@ namespace DEHPEcosimPro.ViewModel
             }
             else
             {
-                this.dstController.TransferMappedThingsToDst();
+                await this.dstController.TransferMappedThingsToDst();
             }
 
             await this.exchangeHistoryService.Write();

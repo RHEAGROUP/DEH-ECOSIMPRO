@@ -42,10 +42,5 @@ namespace DEHPEcosimPro.ViewModel.Interfaces
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
         ReactiveList<VariableRowViewModel> Variables { get; }
-
-        /// <summary>
-        /// Updates this view model properties
-        /// </summary>
-        void UpdateProperties();
     }
 }

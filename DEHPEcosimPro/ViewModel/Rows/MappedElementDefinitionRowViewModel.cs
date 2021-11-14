@@ -66,12 +66,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <summary>
         /// Backing field for <see cref="SelectedVariable"/>
         /// </summary>
-        private VariableRowViewModel selectedVariable;
+        private VariableBaseRowViewModel selectedVariable;
 
         /// <summary>
         /// Gets or sets the <see cref="VariableRowViewModel"/> holding the destination <see cref="Opc.Ua.ReferenceDescription"/>
         /// </summary>
-        public VariableRowViewModel SelectedVariable
+        public VariableBaseRowViewModel SelectedVariable
         {
             get => this.selectedVariable;
             set => this.RaiseAndSetIfChanged(ref this.selectedVariable, value);
@@ -107,14 +107,25 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Initializes a new <see cref="MappedElementDefinitionRowViewModel"/>
+        /// </summary>
+        /// <param name="valueSet">The <see cref="IValueSet"/></param>
+        /// <param name="valueIndex">The value index</param>
+        /// <param name="switchKind">The <see cref="ParameterSwitchKind"/></param>
+        public MappedElementDefinitionRowViewModel(IValueSet valueSet, int valueIndex, ParameterSwitchKind switchKind) : this()
+        {
+            this.SelectedParameter = (valueSet as ParameterValueSetBase)?.GetContainerOfType<ParameterOrOverrideBase>();
+            this.SelectedValue = new ValueSetValueRowViewModel(valueSet, valueIndex, switchKind);
+        }
+
+        /// <summary>
         /// Verify validity of the this <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>
         public void VerifyValidity()
         {
             this.IsValid = this.SelectedValue != null && 
                            this.SelectedValue.Value != "-" && 
-                           this.SelectedVariable != null && 
-                           this.SelectedVariable.HasWriteAccess == true;
+                           this.SelectedVariable != null;
         }
     }
 }

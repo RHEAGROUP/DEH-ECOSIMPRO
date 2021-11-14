@@ -28,7 +28,9 @@ namespace DEHPEcosimPro.DstController
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Reactive.Linq;
     using System.Threading.Tasks;
+    using System.Windows;
 
     using CDP4Common;
     using CDP4Common.CommonData;
@@ -49,6 +51,7 @@ namespace DEHPEcosimPro.DstController
 
     using DEHPEcosimPro.Enumerator;
     using DEHPEcosimPro.Events;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.Services.OpcConnector;
     using DEHPEcosimPro.Services.OpcConnector.Interfaces;
     using DEHPEcosimPro.Services.TypeResolver.Interfaces;
@@ -118,6 +121,11 @@ namespace DEHPEcosimPro.DstController
         private readonly IObjectTypeResolverService objectTypeResolver;
 
         /// <summary>
+        /// The <see cref="IMappingConfigurationService"/>
+        /// </summary>
+        private readonly IMappingConfigurationService mappingConfigurationService;
+
+        /// <summary>
         /// Backing field for the <see cref="MappingDirection"/>
         /// </summary>
         private MappingDirection mappingDirection;
@@ -126,11 +134,30 @@ namespace DEHPEcosimPro.DstController
         /// The collection of (<see cref="NodeId"/> nodeId, <see cref="string"/> value) to be retransfered
         /// </summary>
         private readonly List<(NodeId NodeId, string Value)> transferedHubMapResult = new List<(NodeId NodeId, string Value)>();
+        
+        /// <summary>
+        /// Backing field for <see cref="IsExperimentRunning"/> 
+        /// </summary>
+        private bool isExperimentRunning;
+
+        /// <summary>
+        /// Backing field for <see cref="CanLoadSelectedValues"/>
+        /// </summary>
+        private bool canLoadSelectedValues;
+
+        /// <summary>
+        /// A value indicating whether the selected values saved in the mapping can be loaded
+        /// </summary>
+        public bool CanLoadSelectedValues
+        {
+            get => this.canLoadSelectedValues;
+            set => this.RaiseAndSetIfChanged(ref this.canLoadSelectedValues, value);
+        }
 
         /// <summary>
         /// Gets this running tool name
         /// </summary>
-        public string ThisToolName => this.GetType().Assembly.GetName().Name;
+        public static readonly string ThisToolName = typeof(DstController).Assembly.GetName().Name;
 
         /// <summary>
         /// Assert whether the <see cref="OpcSessionHandler.OpcSession"/> is Open
@@ -201,15 +228,24 @@ namespace DEHPEcosimPro.DstController
         public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
 
         /// <summary>
-        /// Gets or sets the <see cref="ExternalIdentifierMap"/>
+        /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        public ExternalIdentifierMap ExternalIdentifierMap { get; set; }
-
+        public ReactiveList<VariableRowViewModel> VariableRowViewModels { get; } = new ReactiveList<VariableRowViewModel>();
+        
         /// <summary>
         /// Gets the OPC Time <see cref="NodeId"/>
         /// </summary>
         public NodeId TimeNodeId { get; private set; }
-
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether the experiment is running
+        /// </summary>
+        public bool IsExperimentRunning
+        {
+            get => this.isExperimentRunning;
+            set => this.RaiseAndSetIfChanged(ref this.isExperimentRunning, value);
+        }
+        
         /// <summary>
         /// Initializes a new <see cref="DstController"/>
         /// </summary>
@@ -221,10 +257,12 @@ namespace DEHPEcosimPro.DstController
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="exchangeHistory">The <see cref="IExchangeHistoryService"/></param>
         /// <param name="objectTypeResolver">The <see cref="IObjectTypeResolverService"/></param>
+        /// <param name="mappingConfigurationService">The <see cref="IMappingConfigurationService"/></param>
         public DstController(IOpcClientService opcClientService, IHubController hubController,
             IOpcSessionHandler sessionHandler, IMappingEngine mappingEngine,
             IStatusBarControlViewModel statusBar, INavigationService navigationService,
-            IExchangeHistoryService exchangeHistory, IObjectTypeResolverService objectTypeResolver)
+            IExchangeHistoryService exchangeHistory, IObjectTypeResolverService objectTypeResolver,
+            IMappingConfigurationService mappingConfigurationService)
         {
             this.opcClientService = opcClientService;
             this.hubController = hubController;
@@ -234,8 +272,51 @@ namespace DEHPEcosimPro.DstController
             this.navigation = navigationService;
             this.exchangeHistory = exchangeHistory;
             this.objectTypeResolver = objectTypeResolver;
+            this.mappingConfigurationService = mappingConfigurationService;
+            this.InitializeObservables();
+        }
 
-            this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode).Subscribe(clientStatusCode =>
+        /// <summary>
+        /// Initializes this <see cref="DstController"/> observable
+        /// </summary>
+        private void InitializeObservables()
+        {
+            this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode)
+                .Subscribe(this.WhenOpcConnectionStatusChange);
+
+            this.WhenAnyValue(x => x.IsExperimentRunning)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(this.WhenIsExperimentRunningChanged);
+        }
+
+        /// <summary>
+        /// Updates the <see cref="CanLoadSelectedValues"/> and calls the <see cref="LoadMapping"/>
+        /// </summary>
+        /// <param name="isRunning">A value indicating whether the experiment is running</param>
+        private void WhenIsExperimentRunningChanged(bool isRunning)
+        {
+            if (this.CanLoadSelectedValues && !isRunning)
+            {
+                var numberOfMappedThings = this.LoadMapping();
+                this.statusBar.Append($"{numberOfMappedThings} mapped element(s) has been loaded from the saved mapping configuration " +
+                                      $"{this.mappingConfigurationService.ExternalIdentifierMap.Name}");
+
+                this.canLoadSelectedValues = false;
+            }
+
+            if (isRunning)
+            {
+                this.canLoadSelectedValues = true;
+            }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="Variables"/> when ever the opc connection status changes
+        /// </summary>
+        /// <param name="clientStatusCode">The <see cref="OpcClientStatusCode"/></param>
+        private void WhenOpcConnectionStatusChange(OpcClientStatusCode clientStatusCode)
+        {
+            try
             {
                 var isOpcSessionOpen = clientStatusCode == OpcClientStatusCode.Connected;
 
@@ -245,7 +326,7 @@ namespace DEHPEcosimPro.DstController
                     {
                         if (reference.NodeClass == NodeClass.Variable && reference.NodeId.NamespaceIndex == 4)
                         {
-                            this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId)reference.NodeId)));
+                            this.Variables.Add((reference, this.opcClientService.ReadNode((NodeId) reference.NodeId)));
                         }
 
                         else if (reference.NodeClass == NodeClass.Method)
@@ -254,17 +335,81 @@ namespace DEHPEcosimPro.DstController
                         }
                     }
 
-                    this.TimeNodeId = (NodeId)this.References.FirstOrDefault(x => x.BrowseName.Name == "TIME")?.NodeId;
+                    this.TimeNodeId = (NodeId) this.References.FirstOrDefault(x => x.BrowseName.Name == "TIME")?.NodeId;
+
+                    this.VariableRowViewModels.AddRange(this.Variables.Select(r => new VariableRowViewModel(r)));
+                    this.LoadMapping();
                 }
                 else
                 {
                     this.Variables.Clear();
+                    this.VariableRowViewModels.Clear();
                     this.Methods.Clear();
                     this.TimeNodeId = null;
+                    this.ClearSubscriptions();
                 }
 
                 this.IsSessionOpen = isOpcSessionOpen;
-            });
+            }
+            catch (Exception exception)
+            {
+                this.logger.Error(exception);
+                this.statusBar.Append("An error occured while reaching the opc server, please check the log for more details.");
+            }
+        }
+
+        /// <summary>
+        /// Loads the saved mapping and applies the mapping rule to the <see cref="VariableRowViewModel"/>
+        /// </summary>
+        /// <returns>The number of mapped things loaded</returns>
+        public int LoadMapping()
+        {
+            return this.LoadMappingToHub() + this.LoadMappingToDst();
+        }
+
+        /// <summary>
+        /// Loads the saved mapping to the dst
+        /// </summary>
+        /// <returns>The number of mapped things loaded</returns>
+        private int LoadMappingToDst()
+        {
+            if (this.mappingConfigurationService.LoadMappingFromHubToDst(this.VariableRowViewModels) is { } mappedElements
+                            && mappedElements.Any())
+            {
+                mappedElements.ForEach(x => x.VerifyValidity());
+                var validMappedElements = mappedElements.Where(x => x.IsValid).ToList();
+
+                this.Map(validMappedElements);
+
+                return validMappedElements.Count;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Loads the saved mapping to the hub and applies the mapping rule
+        /// </summary>
+        /// <returns>The number of mapped things loaded</returns>
+        private int LoadMappingToHub()
+        {
+            if (this.mappingConfigurationService.LoadMappingFromDstToHub(this.VariableRowViewModels) is { } mappedVariables
+                && mappedVariables.Any())
+            {
+                this.mappingConfigurationService.SelectValues(mappedVariables);
+
+                var validMappedVariables = mappedVariables.Where(x => x.IsValid()).ToList();
+                
+                if (validMappedVariables.Any())
+                {
+                    this.ParameterVariable.Clear();
+                    this.Map(validMappedVariables);
+                }
+
+                return validMappedVariables.Count;
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -369,6 +514,18 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Updates <see cref="ParameterVariable"/> by adding or replacing values
+        /// </summary>
+        /// <param name="parameterNodeIds">The  </param>
+        private void UpdateParameterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
+        {
+            foreach (var keyValue in parameterNodeIds)
+            {
+                this.ParameterVariable[keyValue.Key] = keyValue.Value;
+            }
+        }
+
+        /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="dstVariables">The <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> data</param>
@@ -385,18 +542,6 @@ namespace DEHPEcosimPro.DstController
         }
         
         /// <summary>
-        /// Updates <see cref="ParameterVariable"/> by adding or replacing values
-        /// </summary>
-        /// <param name="parameterNodeIds">The  </param>
-        private void UpdateParameterNodeId(Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIds)
-        {
-            foreach (var keyValue in parameterNodeIds)
-            {
-                this.ParameterVariable[keyValue.Key] = keyValue.Value;
-            }
-        }
-        
-        /// <summary>
         /// Map the provided collection using the corresponding rule in the assembly and the <see cref="MappingEngine"/>
         /// </summary>
         /// <param name="mappedElement">The <see cref="List{T}"/> of <see cref="MappedElementDefinitionRowViewModel"/></param>
@@ -405,6 +550,14 @@ namespace DEHPEcosimPro.DstController
         {
             if (mappedElement.Any())
             {
+                var toRemove = this.HubMapResult
+                    .Where(x => mappedElement.Any(m =>
+                        m.SelectedParameter.Iid == x.SelectedParameter.Iid
+                        && m.SelectedVariable.Reference.NodeId.Identifier
+                            .Equals(x.SelectedVariable.Reference.NodeId.Identifier)))
+                    .ToList();
+
+                this.HubMapResult.RemoveAll(toRemove);
                 this.HubMapResult.AddRange(mappedElement);
             }
 
@@ -432,7 +585,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Transfers the mapped variables to the Dst data source
         /// </summary>
-        public void TransferMappedThingsToDst()
+        public async Task TransferMappedThingsToDst()
         {
             foreach (var mappedElement in this.SelectedHubMapResultToTransfer
                 .Where(
@@ -447,11 +600,21 @@ namespace DEHPEcosimPro.DstController
 
                 this.SelectedHubMapResultToTransfer.Remove(mappedElement);
                 this.HubMapResult.Remove(mappedElement);
-                this.AddToExternalIdentifierMap(((Thing)mappedElement.SelectedValue.Container).Iid, mappedElement.SelectedVariable.Name);
+
+                this.mappingConfigurationService.AddToExternalIdentifierMap(mappedElement);
 
                 this.exchangeHistory.Append(
                     $"Value [{mappedElement.SelectedValue.Representation}] from {mappedElement.SelectedParameter.ModelCode()} has been transfered to {mappedElement.SelectedVariable.Name}");
             }
+
+            var (iteration, transaction) = this.GetIterationTransaction();
+            this.mappingConfigurationService.PersistExternalIdentifierMap(transaction, iteration);
+            transaction.CreateOrUpdate(iteration);
+            await this.hubController.Write(transaction);
+            await this.hubController.Refresh();
+            this.mappingConfigurationService.RefreshExternalIdentifierMap();
+
+            this.LoadMappingToDst();
 
             CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
         }
@@ -492,7 +655,7 @@ namespace DEHPEcosimPro.DstController
         /// <returns>An assert</returns>
         public bool WriteToDst(NodeId nodeId, double value)
         {
-            return this.opcClientService.WriteNode(nodeId, value, true);
+            return this.opcClientService.WriteNode(nodeId, value);
         }
 
         /// <summary>
@@ -537,7 +700,16 @@ namespace DEHPEcosimPro.DstController
         public void GetNextExperimentStep()
         {
             this.CallServerMethod("method_integ_cint");
-            var time = Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value);
+
+            var result = Convert.ToDouble(this.opcClientService.ReadNode(this.TimeNodeId).Value);
+
+            var cint = this.ReadNode(this.References
+                .FirstOrDefault(x => x.BrowseName.Name == "CINT")).Value;
+
+            var places = Convert.ToDouble(cint).ToString(CultureInfo.InvariantCulture).Split('.')[1];
+
+            var time = Math.Round(result, places.Length, MidpointRounding.AwayFromZero);
+
             this.ReadAllNode(time);
         }
 
@@ -586,21 +758,24 @@ namespace DEHPEcosimPro.DstController
                     }
                 }
 
-                this.PersistExternalIdentifierMap(transaction, iterationClone);
-
                 transaction.CreateOrUpdate(iterationClone);
+
+                this.mappingConfigurationService.AddToExternalIdentifierMap(this.ParameterVariable);
+                this.mappingConfigurationService.PersistExternalIdentifierMap(transaction, iterationClone);
 
                 await this.hubController.Write(transaction);
 
                 await this.UpdateParametersValueSets();
 
                 await this.hubController.Refresh();
-                this.hubController.GetThingById(this.ExternalIdentifierMap.Iid, this.hubController.OpenIteration, out ExternalIdentifierMap map);
-                this.ExternalIdentifierMap = map.Clone(true);
+
+                this.mappingConfigurationService.RefreshExternalIdentifierMap();
 
                 this.DstMapResult.Clear();
                 this.SelectedDstMapResultToTransfer.Clear();
                 this.ParameterVariable.Clear();
+
+                this.LoadMappingToHub();
 
                 CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
             }
@@ -633,6 +808,7 @@ namespace DEHPEcosimPro.DstController
             this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride));
 
             transaction.CreateOrUpdate(iterationClone);
+            
             await this.hubController.Write(transaction);
         }
 
@@ -725,85 +901,6 @@ namespace DEHPEcosimPro.DstController
             return (TThing) clone;
         }
         
-        /// <summary>
-        /// Updates the configured mapping, registering the <see cref="ExternalIdentifierMap"/> and its <see cref="IdCorrespondence"/>
-        /// to a <see name="IThingTransaction"/>
-        /// </summary>
-        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
-        /// <param name="iterationClone">The <see cref="Iteration"/> clone</param>
-        private void PersistExternalIdentifierMap(IThingTransaction transaction, Iteration iterationClone)
-        {
-            if (this.ExternalIdentifierMap.Iid == Guid.Empty)
-            {
-                this.ExternalIdentifierMap = this.ExternalIdentifierMap.Clone(true);
-                this.ExternalIdentifierMap.Iid = Guid.NewGuid();
-                iterationClone.ExternalIdentifierMap.Add(this.ExternalIdentifierMap);
-            }
-
-            foreach (var correspondence in this.ExternalIdentifierMap.Correspondence)
-            {
-                if (correspondence.Iid == Guid.Empty)
-                {
-                    correspondence.Iid = Guid.NewGuid();
-                    transaction.Create(correspondence);
-                }
-                else
-                {
-                    transaction.CreateOrUpdate(correspondence);
-                }
-            }
-
-            transaction.CreateOrUpdate(this.ExternalIdentifierMap);
-
-            this.statusBar.Append("Mapping configuration processed");
-        }
-
-        /// <summary>
-        /// Creates and sets the <see cref="ExternalIdentifierMap"/>
-        /// </summary>
-        /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap"/></param>
-        /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
-        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
-        {
-            return new ExternalIdentifierMap()
-            {
-                Name = newName,
-                ExternalToolName = this.ThisToolName,
-                ExternalModelName = newName,
-                Owner = this.hubController.CurrentDomainOfExpertise
-            };
-        }
-
-        /// <summary>
-        /// Adds one correspondance to the <see cref="IDstController.IdCorrespondences"/>
-        /// </summary>
-        /// <param name="internalId">The thing that <see cref="externalId"/> corresponds to</param>
-        /// <param name="externalId">The external thing that <see cref="internalId"/> corresponds to</param>
-        public void AddToExternalIdentifierMap(Guid internalId, string externalId)
-        {
-            if (internalId == Guid.Empty)
-            {
-                return;
-            }
-
-            if (this.ExternalIdentifierMap.Correspondence
-                .FirstOrDefault(x => x.ExternalId == externalId 
-                                     && x.InternalThing != internalId) is { } correspondence)
-            {
-                correspondence.InternalThing = internalId;
-            }
-
-            else if (!this.ExternalIdentifierMap.Correspondence
-                    .Any(x => x.ExternalId == externalId && x.InternalThing == internalId))
-            {
-                this.ExternalIdentifierMap.Correspondence.Add(new IdCorrespondence()
-                {
-                    ExternalId = externalId,
-                    InternalThing = internalId
-                });
-            }
-        }
-
         /// <summary>
         /// Pops the <see cref="CreateLogEntryDialog"/> and based on its result, either registers a new ModelLogEntry to the <see cref="transaction"/> or not
         /// </summary>

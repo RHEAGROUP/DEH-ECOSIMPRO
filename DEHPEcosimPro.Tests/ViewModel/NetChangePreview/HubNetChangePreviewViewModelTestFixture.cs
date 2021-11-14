@@ -149,7 +149,10 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 Container = this.iteration
             };
 
-            this.parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null) { Parameter = this.parameter };
+            this.parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null)
+            {
+                Parameter = this.parameter
+            };
 
             this.elementDefinition2 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
@@ -157,6 +160,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 {
                     new ElementUsage(Guid.NewGuid(), null, null)
                     {
+                        Name = "theOverride",
                         ElementDefinition = this.elementDefinition1,
                         ParameterOverride = { this.parameterOverride}
                     },
@@ -198,7 +202,9 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.hubController.Setup(x => x.Reload()).Returns(Task.CompletedTask);
             
             this.dstController = new Mock<IDstController>();
-            
+
+            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ElementBase>());
+
             this.dstController.Setup(x => x.DstMapResult)
                 .Returns(new ReactiveList<ElementBase>() 
                 {
@@ -343,13 +349,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(false));
             Assert.DoesNotThrow(() =>this.viewModel.UpdateTree(true));
         }
-
-        [Test]
-        public void VerifyOnSessionReset()
-        {
-
-        }
-
+        
         [Test]
         public void VerifyUpdateTreeBasedOnSelection()
         {
@@ -375,6 +375,16 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels.Take(1), null, false)));
             Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(this.variableRowViewModels, null, false)));
             Assert.DoesNotThrow(() => CDPMessageBus.Current.SendMessage(new UpdateHubPreviewBasedOnSelectionEvent(new List<VariableRowViewModel>(), null, true)));
+        }
+
+        [Test]
+        public void VerifySelectCommands()
+        {
+            Assert.DoesNotThrow(() => this.viewModel.UpdateTree(false));
+            Assert.IsTrue(this.viewModel.SelectAllCommand.CanExecute(null));
+            Assert.IsTrue(this.viewModel.DeselectAllCommand.CanExecute(null));
+            Assert.DoesNotThrow(() => this.viewModel.SelectDeselectAllForTransfer());
+            Assert.DoesNotThrow(() => this.viewModel.SelectDeselectAllForTransfer(false));
         }
     }
 }

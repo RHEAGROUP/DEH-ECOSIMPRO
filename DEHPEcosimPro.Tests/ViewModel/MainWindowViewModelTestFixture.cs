@@ -51,6 +51,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IDstNetChangePreviewViewModel> dstNetChangePreviewViewModel;
         private Mock<IMappingViewModel> mappingViewModel;
         private Mock<INavigationService> navigationService;
+        private Mock<IDifferenceViewModel> differenceViewModel;
 
         [SetUp]
         public void Setup()
@@ -64,10 +65,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController = new Mock<IDstController>();
             this.mappingViewModel = new Mock<IMappingViewModel>();
             this.navigationService = new Mock<INavigationService>();
+            this.differenceViewModel = new Mock<IDifferenceViewModel>();
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
                 this.statusBarViewModel.Object, this.hubNetChangePreviewViewModel.Object, this.dstNetChangePreviewViewModel.Object,
-                this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object, this.navigationService.Object);
+                this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object, this.navigationService.Object,
+                this.differenceViewModel.Object);
         }
 
         [Test]

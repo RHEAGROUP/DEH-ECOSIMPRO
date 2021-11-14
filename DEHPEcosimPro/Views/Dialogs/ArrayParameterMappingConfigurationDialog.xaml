@@ -1,0 +1,67 @@
+﻿<dx:DXDialogWindow x:Class="DEHPEcosimPro.Views.Dialogs.ArrayParameterMappingConfigurationDialog" 
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core" 
+                   xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+                   xmlns:dxlc="http://schemas.devexpress.com/winfx/2008/xaml/layoutcontrol" 
+                   xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+                   d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True"
+                   xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+                   mc:Ignorable="d"
+                   WindowStartupLocation="CenterScreen"
+                   Title="Choose Mapping Columns" Height="450">
+    <dxmvvm:Interaction.Behaviors>
+        <behaviors:CloseWindowBehavior/>
+    </dxmvvm:Interaction.Behaviors>
+    <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Column Mapping : " FontSize="12" />
+                </Grid>
+                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding MappingRows}" SelectedItem="{Binding SelectedListOfRowsToMap}">
+                    <dxg:GridControl.View>
+                        <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
+                                       IsDetailButtonVisibleBinding="{x:Null}"
+                                       RetainSelectionOnClickOutsideCheckBoxSelector="True" ShowCheckBoxSelectorColumn="false" ShowFilterPanelMode="Never" ShowGroupPanel="False" VerticalScrollbarVisibility="Auto" />
+                    </dxg:GridControl.View>
+                    <dxg:GridControl.Columns>
+                        <dxg:GridColumn Header="{Binding Name}" FieldName="IndexRepresentation" />
+                        <dxg:GridColumn Header="{Binding ParameterName}" FieldName="SelectedParameterType">
+                            <dxg:ColumnBase.CellTemplate>
+                                <DataTemplate>
+                                    <dxe:ComboBoxEdit Height="Auto"
+                                                      Margin="5"
+                                                      FontSize="12"
+                                                      ItemsSource="{Binding ElementName=Mapping, Path=DataContext.ParameterNames}"
+                                                      SelectedItem="{Binding Path=RowData.Row.SelectedParameterType}"
+                                                      ToolTip="Choose a column to match"
+                                                      NullText="Choose a column to match" />
+                                </DataTemplate>
+                            </dxg:ColumnBase.CellTemplate>
+                        </dxg:GridColumn>
+                    </dxg:GridControl.Columns>
+                </dxg:GridControl>
+            </Grid>
+        </Grid>
+    </dx:LoadingDecorator>
+    <dx:DXDialogWindow.FooterButtons>
+        <dx:DialogButton ToolTip="Proceed" Content="Proceed" MinWidth="65" DialogResult="OK"/>
+        <dx:DialogButton ToolTip="Cancel" IsDefault="True" Content="Cancel" IsCancel="True" MinWidth="65" DialogResult="Cancel"/>
+    </dx:DXDialogWindow.FooterButtons>
+</dx:DXDialogWindow>

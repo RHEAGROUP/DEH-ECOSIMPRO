@@ -108,12 +108,7 @@ namespace DEHPEcosimPro.ViewModel
         /// Backing field for <see cref="SelectedStepping"/> 
         /// </summary>
         private double selectedStepping = .01;
-
-        /// <summary>
-        /// Backing field for <see cref="IsExperimentRunning"/> 
-        /// </summary>
-        private bool isExperimentRunning;
-
+        
         /// <summary>
         /// Backing field for <see cref="ExperimentProgress"/> 
         /// </summary>
@@ -150,9 +145,23 @@ namespace DEHPEcosimPro.ViewModel
         private bool areTimeStepAnStepTimeEditable;
 
         /// <summary>
-        /// Bqcking field for <see cref="CanRunExperiment"/>
+        /// Backing field for <see cref="CanRunExperiment"/>
         /// </summary>
         private bool canRunExperiment;
+
+        /// <summary>
+        /// Backing field for <see cref="IsExperimentRunning"/>
+        /// </summary>
+        private bool isExperimentRunning;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the experiment is running
+        /// </summary>
+        public bool IsExperimentRunning
+        {
+            get => this.isExperimentRunning;
+            set => this.RaiseAndSetIfChanged(ref this.isExperimentRunning, value);
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DstBrowserHeaderViewModel"/>
@@ -186,6 +195,9 @@ namespace DEHPEcosimPro.ViewModel
                 this.WhenAnyValue(vm => vm.dstController.IsSessionOpen));
             
             this.CallResetMethodCommand.Subscribe(_ => this.Reset());
+
+            this.WhenAnyValue(x => x.dstController.IsExperimentRunning)
+                .Subscribe(x => this.IsExperimentRunning = x);
 
             this.WhenAny(x => x.ExperimentTime, 
                 x => x.dstController.IsSessionOpen,
@@ -227,7 +239,7 @@ namespace DEHPEcosimPro.ViewModel
             {
                 this.RaiseAndSetIfChanged(ref this.experimentTime, value);
 
-                if (this.IsExperimentRunning)
+                if (this.dstController.IsExperimentRunning)
                 {
                     this.ExperimentProgress = Math.Round((value / this.SelectedStopStep) * 100, 2);
                 }
@@ -250,15 +262,6 @@ namespace DEHPEcosimPro.ViewModel
         {
             get => this.experimentProgress;
             set => this.RaiseAndSetIfChanged(ref this.experimentProgress, value);
-        }
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether the experiment is running
-        /// </summary>
-        public bool IsExperimentRunning
-        {
-            get => this.isExperimentRunning;
-            set => this.RaiseAndSetIfChanged(ref this.isExperimentRunning, value);
         }
 
         /// <summary>
@@ -364,7 +367,7 @@ namespace DEHPEcosimPro.ViewModel
             {
                 this.ExperimentButtonText = "Run";
                 this.ExperimentProgress = 0;
-                this.IsExperimentRunning = false;
+                this.dstController.IsExperimentRunning = false;
                 this.CancelToken = null;
                 this.ServerAddress = string.Empty;
                 this.VariablesCount = 0;
@@ -389,7 +392,7 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         public void RunExperiment()
         {
-            if (this.IsExperimentRunning)
+            if (this.dstController.IsExperimentRunning)
             {
                 this.CancelToken?.Cancel();
                 return;
@@ -411,7 +414,7 @@ namespace DEHPEcosimPro.ViewModel
             if(this.dstController.WriteToDst(this.stopStepNodeId, this.SelectedStopStep) 
                && this.dstController.WriteToDst(this.steppingNodeId, this.SelectedStepping))
             {
-                this.IsExperimentRunning = true;
+                this.dstController.IsExperimentRunning = true;
                 this.stopWatch = new Stopwatch();
                 this.stopWatch.Start();
                 this.CancelToken = new CancellationTokenSource();
@@ -459,7 +462,7 @@ namespace DEHPEcosimPro.ViewModel
         private void EndRun()
         {
             this.ExperimentButtonText = this.ExperimentTime < this.SelectedStopStep ? $"Paused ({ this.ExperimentProgress}%) Press to Continue" : "Run";
-            this.IsExperimentRunning = false;
+            this.dstController.IsExperimentRunning = false;
 
             if (this.stopWatch is {})
             {

@@ -28,6 +28,7 @@ namespace DEHPEcosimPro.ViewModel
     using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
+    using System.Windows;
 
     using CDP4Common.EngineeringModelData;
 
@@ -117,6 +118,11 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="mappedElement">The <see cref="MappedElementDefinitionRowViewModel"/></param>
         private void UpdateMappedThings(MappedElementDefinitionRowViewModel mappedElement)
         {
+            this.MappingRows.RemoveAll(this.MappingRows
+                .Where(m => m.HubThing.Name == mappedElement.SelectedParameter.ModelCode()
+                            && m.DstThing.Name == mappedElement.SelectedVariable.Name
+                            && m.Direction == MappingDirection.FromHubToDst).ToList());
+
             this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, mappedElement));
         }
 
@@ -133,9 +139,10 @@ namespace DEHPEcosimPro.ViewModel
                 _ => new List<(ParameterOrOverrideBase parameter, VariableRowViewModel variable)>()
             };
 
-            foreach (var parameter in parametersNodeId)
+            foreach (var parameterVariable in parametersNodeId)
             {
-                this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, parameter));
+                this.MappingRows.RemoveAll(this.MappingRows.Where(m => m.DstThing.Name == parameterVariable.variable.Name).ToList());
+                this.MappingRows.Add(new MappingRowViewModel(this.dstController.MappingDirection, parameterVariable));
             }
         }
 
@@ -148,7 +155,9 @@ namespace DEHPEcosimPro.ViewModel
         {
             var modified  = this.dstController
                         .ParameterVariable.Where(x =>
-                            x.Key.Container?.Iid == element.Iid).ToList();
+                            x.Key.Container is ElementDefinition elementDefinition 
+                            && elementDefinition.Iid == element.Iid 
+                            && elementDefinition.ShortName == element.ShortName).ToList();
 
             var originals = this.hubController.OpenIteration.Element
                 .FirstOrDefault(x => x.Iid == element.Iid)?

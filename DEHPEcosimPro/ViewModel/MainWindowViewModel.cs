@@ -2,7 +2,7 @@
 // <copyright file="MainWindowViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -53,6 +53,11 @@ namespace DEHPEcosimPro.ViewModel
         private readonly INavigationService navigationService;
 
         /// <summary>
+        /// Gets the view model that represents the difference table
+        /// </summary>
+        public IDifferenceViewModel DifferenceViewModel { get; private set; }
+
+        /// <summary>
         /// Backing field for <see cref="MappingDirection"/>
         /// </summary>
         private int mappingDirection;
@@ -96,7 +101,7 @@ namespace DEHPEcosimPro.ViewModel
         /// Gets the view model that represents the status bar
         /// </summary>
         public IStatusBarControlViewModel StatusBarControlViewModel { get; }
-        
+
         /// <summary>
         /// Gets or sets the <see cref="ICommand"/> that will change the mapping direction
         /// </summary>
@@ -128,22 +133,24 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="transferControlViewModel">The <see cref="ITransferControlViewModel"/></param>
         /// <param name="mappingViewModel">The <see cref="IMappingViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
-        public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel, 
-            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel, 
-            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController, 
+        /// <param name="differenceViewModel">The <see cref="IDifferenceViewModel"/></param>
+        public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel,
+            IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel,
+            IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController,
             ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel,
-            INavigationService navigationService)
+            INavigationService navigationService, IDifferenceViewModel differenceViewModel)
         {
             this.dstController = dstController;
             this.navigationService = navigationService;
+            this.DifferenceViewModel = differenceViewModel;
             this.TransferControlViewModel = transferControlViewModel;
             this.MappingViewModel = mappingViewModel;
             this.HubNetChangePreviewViewModel = hubNetChangePreviewViewModel;
             this.DstNetChangePreviewViewModel = dstNetChangePreviewViewModel;
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;
-            this.StatusBarControlViewModel = statusBarControlViewModel; 
-            
+            this.StatusBarControlViewModel = statusBarControlViewModel;
+
             this.InitializeCommands();
         }
 
@@ -165,11 +172,11 @@ namespace DEHPEcosimPro.ViewModel
         private void ChangeMappingDirectionExecute()
         {
             this.SwitchPanelBehavior?.Switch();
-            
-            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection 
+
+            this.dstController.MappingDirection = this.SwitchPanelBehavior?.MappingDirection
                                                   ?? DEHPCommon.Enumerators.MappingDirection.FromDstToHub;
 
-            this.MappingDirection = (int)this.dstController.MappingDirection;
+            this.MappingDirection = (int) this.dstController.MappingDirection;
         }
     }
 }

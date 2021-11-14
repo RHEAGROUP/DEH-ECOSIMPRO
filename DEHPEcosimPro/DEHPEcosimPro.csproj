@@ -9,8 +9,8 @@
     <Product>DEHPEcosimPro</Product>
     <Description>DEHPEcosimPro desktop application</Description>
     <Copyright>Copyright © RHEA System S.A.</Copyright>
-    <AssemblyVersion>1.4.0</AssemblyVersion>
-    <FileVersion>1.4.0</FileVersion>
+    <AssemblyVersion>1.5.0</AssemblyVersion>
+    <FileVersion>1.5.0</FileVersion>
     <LangVersion>latest</LangVersion>
     <StartupObject>DEHPEcosimPro.App</StartupObject>
     <ApplicationIcon>icon.ico</ApplicationIcon>
@@ -29,9 +29,8 @@
     <Compile Include="Services\TypeResolver\Interfaces\IObjectTypeResolverService.cs" />
     <Compile Include="Services\TypeResolver\ObjectTypeResolverService.cs" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="DEHPCommon" Version="1.0.224" />
+    <PackageReference Include="DEHPCommon" Version="1.0.233" />
     <PackageReference Include="NLog" Version="4.6.8" />
     <PackageReference Include="NLog.Schema" Version="4.6.8" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.4.363.107" />
@@ -39,31 +38,25 @@
     <PackageReference Include="reactiveui" Version="6.5.0" />
     <PackageReference Include="Rx-Linq" Version="2.2.5" />
     <PackageReference Include="Rx-PlatformServices" Version="2.2.5" />
-    <PackageReference Include="Splat" Version="1.6.2" />  
+    <PackageReference Include="Splat" Version="1.6.2" />
   </ItemGroup>
-  
   <ItemGroup>
     <Page Include="App.xaml" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="System.Web" />
   </ItemGroup>
-
   <ItemGroup>
     <Resource Include="Resources\logo.png" />
   </ItemGroup>
-
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Views\DstNetChangePreview.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <None Update="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -72,7 +65,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
   <ItemGroup>
     <Page Update="Views\DstBrowserHeader.xaml">
       <SubType>Designer</SubType>

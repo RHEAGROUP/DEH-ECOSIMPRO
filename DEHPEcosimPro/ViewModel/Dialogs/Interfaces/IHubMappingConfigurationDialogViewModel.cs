@@ -2,7 +2,7 @@
 // <copyright file="IHubMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -40,33 +40,18 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
         /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
-        ReactiveList<VariableRowViewModel> AvailableVariables { get; set; }
+        ReactiveList<VariableBaseRowViewModel> AvailableVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of available variables
+        /// </summary>
+        VariableBaseRowViewModel SelectedVariable { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel"/> that hold parameter value to map
         /// </summary>
         ReactiveList<ElementDefinitionRowViewModel> Elements { get; set; }
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="ElementDefinition"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ElementDefinition> ElementDefinitions { get; }
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="ElementDefinition"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ElementUsage> ElementUsages { get; set; }
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="Parameter"/> that hold parameter value to map
-        /// </summary>
-        ReactiveList<ParameterOrOverrideBase> Parameters { get; set; }
-
-        /// <summary>
-        /// Gets or sets the collection of string value
-        /// </summary>
-        ReactiveList<ValueSetValueRowViewModel> Values { get; set; }
-
+        
         /// <summary>
         /// Gets the collection of <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>

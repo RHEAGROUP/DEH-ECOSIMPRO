@@ -37,6 +37,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPCommon.UserPreferenceHandler.UserPreferenceService;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.Settings;
     using DEHPEcosimPro.ViewModel.Dialogs;
 
@@ -56,11 +57,15 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         private Mock<IStatusBarControlViewModel> statusBar;
         private Mock<IUserPreferenceService<AppSettings>> userPreferenceService;
         private DstLoginViewModel viewModel;
+        private Mock<IMappingConfigurationService> mappingConfigurationService;
 
         [SetUp]
         public void Setup()
         {
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
+
+            this.mappingConfigurationService = new Mock<IMappingConfigurationService>();
+
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
             this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>(), 1000)).Returns(Task.CompletedTask);
@@ -79,7 +84,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.userPreferenceService.SetupProperty(s => s.UserPreferenceSettings, new AppSettings { SavedOpcUris = new List<string>() });
 
             this.viewModel = new DstLoginViewModel(this.dstController.Object, this.statusBar.Object, 
-                this.userPreferenceService.Object, this.hubController.Object);
+                this.userPreferenceService.Object, this.hubController.Object, this.mappingConfigurationService.Object);
         }
 
         [Test]

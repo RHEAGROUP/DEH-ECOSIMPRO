@@ -100,9 +100,20 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void VerifyTransferCommand()
         {
             Assert.IsFalse(this.viewModel.TransferCommand.CanExecute(null));
-            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent(true));
-            Assert.IsFalse(this.viewModel.TransferCommand.CanExecute(null));
-            CDPMessageBus.Current.SendMessage(new UpdateObjectBrowserTreeEvent());
+
+            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer)
+                .Returns(new ReactiveList<ElementBase>()
+                {
+                    new ElementDefinition()
+                    {
+                        Parameter = { new Parameter()}
+                    }
+                });
+
+            this.dstController.Setup(x => x.MappingDirection)
+                .Returns(MappingDirection.FromDstToHub);
+
+            this.viewModel.UpdateNumberOfThingsToTransfer();
             Assert.IsTrue(this.viewModel.TransferCommand.CanExecute(null));
             
             Assert.DoesNotThrowAsync(() => this.viewModel.TransferCommand.ExecuteAsyncTask(null));

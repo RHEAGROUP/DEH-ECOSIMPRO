@@ -2,7 +2,7 @@
 // <copyright file="HubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -116,18 +116,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             CDPMessageBus.Current.Listen<SessionEvent>(this.HubController.Session)
                 .Where(x => x.Status == SessionStatus.EndUpdate)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x =>
-                {
-                    this.UpdateTreeBasedOnSelectionHandler(this.previousSelection);
-                });
+                .Subscribe(x => { this.UpdateTreeBasedOnSelectionHandler(this.previousSelection); });
 
             CDPMessageBus.Current.Listen<SessionEvent>(this.HubController.Session)
                 .Where(x => x.Status == SessionStatus.EndUpdate && this.HubController.OpenIteration != null)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x =>
-                {
-                    this.ComputeValuesWrapper();
-                });
+                .Subscribe(x => { this.ComputeValuesWrapper(); });
 
             this.SelectedThings.BeforeItemsAdded.Subscribe(this.WhenItemSelectedChanges);
             this.SelectedThings.BeforeItemsRemoved.Subscribe(this.WhenItemSelectedChanges);
@@ -147,7 +141,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             switch (row)
             {
-                case ParameterRowViewModel parameterRow when IsThingTransferable(parameterRow):
+                case ParameterRowViewModel parameterRow when this.IsThingTransferable(parameterRow):
                 {
                     parameterRow.IsSelectedForTransfer = !parameterRow.IsSelectedForTransfer;
 
@@ -158,10 +152,14 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                             .Any(x => x.IsSelectedForTransfer);
                     }
 
+                    //used by the DifferenceViewModel
+                    CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(parameterRow.IsSelectedForTransfer, parameterRow.Thing));
+
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterRow);
+
                     break;
                 }
-                case ParameterOverrideRowViewModel parameterOverrideRow when IsThingTransferable(parameterOverrideRow):
+                case ParameterOverrideRowViewModel parameterOverrideRow when this.IsThingTransferable(parameterOverrideRow):
                 {
                     parameterOverrideRow.IsSelectedForTransfer = !parameterOverrideRow.IsSelectedForTransfer;
 
@@ -175,19 +173,22 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterOverrideRow);
                     break;
                 }
-                case ElementDefinitionRowViewModel elementDefinitionRow when IsThingTransferable(elementDefinitionRow):
+                case ElementDefinitionRowViewModel elementDefinitionRow when this.IsThingTransferable(elementDefinitionRow):
                 {
                     elementDefinitionRow.IsSelectedForTransfer = !elementDefinitionRow.IsSelectedForTransfer;
 
-                    foreach (var parameter in elementDefinitionRow.ContainedRows.OfType<ParameterRowViewModel>().Where(IsThingTransferable))
+                    foreach (var parameter in elementDefinitionRow.ContainedRows.OfType<ParameterRowViewModel>().Where(this.IsThingTransferable))
                     {
                         parameter.IsSelectedForTransfer = elementDefinitionRow.IsSelectedForTransfer;
                     }
 
+                    //used by the DifferenceViewModel
+                    CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(elementDefinitionRow.IsSelectedForTransfer, elementDefinitionRow.Thing));
+
                     this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
                     break;
                 }
-                case ElementUsageRowViewModel elementUsageRow when IsThingTransferable(elementUsageRow):
+                case ElementUsageRowViewModel elementUsageRow when this.IsThingTransferable(elementUsageRow):
                 {
                     this.SelectChainOfContainerViewModel(elementUsageRow);
 
@@ -201,7 +202,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         this.AddOrRemoveToSelectedThingsToTransfer(definitionRowViewModel);
                     }
 
-                    foreach (var parameterOverride in elementUsageRow.ContainedRows.OfType<ParameterOverrideRowViewModel>().Where(IsThingTransferable))
+                    foreach (var parameterOverride in elementUsageRow.ContainedRows.OfType<ParameterOverrideRowViewModel>().Where(this.IsThingTransferable))
                     {
                         parameterOverride.IsSelectedForTransfer = elementUsageRow.IsSelectedForTransfer;
                     }
@@ -215,11 +216,30 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <summary>
         /// Verifies that the <see cref="thingViewModel"/> is transferable
         /// </summary>
+        /// <param name="thingViewModel">The <see cref="ParameterOrOverrideBaseRowViewModel"/></param>
+        /// <returns>An assert</returns>
+        private bool IsThingTransferable(ParameterOrOverrideBaseRowViewModel thingViewModel)
+        {
+            var thingContainer = thingViewModel.ContainerViewModel.Thing;
+
+            var element = this.dstController.DstMapResult
+                .FirstOrDefault(x => x.ShortName == (thingContainer as IShortNamedThing)?.ShortName && x.Iid == thingContainer.Iid);
+
+            return element?.Iid == Guid.Empty || element?.Original != null;
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="thingViewModel"/> is transferable
+        /// </summary>
+        /// <typeparam name="TElement">The type of <see cref="ElementBase"/></typeparam>
         /// <param name="thingViewModel"></param>
         /// <returns>An assert</returns>
-        private static bool IsThingTransferable(IRowViewModelBase<Thing> thingViewModel)
+        private bool IsThingTransferable<TElement>(IViewModelBase<TElement> thingViewModel) where TElement : ElementBase
         {
-            return thingViewModel.Thing.Iid == Guid.Empty || thingViewModel.Thing.Original != null;
+            var element = this.dstController.DstMapResult.OfType<TElement>()
+                .FirstOrDefault(x => x.Iid == thingViewModel.Thing.Iid && x.ShortName == thingViewModel.Thing.ShortName);
+
+            return element?.Iid == Guid.Empty || element?.Original != null;
         }
 
         /// <summary>
@@ -288,7 +308,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 default:
                     throw new ArgumentOutOfRangeException($"{nameof(element)} is of type {element.ClassKind} which is unsuported at this point.");
             }
-
         }
 
         /// <summary>
@@ -299,9 +318,9 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             (parameterRow.ContainerViewModel switch
             {
-                RowViewModelBase<ElementDefinition> definitionRowViewModel => (Action)(() =>
+                RowViewModelBase<ElementDefinition> definitionRowViewModel => (Action) (() =>
                     this.AddOrRemoveToSelectedThingsToTransfer(definitionRowViewModel)),
-                 RowViewModelBase<ElementUsage> usageRowViewModelBase => () => 
+                RowViewModelBase<ElementUsage> usageRowViewModelBase => () =>
                     this.AddOrRemoveToSelectedThingsToTransfer(usageRowViewModelBase),
                 _ => throw new ArgumentException(
                     $"The type of container view model, {parameterRow.ContainerViewModel.GetType().Name} of {nameof(parameterRow)} is not supported.")
@@ -370,19 +389,19 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             var selectedParameters = parentViewModel.ContainedRows
                 .OfType<ParameterOrOverrideBaseRowViewModel>()
                 .Where(x => x.IsSelectedForTransfer)
-                .Select(x => x.Thing)
-                .Cast<TParameter>()
+                .Select(x => x.Thing as TParameter)
+                .Where(x => x is {})
                 .ToList();
-            
+
             parametersToAdd
                 .RemoveAll(p => selectedParameters?
                     .FirstOrDefault(x => x.ParameterType.Iid == p.ParameterType.Iid) is { });
 
-           parametersToAdd.AddRange(selectedParameters);
+            parametersToAdd.AddRange(selectedParameters);
 
-           parameters.Clear();
+            parameters.Clear();
 
-           parameters.AddRange(parametersToAdd);
+            parameters.AddRange(parametersToAdd);
         }
 
         /// <summary>
@@ -430,21 +449,21 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 var parameters = this.dstController.ParameterVariable
                     .Where(v => v.Value.Equals(variable.Reference.NodeId.Identifier))
                     .Select(x => x.Key);
-                
+
                 foreach (var parameterOrOverrideBase in parameters)
                 {
                     var parameterRows = this.GetRows(parameterOrOverrideBase).ToList();
 
                     if (!parameterRows.Any())
                     {
-                        var oldElement = this.GetOldElement(parameterOrOverrideBase.Container); 
-                        
-                        (oldElement as ElementDefinition)?.Parameter.RemoveAll(p => 
+                        var oldElement = this.GetOldElement(parameterOrOverrideBase.Container);
+
+                        (oldElement as ElementDefinition)?.Parameter.RemoveAll(p =>
                             parametersToRemove.Any(r => p.ParameterType.Iid == r.ParameterType.Iid));
-                        
+
                         var elementRow = this.VerifyElementIsInTheTree(parameterOrOverrideBase);
 
-                        this.UpdateRow(parameterOrOverrideBase, (ElementDefinition)oldElement, elementRow);
+                        this.UpdateRow(parameterOrOverrideBase, (ElementDefinition) oldElement, elementRow);
 
                         this.IsDirty = true;
                     }
@@ -455,12 +474,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                         if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
                         {
-                            this.UpdateRow(parameterOrOverrideBase, (ElementDefinition)oldElement, elementDefinitionRow);
+                            this.UpdateRow(parameterOrOverrideBase, (ElementDefinition) oldElement, elementDefinitionRow);
                         }
 
                         else if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
                         {
-                            this.UpdateRow(parameterOrOverrideBase, (ElementUsage)oldElement, elementUsageRow);
+                            this.UpdateRow(parameterOrOverrideBase, (ElementUsage) oldElement, elementUsageRow);
                         }
 
                         this.IsDirty = true;
@@ -477,12 +496,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         private ElementBase GetOldElement(Thing container)
         {
             return this.ThingsAtPreviousState
-                .FirstOrDefault(t => t.Iid == container.Iid
-                                  || container.Iid == Guid.Empty
-                                  && container is ElementDefinition element
-                                  && t is ElementDefinition previousStateElement
-                                  && element.Name == previousStateElement.Name
-                                  && element.ShortName == previousStateElement.ShortName)
+                    .FirstOrDefault(t => t.Iid == container.Iid
+                                         || container.Iid == Guid.Empty
+                                         && container is ElementDefinition element
+                                         && t is ElementDefinition previousStateElement
+                                         && element.Name == previousStateElement.Name
+                                         && element.ShortName == previousStateElement.ShortName)
                 as ElementBase;
         }
 
@@ -494,10 +513,10 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <param name="parameterOrOverrideBase">The <see cref="ParameterOrOverrideBase"/></param>
         /// <param name="oldElement">The old <see cref="ElementBase"/> to be updated</param>
         /// <param name="elementRow">The row to perform on the update</param>
-        private void UpdateRow<TThing, TRow>(ParameterOrOverrideBase parameterOrOverrideBase, TThing oldElement, TRow elementRow) 
+        private void UpdateRow<TThing, TRow>(ParameterOrOverrideBase parameterOrOverrideBase, TThing oldElement, TRow elementRow)
             where TRow : ElementBaseRowViewModel<TThing> where TThing : ElementBase
         {
-            var updatedElement = (TThing)oldElement?.Clone(true);
+            var updatedElement = (TThing) oldElement?.Clone(true);
 
             this.AddOrReplaceParameter(updatedElement, parameterOrOverrideBase);
 
@@ -533,7 +552,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                     elementDefinition.Parameter.Remove(parameter);
                 }
 
-                elementDefinition.Parameter.Add((Parameter)parameterOrOverride);
+                elementDefinition.Parameter.Add((Parameter) parameterOrOverride);
             }
 
             else if (updatedElement is ElementUsage elementUsage)
@@ -595,14 +614,14 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <returns>An assert</returns>
         private static bool VerifyRowContainsTheParameter(ParameterBase parameter, IRowViewModelBase<ParameterOrOverrideBase> parameterRow)
         {
-            var containerIsTheRightOne = (parameterRow.ContainerViewModel.Thing.Iid == parameter.Container.Iid ||
-                                          (parameterRow.ContainerViewModel.Thing is ElementUsage elementUsage
-                                           && (elementUsage.ElementDefinition.Iid == parameter.Container.Iid
-                                           || elementUsage.Iid == parameter.Container.Iid)));
+            var containerIsTheRightOne = parameterRow.ContainerViewModel.Thing.Iid == parameter.Container.Iid ||
+                                         parameterRow.ContainerViewModel.Thing is ElementUsage elementUsage
+                                         && (elementUsage.ElementDefinition.Iid == parameter.Container.Iid
+                                             || elementUsage.Iid == parameter.Container.Iid);
 
-            var parameterIsTheRightOne = (parameterRow.Thing.Iid == parameter.Iid ||
-                                          (parameter.Iid == Guid.Empty
-                                           && parameter.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid));
+            var parameterIsTheRightOne = parameterRow.Thing.Iid == parameter.Iid ||
+                                         parameter.Iid == Guid.Empty
+                                         && parameter.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid;
 
             return containerIsTheRightOne && parameterIsTheRightOne;
         }
@@ -665,13 +684,13 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                 if (parameter.Iid == Guid.Empty)
                 {
-                    this.UpdateRow(parameter, (ElementDefinition)parameter.Container, elementRow);
+                    this.UpdateRow(parameter, (ElementDefinition) parameter.Container, elementRow);
                     this.AddToThingsAtPreviousState(elementRow.Thing);
                     continue;
                 }
 
                 var parameterRows = this.GetRows(parameter).ToList();
-                
+
                 foreach (var parameterRow in parameterRows)
                 {
                     if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)

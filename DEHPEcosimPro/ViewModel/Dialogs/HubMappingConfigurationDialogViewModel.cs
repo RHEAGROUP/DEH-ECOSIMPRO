@@ -2,7 +2,7 @@
 // <copyright file="HubMappingConfigurationDialogViewModel.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2021 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -30,22 +30,34 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using System.Reactive.Linq;
     using System.Windows.Input;
 
+    using Autofac;
+
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
     using CDP4Common.Validation;
 
+    using CDP4Dal;
+
+    using DEHPCommon;
     using DEHPCommon.Enumerators;
+    using DEHPCommon.Events;
     using DEHPCommon.HubController.Interfaces;
+    using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
     using DEHPEcosimPro.DstController;
-    using DEHPEcosimPro.Services.TypeResolver.Interfaces;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
+    using DEHPEcosimPro.Views.Dialogs;
+
+    using Opc.Ua;
 
     using ReactiveUI;
+
+    using Splat;
 
     /// <summary>
     /// The <see cref="HubMappingConfigurationDialogViewModel"/> is the view model to let the user configure the mapping to the Ecosim source
@@ -53,40 +65,48 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     public class HubMappingConfigurationDialogViewModel : MappingConfigurationDialogViewModel, IHubMappingConfigurationDialogViewModel
     {
         /// <summary>
+        /// The <see cref="INavigationService" />
+        /// </summary>
+        private readonly INavigationService navigationService;
+        
+        /// <summary>
+        /// Get the Selected Option of the parameter
+        /// </summary>
+        public Option SelectedOption { get; set; }
+
+        /// <summary>
+        /// Get the Selected State of the parameter
+        /// </summary>
+        public ActualFiniteState SelectedState { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of available variables
         /// </summary>
-        public ReactiveList<VariableRowViewModel> AvailableVariables { get; set; }
+        private VariableBaseRowViewModel selectedVariable;
 
         /// <summary>
-        /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel"/> that hold parameter value to map
+        /// Gets or sets the collection of available variables
         /// </summary>
-        public ReactiveList<ElementDefinitionRowViewModel> Elements { get; set; } = new ReactiveList<ElementDefinitionRowViewModel>();
+        public VariableBaseRowViewModel SelectedVariable
+        {
+            get => this.selectedVariable;
+            set => this.RaiseAndSetIfChanged(ref this.selectedVariable, value);
+        }
 
         /// <summary>
-        /// Gets the collection of <see cref="ElementDefinition"/> that hold parameter value to map
+        /// Gets or sets the collection of available variables
         /// </summary>
-        public ReactiveList<ElementDefinition> ElementDefinitions =>
-            new ReactiveList<ElementDefinition>(this.Elements.Select(x => x.Thing));
-
+        public ReactiveList<VariableBaseRowViewModel> AvailableVariables { get; set; } = new();
+        
         /// <summary>
-        /// Gets or sets the collection of <see cref="ElementUsages"/> that hold parameter value to map
+        /// Gets or sets the collection of <see cref="ElementDefinitionRowViewModel" /> that hold parameter value to map
         /// </summary>
-        public ReactiveList<ElementUsage> ElementUsages { get; set; } = new ReactiveList<ElementUsage>();
-
-        /// <summary>
-        /// Gets or sets the collection of <see cref="Parameter"/> that hold parameter value to map
-        /// </summary>
-        public ReactiveList<ParameterOrOverrideBase> Parameters { get; set; } = new ReactiveList<ParameterOrOverrideBase>();
-
-        /// <summary>
-        /// Gets or sets the collection of string value
-        /// </summary>
-        public ReactiveList<ValueSetValueRowViewModel> Values { get; set; } = new ReactiveList<ValueSetValueRowViewModel>();
-
+        public ReactiveList<ElementDefinitionRowViewModel> Elements { get; set; } = new();
+        
         /// <summary>
         /// Gets the collection of <see cref="MappedElementDefinitionRowViewModel"/>
         /// </summary>
-        public ReactiveList<MappedElementDefinitionRowViewModel> MappedElements { get; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
+        public ReactiveList<MappedElementDefinitionRowViewModel> MappedElements { get; } = new();
 
         /// <summary>
         /// Backing field for <see cref="SelectedMappedElement"/>
@@ -129,39 +149,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.selectedParameter;
             set => this.RaiseAndSetIfChanged(ref this.selectedParameter, value);
         }
-
-        /// <summary>
-        /// Backing field for <see cref="SelectedElementUsage"/>
-        /// </summary>
-        private ElementUsage selectedElementUsage;
-
-        /// <summary>
-        /// Gets or sets the source <see cref="ElementDefinition"/>
-        /// </summary>
-        public ElementUsage SelectedElementUsage
-        {
-            get => this.selectedElementUsage;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementUsage, value);
-        }
-
-        /// <summary>
-        /// Backing field for <see cref="SelectedElementDefinition"/>
-        /// </summary>
-        private ElementDefinition selectedElementDefinition;
-
-        /// <summary>
-        /// Gets or sets the source <see cref="ElementDefinition"/>
-        /// </summary>
-        public ElementDefinition SelectedElementDefinition
-        {
-            get => this.selectedElementDefinition;
-            set => this.RaiseAndSetIfChanged(ref this.selectedElementDefinition, value);
-        }
-
+        
         /// <summary>
         /// Backing field for <see cref="CanContinue"/>
         /// </summary>
         private bool canContinue;
+
+        /// <summary>
+        /// The <see cref="IStatusBarControlViewModel" />
+        /// </summary>
+        private readonly IStatusBarControlViewModel statusBarService;
 
         /// <summary>
         /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
@@ -173,15 +170,24 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
+        /// Gets the command that delete the specified row from the <see cref="MappedElements"/>
+        /// </summary>
+        public ReactiveCommand<object> DeleteMappedRowCommand { get; private set; }
+
+        /// <summary>
         /// Initializes a new <see cref="HubMappingConfigurationDialogViewModel"/>
         /// </summary>
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="statusBarService">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="navigationService">The <see cref="INavigationService" /></param>
+        /// <param name="mappingConfigurationService">The <see cref="IMappingConfigurationService" /></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
-            IDstController dstController, IStatusBarControlViewModel statusBar) :
-            base(hubController, dstController, statusBar)
+            IDstController dstController, IStatusBarControlViewModel statusBarService, INavigationService navigationService) 
+            : base(hubController, dstController, statusBarService)
         {
+            this.navigationService = navigationService;
+            this.statusBarService = statusBarService;
             this.UpdateProperties();
             this.InitializesCommandsAndObservableSubscriptions();
         }
@@ -191,117 +197,143 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void InitializesCommandsAndObservableSubscriptions()
         {
-            this.ContinueCommand = ReactiveCommand.Create(
-                this.WhenAnyValue(x => x.CanContinue),
-                RxApp.MainThreadScheduler);
+            this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue), RxApp.MainThreadScheduler);
 
-            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(
-                () =>
+            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(() =>
                 {
                     var mappedElement =
                         this.MappedElements.Where(x => x.IsValid).ToList();
 
                     this.DstController.Map(mappedElement);
-                    this.StatusBar.Append($"Mapping in progress of {mappedElement.Count} value(s)...");
+                    this.statusBarService.Append($"Mapping in progress of {mappedElement.Count} value(s)...");
                 }));
-
-            this.WhenAnyValue(x => x.SelectedThing)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.SelectedThingChanged));
 
             this.WhenAnyValue(x => x.Elements)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.CreateMappedElements));
-
-            this.WhenAnyValue(x => x.SelectedElementDefinition)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.SelectedElementDefinitionChanged));
+                .Subscribe(_ => this.UpdateHubFields(this.LoadExistingMappedElement));
             
             this.WhenAnyValue(x => x.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.SelectedParameterChanged));
 
-            this.WhenAnyValue(x => x.SelectedMappedElement.SelectedVariable)
+            this.WhenAnyValue(x => x.SelectedVariable)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.AreVariableTypesAreCompatible));
+                .Subscribe(_ => this.UpdateHubFields(this.SelectedAvailableVariablesChanged));
 
-            this.WhenAnyValue(x => x.SelectedMappedElement)
+            this.WhenAnyValue(x => x.SelectedThing)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.SetHubElementFromSelectedMappedElement));
+                .Subscribe(_ => this.UpdateHubFields(this.SelectedThingChanged), e =>
+                {
+                    this.StatusBar.Append($"An error of type {e.GetType().Name}, check the log for more detail.");
+                    this.Logger.Error(e);
+                });
+
+            this.DeleteMappedRowCommand = ReactiveCommand.Create(this.WhenAny(x => x.SelectedMappedElement,
+                x =>
+                    x.Value != null && this.DstController.HubMapResult.All(h => 
+                        h.SelectedParameter.Iid != x.Value.SelectedParameter.Iid)));
+            
+            this.DeleteMappedRowCommand.OfType<Guid>()
+                .Subscribe(this.DeleteMappedRowCommandExecute);
         }
 
         /// <summary>
-        /// Sets the <see cref="SelectedElementDefinition"/>, <see cref="SelectedElementUsage"/>
+        /// Executes the <see cref="DeleteMappedRowCommand"/>
         /// </summary>
-        private void SetHubElementFromSelectedMappedElement()
+        /// <param name="iid">The id of the Thing to delete from <see cref="MappedElements"/>/></param>
+        private void DeleteMappedRowCommandExecute(Guid iid)
         {
-            if (this.SelectedMappedElement is null)
+            var mappedElement = this.MappedElements.FirstOrDefault(x => x.SelectedParameter.Iid == iid);
+
+            if (mappedElement is null)
             {
+                this.Logger.Info($"No MappedElement has been found with the Iid: {iid}");
                 return;
             }
 
-            this.SelectedElementDefinition = this.SelectedMappedElement.SelectedParameter?.GetContainerOfType<ElementDefinition>();
-            this.SelectedElementUsage = this.SelectedMappedElement.SelectedParameter?.GetContainerOfType<ElementUsage>();
+            CDPMessageBus.Current.SendMessage(new SelectEvent(mappedElement.SelectedParameter.GetContainerOfType<ElementDefinition>(), true));
+            this.MappedElements.Remove(mappedElement);
+            var mappingConfigurationService = AppContainer.Container.Resolve<IMappingConfigurationService>();
 
-            this.ComputesAvailableValues();
+            mappingConfigurationService.ExternalIdentifierMap.Correspondence.Remove(mappingConfigurationService
+                .ExternalIdentifierMap.Correspondence.FirstOrDefault(x => x.InternalThing == iid));
+            
+            this.CheckCanExecute();
         }
-
+        
         /// <summary>
         /// Occurs when the selected <see cref="ParameterOrOverrideBase"/> changes
         /// </summary>
         private void SelectedParameterChanged()
         {
             this.SetSelectedMappedElement(this.SelectedParameter);
-            this.ComputesAvailableValues();
         }
         
         /// <summary>
-        /// Occurs when the selected <see cref="ElementDefinition"/> changes
-        /// </summary>
-        private void SelectedElementDefinitionChanged()
-        {
-            if (this.SelectedElementDefinition is null)
-            {
-                return;
-            }
-
-            if (this.SelectedElementUsage?.ElementDefinition.Iid != this.SelectedElementDefinition?.Iid)
-            {
-                this.ElementUsages.Clear();
-                this.ElementUsages.AddRange(this.SelectedElementDefinition.ReferencingElementUsages());
-            }
-
-            this.Parameters.Clear();
-            this.Parameters.AddRange(this.SelectedElementDefinition.Parameter);
-
-            if (this.SelectedElementUsage?.ParameterOverride is {} parameterOverrides)
-            {
-                this.Parameters.AddRange(parameterOverrides);
-            }
-        }
-
-        /// <summary>
         /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>
-        public void AreVariableTypesAreCompatible()
+        public void AreVariableTypesCompatible()
         {
-            if (!(this.SelectedMappedElement?.SelectedVariable is {} variable && this.SelectedMappedElement.SelectedParameter is {} parameter))
+            if (!(this.SelectedVariable is {} variable && this.SelectedMappedElement?.SelectedParameter is {} parameter))
             {
                 return;
             }
 
-            var validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
-
-            if (validationResult.ResultKind != ValidationResultKind.Valid)
+            var validationResult = new ValidationResult
             {
-                this.StatusBar.Append(
-                    $"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}", 
+                Message = string.Empty
+            };
+
+            if (variable is ArrayVariableRowViewModel arrayVariable && parameter.ParameterType is SampledFunctionParameterType sampledFunctionParameter)
+            {
+                validationResult.ResultKind = this.AreVariableTypesCompatible(arrayVariable, parameter);
+            }
+            else if(parameter.ParameterType is not SampledFunctionParameterType)
+            {
+                validationResult = parameter.ParameterType.Validate(variable.ActualValue, parameter.Scale);
+                this.SelectedMappedElement.SelectedParameter = parameter;
+                this.SelectedMappedElement.SelectedVariable = this.SelectedVariable;
+                this.SelectedMappedElement.VerifyValidity();
+            }
+
+            if (validationResult.ResultKind == ValidationResultKind.Invalid)
+            {
+                this.statusBarService.Append(
+                    $"Unable to map the {parameter.ParameterType.Name} with {variable.Name} \n\r {validationResult.Message}",
                     StatusBarMessageSeverity.Error);
 
                 this.SelectedMappedElement.SelectedVariable = null;
             }
-            
+
+            this.SelectedParameter = null;
+            this.SelectedVariable = null;
             this.CheckCanExecute();
+        }
+
+        /// <summary>
+        /// Determine if arrays selected as variable and parameters are compatibles and show a dialog to let the user choose which parameter columns should be mapped to variable column
+        /// </summary>
+        /// <param name="variable">selected variable that is <see cref="ArrayVariableRowViewModel"/></param>
+        /// <param name="parameter">selected parameter that is <see cref="SampledFunctionParameterType"/></param>
+        /// <returns>A <see cref="ValidationResultKind"/></returns>
+        private ValidationResultKind AreVariableTypesCompatible(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
+        {
+            if (!this.AreArraysCompatible(variable, parameter))
+            {
+                return ValidationResultKind.Invalid;
+            }
+
+            var viewModel = new ArrayParameterMappingConfigurationDialogViewModel(variable, parameter);
+
+            if(this.navigationService
+                .ShowDxDialog<ArrayParameterMappingConfigurationDialog, ArrayParameterMappingConfigurationDialogViewModel>(viewModel)
+               != true)
+            {
+                return ValidationResultKind.InConclusive;
+            }
+
+            this.MapParameterToVariable(viewModel, parameter);
+            return ValidationResultKind.Valid;
         }
 
         /// <summary>
@@ -309,51 +341,35 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void SelectedThingChanged()
         {
-            switch (this.SelectedThing)
+            if (this.SelectedThing is ParameterValueRowViewModel parameterValueRow)
             {
-                case IRowViewModelBase<ElementDefinition> elementDefinition:
-                {
-                    this.SelectedElementDefinition = elementDefinition.Thing;
-                    break;
-                }
-                case IRowViewModelBase<ElementUsage> elementUsage:
-                {
-                    this.SelectedElementUsage = elementUsage.Thing;
-                    break;
-                }
-                case IRowViewModelBase<ParameterOrOverrideBase> parameterOrOverrideRow:
-                {
-                    this.SelectedMappedElement = this.MappedElements
-                        .FirstOrDefault(x => x.SelectedParameter?.Iid == parameterOrOverrideRow.Thing.Iid);
-                    break;
-                }
-                default:
-                    return;
+                this.SelectedOption = parameterValueRow.ActualOption;
+                this.SelectedState = parameterValueRow.ActualState;
+                
+                this.SetsSelectedMappedElement((ParameterOrOverrideBase)parameterValueRow.Thing);
+            }
+            else if (this.SelectedThing is ParameterOrOverrideBaseRowViewModel parameterOrOverride)
+            {
+                this.SetsSelectedMappedElement(parameterOrOverride.Thing);
             }
         }
 
         /// <summary>
-        /// Sets the available values to select
+        /// Sets the selected <see cref="MappedElementDefinitionRowViewModel"/> based on the provided 
         /// </summary>
-        private void ComputesAvailableValues()
+        /// <param name="parameter">The <see cref="ParameterOrOverrideBase"/></param>
+        private void SetsSelectedMappedElement(ParameterOrOverrideBase parameter)
         {
-            this.Values.Clear();
+            this.SelectedMappedElement = this.MappedElements
+                                                             .FirstOrDefault(x => x.SelectedParameter?.Iid == parameter.Iid)
+                                                         ?? this.CreateMappedElement(parameter);
 
-            if (this.SelectedMappedElement?.SelectedParameter is null)
+            this.SelectedMappedElement.SelectedParameter = parameter;
+
+            if (this.SelectedVariable != null)
             {
-                return;
+                this.AreVariableTypesCompatible();
             }
-
-            var scale = this.SelectedMappedElement.SelectedParameter.Scale;
-
-            this.Values.AddRange(this.SelectedMappedElement.SelectedParameter
-                .ValueSets.SelectMany(x => this.ComputesValueRow(x, x.Computed, scale)));
-
-            this.Values.AddRange(this.SelectedMappedElement.SelectedParameter
-                .ValueSets.SelectMany(x => this.ComputesValueRow(x, x.Reference, scale)));
-
-            this.Values.AddRange(this.SelectedMappedElement.SelectedParameter
-                .ValueSets.SelectMany(x => this.ComputesValueRow(x, x.Manual, scale)));
         }
 
         /// <summary>
@@ -385,39 +401,57 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Creates all <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>
+        /// Creates all <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>. Use to add the already saved mapping.
         /// </summary>
-        public void CreateMappedElements()
+        public void LoadExistingMappedElement()
         {
-            foreach (var thing in this.ElementDefinitions.SelectMany(x => x.Parameter))
+            if (!this.DstController.HubMapResult.Any())
             {
-                this.MappedElements.Add(this.CreateMappedElement(thing));
-            }
-            
-            foreach (var parameterOverride in this.ElementDefinitions
-                .SelectMany(x => x.ReferencingElementUsages()
-                    .SelectMany(p => p.ParameterOverride)))
-            {
-                this.MappedElements.Add(this.CreateMappedElement(parameterOverride));
+                return;
             }
 
-            this.AssignMapping();
+            this.MappedElements.AddRange(this.DstController.HubMapResult.Distinct());
+            this.CheckCanExecute();
         }
 
         /// <summary>
         /// Creates a new <see cref="MappedElementDefinitionRowViewModel"/> and adds it to <see cref="MappedElements"/>
+        /// if it does not exist in the mapped things
         /// </summary>
-        /// <param name="thing">The base <see cref="Thing"/></param>
+        /// <param name="parameterOrOverride">The base <see cref="Thing"/></param>
         /// <returns>A new <see cref="MappedElementDefinitionRowViewModel"/></returns>
-        private MappedElementDefinitionRowViewModel CreateMappedElement(ParameterOrOverrideBase thing)
+        private MappedElementDefinitionRowViewModel CreateMappedElement(ParameterOrOverrideBase parameterOrOverride)
         {
-            var selectedElement = new MappedElementDefinitionRowViewModel()
-            {
-                SelectedParameter = thing
-            };
+            MappedElementDefinitionRowViewModel mappedElement;
 
-            selectedElement.WhenAnyValue(x => x.IsValid).Subscribe(_ => this.CheckCanExecute());
-            return selectedElement;
+            if (this.MappedElements.LastOrDefault(x => x.SelectedVariable is null) is { } lastMappedElement)
+            {
+                this.MappedElements.Remove(lastMappedElement);
+            }
+
+            if (this.DstController.HubMapResult
+                    .FirstOrDefault(x => x.SelectedParameter.Iid == parameterOrOverride.Iid)
+                is { } existinMappedElement)
+            {
+                mappedElement = existinMappedElement;
+            }
+            else
+            {
+                var selectedValue = parameterOrOverride.ParameterType is SampledFunctionParameterType
+                    ? null
+                    : parameterOrOverride.ValueSets.SelectMany(x => this.ComputesValueRow(x, x.ActualValue, null)).FirstOrDefault();
+               
+                mappedElement = new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = parameterOrOverride,
+                    SelectedValue = selectedValue
+                };
+            }
+
+            this.MappedElements.Add(mappedElement);
+
+            mappedElement.WhenAnyValue(x => x.IsValid).Subscribe(_ => this.CheckCanExecute());
+            return mappedElement;
         }
 
         /// <summary>
@@ -435,66 +469,185 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.IsBusy = true;
 
-            this.AvailableVariables = new ReactiveList<VariableRowViewModel>(
+            var availableVariables =
                 this.DstController.Variables
                     .Where(x => this.DstController.IsVariableWritable(x.Reference))
-                    .Select(r =>
-                    {
-                        r.Node = this.DstController.ReadNode(r.Reference);
-                        return new VariableRowViewModel(r, false)
-                        {
-                            HasWriteAccess = true
-                        };
-                    }));
+                    .ToList();
 
-            this.MappedElements.ChangeTrackingEnabled = true;
+            if (availableVariables.Count == 0)
+            {
+                return;
+            }
+
+            var arrayVariables = availableVariables.Where(x => x.Reference.DisplayName.Text.Contains("["));
+
+            this.AvailableVariables.AddRange(availableVariables.Where(x => arrayVariables
+                    .All(y => y.Reference.NodeId.Identifier != x.Reference.NodeId.Identifier))
+                .Select(x =>
+                {
+                    var (reference, _) = x;
+                    return new VariableRowViewModel((reference, this.DstController.ReadNode(x.Reference)));
+                }));
+
+            var groupingOfReferencesFromVariables = arrayVariables.GroupBy(x => this.GetArrayName(x.Reference));
+
+            foreach (var arrayVariablesGrouped in groupingOfReferencesFromVariables)
+            {
+                if (arrayVariablesGrouped.Key == null)
+                {
+                    continue;
+                }
+
+                if (arrayVariablesGrouped.Count() < 2)
+                {
+                    this.AvailableVariables.AddRange(arrayVariablesGrouped
+                        .Select(x =>
+                        {
+                            var (reference, _) = x;
+                            return new VariableRowViewModel((reference, this.DstController.ReadNode(x.Reference)));
+                        }));
+                } 
+                else
+                { 
+                    this.AvailableVariables.Add(
+                        new ArrayVariableRowViewModel(arrayVariablesGrouped.Key, 
+                            arrayVariablesGrouped.Select(x => 
+                                new VariableRowViewModel((x.Reference, this.DstController.ReadNode(x.Reference))))));
+                }
+            }
             
             this.IsBusy = false;
         }
 
         /// <summary>
-        /// Assings a mapping configuration if any to each of the selected variables
+        /// Gets the name of the array variable by ignoring the included indice out of the specified <paramref name="referenceDescription"/>
         /// </summary>
-        private void AssignMapping()
+        /// <param name="referenceDescription">The <see cref="ReferenceDescription"/> that holds the name to parse</param>
+        /// <returns>The bare array variable name</returns>
+        private string GetArrayName(ReferenceDescription referenceDescription)
         {
-            foreach (var elementDefinitionRowViewModel in this.MappedElements)
+            var newName = referenceDescription.DisplayName.Text.Split('[')[0];
+
+            if (referenceDescription.DisplayName.Text.Contains('\''))
             {
-                elementDefinitionRowViewModel.MappingConfiguration =
-                    this.DstController.ExternalIdentifierMap.Correspondence.FirstOrDefault(
-                        x => elementDefinitionRowViewModel.SelectedParameter
-                            .ValueSets.Cast<ParameterValueSetBase>()
-                            .Any(v => v.Iid == x.InternalThing));
+                newName = $"{newName}'";
             }
 
-            this.UpdatePropertiesBasedOnMappingConfiguration();
+            return newName;
         }
 
         /// <summary>
-        /// Updates the mapping based on the available 10-25 elements
+        /// Invoked when the <see cref="SelectedVariable"/> has changed
         /// </summary>
-        public void UpdatePropertiesBasedOnMappingConfiguration()
+        public void SelectedAvailableVariablesChanged()
         {
-            this.IsBusy = true;
-
-            foreach (var rowViewModel in this.MappedElements.Where(x => x.MappingConfiguration != null))
+            this.AreVariableTypesCompatible();
+        }
+        
+        /// <summary>
+        /// Compares the number of rows of the <paramref name="variable"/> and the <see cref="parameter"/> </param>
+        /// </summary>
+        /// <param name="variable">The <see cref="ArrayVariableRowViewModel"/></param>
+        /// <param name="parameter">The <see cref="SampledFunctionParameterType"/> <see cref="Parameter"/></param>
+        /// <returns>A value indicating whether the two provided references are compatible</returns>
+        public bool AreArraysCompatible(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
+        {
+            if (parameter.ParameterType is not SampledFunctionParameterType sampledFunctionParameterType)
             {
-                if (this.HubController.GetThingById(
-                        rowViewModel.MappingConfiguration.InternalThing, 
-                        this.HubController.OpenIteration, out ParameterValueSetBase thing)
-                && (this.ElementDefinitions.Any(
-                        x => thing.GetContainerOfType<ElementDefinition>()?.Iid == x.Iid)
-                || this.ElementDefinitions.Any(x => 
-                    x.ReferencingElementUsages().Any( u => thing.GetContainerOfType<ElementUsage>()?.Iid == x.Iid))))
-                { 
-                    rowViewModel.SelectedParameter = thing.GetContainerOfType<ParameterOrOverrideBase>();
-                    this.ComputesAvailableValues();
-
-                    rowViewModel.SelectedVariable = this.AvailableVariables.FirstOrDefault(
-                        x => x.Name == rowViewModel.MappingConfiguration.ExternalId);
-                }
+                return false;
             }
 
-            this.IsBusy = false;
+            var result = parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState)
+                       .ActualValue.Count / sampledFunctionParameterType.NumberOfValues == variable.NumberOfValues;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Maps the correponding values to the chosen columns
+        /// </summary>
+        /// <param name="arrayParameterMappingConfigurationDialogViewModel"></param>
+        /// <param name="parameter">parameter to map on variable</param>
+        public void MapParameterToVariable(ArrayParameterMappingConfigurationDialogViewModel arrayParameterMappingConfigurationDialogViewModel, ParameterOrOverrideBase parameter)
+        {
+            this.MappedElements.Remove(this.SelectedMappedElement);
+
+            foreach (var arrayParameterMappingConfigurationRowViewModel in arrayParameterMappingConfigurationDialogViewModel.MappingRows)
+            {
+                if (arrayParameterMappingConfigurationRowViewModel.SelectedParameterType == null)
+                {
+                    continue;
+                }
+
+                var variables = arrayParameterMappingConfigurationDialogViewModel.MappingRows
+                    .Where(x => x.SelectedParameterType != null)
+                    .Select(x => (x.Index, x.SelectedParameterType, x.Variables));
+
+                if (parameter.ParameterType is not SampledFunctionParameterType parameterType)
+                {
+                    this.statusBarService.Append($"The selected parameter is not supported for mapping to a array opc variable");
+                    return;
+                }
+                
+                var allParameterType = new List<ParameterType>(parameterType.IndependentParameterType.Select(x => x.ParameterType));
+                allParameterType.AddRange(parameterType.DependentParameterType.Select(x => x.ParameterType));
+
+                foreach (var (_, selectedParameterTypeShortName, variableRowViewModels) in variables)
+                {
+                    if (allParameterType.FirstOrDefault(x => x.ShortName == selectedParameterTypeShortName) is not { } selectedParameterType)
+                    {
+                        this.Logger.Error($"The parameter type: {selectedParameterTypeShortName} was not found in the parameter independent or dependent parameter types.");
+                        continue;
+                    }
+
+                    var values = this.GetSpecificParameterTypeValues(parameter, allParameterType, selectedParameterType);
+
+                    foreach (var variable in variableRowViewModels)
+                    {
+                        var value = values[variable.Index.Aggregate((dimension0, dimension1) => dimension0 * dimension1) - 1];
+
+                        var element = new MappedElementDefinitionRowViewModel()
+                        {
+                            SelectedParameter = parameter,
+
+                            SelectedValue = new ValueSetValueRowViewModel(
+                                parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState), value, parameter.Scale),
+
+                            SelectedVariable = variable,
+                        };
+
+                        element.VerifyValidity();
+
+                        var existingRow = this.MappedElements.FirstOrDefault(x =>
+                            x.SelectedVariable.Reference.NodeId.Identifier.Equals(variable.Reference.NodeId.Identifier));
+
+                        this.MappedElements.Remove(existingRow);
+                        this.MappedElements.Add(element);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets an <see cref="IEnumerable{T}"/> of values that belongs to <paramref name="selectedParameterType"/>
+        /// from the <see cref="IValueSet"/> of the <paramref name="parameter"/>
+        /// </summary>
+        /// <param name="parameter">The <see cref="ParameterBase"/> to get the values from</param>
+        /// <param name="allParameterType">The collection of <see cref="ParameterType"/> from the <paramref name="parameter"/></param>
+        /// <param name="selectedParameterType">The <see cref="ParameterType"/></param>
+        /// <returns>A <see cref="List{T}"/> of <see cref="string"/></returns>
+        private List<string> GetSpecificParameterTypeValues(ParameterBase parameter, IList<ParameterType> allParameterType, ParameterType selectedParameterType)
+        {
+            var actualValue = parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState).ActualValue;
+
+            var values = new List<string>();
+
+            for (var i = allParameterType.IndexOf(selectedParameterType); i < actualValue.Count; i += parameter.ParameterType.NumberOfValues)
+            {
+                values.Add(actualValue[i]);
+            }
+
+            return values;
         }
     }
 }
