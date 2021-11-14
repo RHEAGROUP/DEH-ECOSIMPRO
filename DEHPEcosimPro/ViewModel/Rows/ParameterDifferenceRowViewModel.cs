@@ -77,7 +77,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.OldThing = OldThing;
             this.NewThing = NewThing;
             this.Name = Name.ToString();
-            this.OldValue = OldValue.ToString();
+            this.OldValue = OldValue?.ToString();
             this.NewValue = NewValue.ToString();
             this.Difference = Difference.ToString();
             this.PercentDiff = PercentDiff.ToString();

@@ -11,20 +11,19 @@
                    d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True"
                    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
                    mc:Ignorable="d"
-                   Title="ChooseMappingColumns" Height="450">
+                   WindowStartupLocation="CenterScreen"
+                   Title="Choose Mapping Columns" Height="450">
     <dxmvvm:Interaction.Behaviors>
         <behaviors:CloseWindowBehavior/>
     </dxmvvm:Interaction.Behaviors>
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid Margin="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="3*" />
-                <RowDefinition Height="7*" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <RibbonTwoLineText VerticalAlignment="Center" MaxWidth="400" Grid.Row="0" Grid.Column="0" Text="Map columns of data" HorizontalAlignment="Left" HasTwoLines="True" FontSize="18" />
 
-            <Grid Grid.Row="1" VerticalAlignment="Stretch">
+            <Grid Grid.Row="0" VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -33,7 +32,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Mapping : " FontSize="12" />
+                    <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Column Mapping : " FontSize="12" />
                 </Grid>
                 <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding MappingRows}" SelectedItem="{Binding SelectedListOfRowsToMap}">
                     <dxg:GridControl.View>

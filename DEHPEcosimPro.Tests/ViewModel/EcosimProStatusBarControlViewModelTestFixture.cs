@@ -37,10 +37,9 @@ namespace DEHPEcosimPro.Tests.ViewModel
         public void VerifyExecuteUserSettingsCommand()
         {
             var viewModel = new EcosimProStatusBarControlViewModel(new Moq.Mock<INavigationService>().Object);
-            Assert.IsTrue(viewModel.UserSettingCommand.CanExecute(null));
-            Assert.DoesNotThrow(() => viewModel.UserSettingCommand.Execute(null));
+            Assert.IsFalse(viewModel.UserSettingCommand.CanExecute(null));
 
-            Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.Message));
+            Assert.IsTrue(string.IsNullOrWhiteSpace(viewModel.Message));
         }
     }
 }

@@ -24,8 +24,6 @@
 
 namespace DEHPEcosimPro.ViewModel.Rows
 {
-    using System;
-
     using ReactiveUI;
 
     /// <summary>
@@ -45,6 +43,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             get => this.value;
             set => this.RaiseAndSetIfChanged(ref this.value, value);
+        }
+
+        /// <summary>
+        /// Backing field for <see cref="AveragedValue"/>
+        /// </summary>
+        private object averagedValue;
+
+        /// <summary>
+        /// Gets the averaged value of the represented reference
+        /// </summary>
+        public object AveragedValue
+        {
+            get => this.averagedValue;
+            set => this.RaiseAndSetIfChanged(ref this.averagedValue, value);
         }
 
         /// <summary>

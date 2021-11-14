@@ -35,6 +35,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
     using DEHPEcosimPro.Events;
     using DEHPEcosimPro.ViewModel.Rows;
 
+    using DevExpress.Xpf.Editors.Helpers;
+
     using NUnit.Framework;
 
     using Opc.Ua;
@@ -151,7 +153,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
 
             viewModel.SelectedTimeStep = .01;
             viewModel.ApplyTimeStep();
-            Assert.AreEqual(13, viewModel.SelectedValues.Count);
+            Assert.AreEqual(14, viewModel.SelectedValues.Count);
 
             viewModel.SelectedTimeStep = .1;
             viewModel.ApplyTimeStep();
@@ -165,7 +167,73 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             viewModel.ApplyTimeStep();
             Assert.AreEqual(14, viewModel.SelectedValues.Count);
         }
-        
+
+        [Test]
+        public void VerifyAveragedSampling()
+        {
+            var viewModel = new VariableRowViewModel((new ReferenceDescription()
+            {
+                NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                DisplayName = new LocalizedText("", "DummyVariable0")
+            }, new DataValue() { Value = .2 }));
+
+            var newValues = new List<TimeTaggedValueRowViewModel>()
+            {
+                new TimeTaggedValueRowViewModel(2, 0),
+                new TimeTaggedValueRowViewModel(3, 1),
+                new TimeTaggedValueRowViewModel(2, 2),
+                new TimeTaggedValueRowViewModel(1, 3),
+                new TimeTaggedValueRowViewModel(0, 4),
+                new TimeTaggedValueRowViewModel(0, 5),
+                new TimeTaggedValueRowViewModel(1, 6),
+                new TimeTaggedValueRowViewModel(3, 7),
+                new TimeTaggedValueRowViewModel(4, 8)
+            };
+
+            viewModel.SelectedTimeStep = 3;
+            viewModel.Values.Clear();
+            viewModel.Values.AddRange(newValues.OrderBy(x => x.TimeStep).ToList());
+            Assert.IsEmpty(viewModel.SelectedValues);
+            viewModel.IsAveraged = true;
+
+            viewModel.ApplyTimeStep();
+            Assert.IsNotEmpty(viewModel.SelectedValues);
+            Assert.AreEqual(3, viewModel.SelectedValues.Count);
+
+            Assert.AreEqual(0, viewModel.SelectedValues[0].TimeStep);
+            Assert.AreEqual(2.333, Math.Round(viewModel.SelectedValues[0].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(3, viewModel.SelectedValues[1].TimeStep);
+            Assert.AreEqual(0.333, Math.Round(viewModel.SelectedValues[1].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(6, viewModel.SelectedValues[2].TimeStep);
+            Assert.AreEqual(2.667, Math.Round(viewModel.SelectedValues[2].AveragedValue.TryConvertToDouble(), 3));
+
+            viewModel.SelectedTimeStep = 2;
+            viewModel.Values.Clear();
+            viewModel.SelectedValues.Clear();
+            viewModel.Values.AddRange(newValues.OrderBy(x => x.TimeStep).ToList());
+
+            viewModel.ApplyTimeStep();
+            Assert.IsNotEmpty(viewModel.SelectedValues);
+            Assert.AreEqual(5, viewModel.SelectedValues.Count);
+
+            Assert.AreEqual(0, viewModel.SelectedValues[0].TimeStep);
+            Assert.AreEqual((2d + 3d) / 2d, Math.Round(viewModel.SelectedValues[0].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(2, viewModel.SelectedValues[1].TimeStep);
+            Assert.AreEqual((2d + 1d) / 2d, Math.Round(viewModel.SelectedValues[1].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(4, viewModel.SelectedValues[2].TimeStep);
+            Assert.AreEqual((0d + 0d) / 2d, Math.Round(viewModel.SelectedValues[2].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(6, viewModel.SelectedValues[3].TimeStep);
+            Assert.AreEqual((1d + 3d) / 2d, Math.Round(viewModel.SelectedValues[3].AveragedValue.TryConvertToDouble(), 3));
+
+            Assert.AreEqual(8, viewModel.SelectedValues[4].TimeStep);
+            Assert.AreEqual(4d, Math.Round(viewModel.SelectedValues[4].AveragedValue.TryConvertToDouble(), 3));
+        }
+
         [Test]
         public void VerifyIsValid()
         {

@@ -51,16 +51,21 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// The represented <see cref="ReferenceDescription" />
         /// </summary>
         public new readonly ReferenceDescription Reference;
-        
+
         /// <summary>
         /// Backing field for <see cref="IsHighlighted" />
         /// </summary>
         private bool isHiglighted;
-        
+
         /// <summary>
         /// Backing field for <see cref="SelectedTimeStep" />
         /// </summary>
         private double selectedTimeStep;
+
+        /// <summary>
+        /// Backing field for <see cref="IsAveraged" />
+        /// </summary>
+        private bool isAveraged;
 
         /// <summary>
         /// Initializes a new <see cref="VariableRowViewModel"/>
@@ -98,8 +103,17 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         public bool IsHighlighted
         {
-            get => this.isHiglighted;
-            set => this.RaiseAndSetIfChanged(ref this.isHiglighted, value);
+            get { return this.isHiglighted; }
+            set { this.RaiseAndSetIfChanged(ref this.isHiglighted, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this row is averaged over timestep
+        /// </summary>
+        public bool IsAveraged
+        {
+            get { return this.isAveraged; }
+            set { this.RaiseAndSetIfChanged(ref this.isAveraged, value); }
         }
 
         /// <summary>
@@ -107,10 +121,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         public double SelectedTimeStep
         {
-            get => this.selectedTimeStep;
-            set => this.RaiseAndSetIfChanged(ref this.selectedTimeStep, value);
+            get { return this.selectedTimeStep; }
+            set { this.RaiseAndSetIfChanged(ref this.selectedTimeStep, value); }
         }
-        
+
         /// <summary>
         /// Gets or sets the collection of value collection to display in the chart view
         /// </summary>
@@ -123,6 +137,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public void ApplyTimeStep()
         {
             this.SelectedValues.Clear();
+            this.ClearAverages();
 
             if (this.SelectedTimeStep is 0)
             {
@@ -130,19 +145,76 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 return;
             }
 
-            var lastValue = .0;
+            var firstValue = this.Values.FirstOrDefault();
 
-            this.SelectedValues.Add(this.Values.FirstOrDefault());
+            if (firstValue == null)
+            {
+                return;
+            }
+
+            var currentTimestep = firstValue.TimeStep;
+
+            this.SelectedValues.Add(firstValue);
+
+            var averagingList = new List<double>();
 
             foreach (var timeTaggedValueRowViewModel in this.Values)
             {
-                var lastValuePlusTimeStep = lastValue + this.SelectedTimeStep;
-
-                if (Math.Abs(timeTaggedValueRowViewModel.TimeStep) >= Math.Abs(lastValuePlusTimeStep))
+                if (this.IsAveraged)
                 {
-                    this.SelectedValues.Add(timeTaggedValueRowViewModel);
-                    lastValue = timeTaggedValueRowViewModel.TimeStep;
+                    if (timeTaggedValueRowViewModel.Value is IConvertible convert)
+                    {
+                        averagingList.Add(convert.ToDouble(null));
+                    }
                 }
+
+                var lastValuePlusTimeStep = currentTimestep + this.SelectedTimeStep;
+
+                if (Math.Round(Math.Abs(timeTaggedValueRowViewModel.TimeStep), 3) >= Math.Round(Math.Abs(lastValuePlusTimeStep), 3))
+                {
+                    if (this.IsAveraged)
+                    {
+                        var lastSelectedRow = this.SelectedValues.LastOrDefault();
+
+                        if (lastSelectedRow != null)
+                        {
+                            averagingList.RemoveAt(averagingList.Count - 1);
+                            lastSelectedRow.AveragedValue = averagingList.Average();
+                        }
+
+                        averagingList.Clear();
+
+                        if (timeTaggedValueRowViewModel.Value is IConvertible convert)
+                        {
+                            averagingList.Add(convert.ToDouble(null));
+                        }
+                    }
+
+                    this.SelectedValues.Add(timeTaggedValueRowViewModel);
+                    currentTimestep = timeTaggedValueRowViewModel.TimeStep;
+                }
+            }
+
+            // come back for the last added row
+            if (this.IsAveraged)
+            {
+                var lastSelectedRow = this.SelectedValues.LastOrDefault();
+
+                if (lastSelectedRow != null)
+                {
+                    lastSelectedRow.AveragedValue = averagingList.Average();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears the averaged value of every row
+        /// </summary>
+        public void ClearAverages()
+        {
+            foreach (var timeTaggedValueRowViewModel in this.Values)
+            {
+                timeTaggedValueRowViewModel.AveragedValue = null;
             }
         }
 
@@ -156,7 +228,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
                 new { this.Name, this.Values }
             });
         }
-        
+
         /// <summary>
         /// Sets the properties of this view model
         /// </summary>

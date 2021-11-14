@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="PresentationFramework" />
     <Reference Include="System.Web" />
   </ItemGroup>
 

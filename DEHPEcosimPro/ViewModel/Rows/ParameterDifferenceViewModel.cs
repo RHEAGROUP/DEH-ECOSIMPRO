@@ -208,7 +208,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             try
             {
-                this.listofsetOfOldValues.Add(this.OldThing.QueryParameterBaseValueSet(option, state));
+                this.listofsetOfOldValues.Add(this.OldThing?.QueryParameterBaseValueSet(option, state) ?? new ParameterValueSet(Guid.Empty, null, null));
                 this.listofsetOfNewValues.Add(this.NewThing.QueryParameterBaseValueSet(option, state));
             }
             catch (Exception e)
@@ -234,7 +234,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
             NumberStyles style = NumberStyles.Number | NumberStyles.AllowDecimalPoint;
             CultureInfo culture = CultureInfo.InvariantCulture;
 
-            var isOldValueDecimal = decimal.TryParse(oldValue.ToString(), style, culture, out decimal decimalOldValue);
+            var isOldValueDecimal = decimal.TryParse(oldValue?.ToString(), style, culture, out decimal decimalOldValue);
             var isNewValueDecimal = decimal.TryParse(newValue.ToString(), style, culture, out decimal decimalNewValue);
 
             if (isOldValueDecimal && isNewValueDecimal)
