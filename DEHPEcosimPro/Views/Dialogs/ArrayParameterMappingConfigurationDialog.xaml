@@ -11,30 +11,18 @@
                    d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True"
                    xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
                    mc:Ignorable="d"
-                   WindowStartupLocation="CenterScreen"
-                   Title="Choose Mapping Columns" Height="450">
+                   WindowStartupLocation="CenterScreen" SizeToContent="Height"
+                   Title="Array Parameter Column Mapping" Height="450" MaxHeight="800">
     <dxmvvm:Interaction.Behaviors>
         <behaviors:CloseWindowBehavior/>
     </dxmvvm:Interaction.Behaviors>
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
-        <Grid Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="0" VerticalAlignment="Stretch">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <dxlc:LayoutItemLabel Grid.Row="0" Grid.Column="0" Height="Auto" Margin="5" Content="Column Mapping : " FontSize="12" />
-                </Grid>
-                <dxg:GridControl Grid.Row="1" Grid.Column="0" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding MappingRows}" SelectedItem="{Binding SelectedListOfRowsToMap}">
+        <dxlc:LayoutGroup Orientation="Vertical" Padding="10">
+            <dxlc:LayoutItem>
+                <Label FontSize="12">Column Mapping :</Label>
+            </dxlc:LayoutItem>
+            <dxlc:LayoutItem VerticalAlignment="Stretch">
+                <dxg:GridControl MaxHeight="800" x:Name="Mapping" HorizontalContentAlignment="Stretch" ItemsSource="{Binding MappingRows}" SelectedItem="{Binding SelectedListOfRowsToMap}">
                     <dxg:GridControl.View>
                         <dxg:TableView HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AllowColumnMoving="True" AllowEditing="False" AllowGrouping="True" AutoWidth="true"
                                        IsDetailButtonVisibleBinding="{x:Null}"
@@ -57,8 +45,8 @@
                         </dxg:GridColumn>
                     </dxg:GridControl.Columns>
                 </dxg:GridControl>
-            </Grid>
-        </Grid>
+            </dxlc:LayoutItem>
+        </dxlc:LayoutGroup>
     </dx:LoadingDecorator>
     <dx:DXDialogWindow.FooterButtons>
         <dx:DialogButton ToolTip="Proceed" Content="Proceed" MinWidth="65" DialogResult="OK"/>
