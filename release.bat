@@ -65,12 +65,21 @@ ECHO.
 
 call powershell -Command "& {Compress-Archive -Path %buildpath% -DestinationPath %filename% -Force;}"
 
-zip -r -p "%filename%" "%buildpath%\*"
-
 :End
 
 ECHO.
 ECHO Release %version% Completed
+ECHO.
+
+ECHO.
+ECHO Generating Verification Hashes
+ECHO.
+
+call powershell -Command "& {Get-FileHash .\%filename% -Algorithm MD5 | Format-List}"
+call powershell -Command "& {Get-FileHash .\%filename% | Format-List}"
+
+ECHO.
+ECHO Done
 ECHO.
 
 EXIT /B 0
