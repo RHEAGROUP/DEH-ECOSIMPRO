@@ -64,9 +64,9 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
             this.Variables.AddRange(variableRowViewModels);
 
-            this.Name = name;
+            this.Name = $"{name}[{string.Join("x", this.Variables.Last().Index)}]";
             this.Dimensions = this.Variables.Last().Index;
-            this.ActualValue = $"[{string.Join("x", this.Variables.Last().Index)}]";
+            this.ActualValue = null;
         }
         
         /// <summary>

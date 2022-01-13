@@ -27,6 +27,7 @@ namespace DEHPEcosimPro.Tests.DstController
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reactive.Concurrency;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -191,7 +192,10 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object, 
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
-                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object,
+                this.mappingConfigurationService.Object);
+
+            RxApp.MainThreadScheduler = Scheduler.CurrentThread;
         }
 
         [Test]
