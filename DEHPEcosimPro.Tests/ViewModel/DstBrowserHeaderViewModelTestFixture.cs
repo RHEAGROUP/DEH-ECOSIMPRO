@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DstVariablesControlViewModelTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -234,6 +234,19 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.DoesNotThrow(() => this.viewModel.RunExperimentTask());
 
             this.dstController.Verify(x => x.GetNextExperimentStep(), Times.Exactly(6));
+        }
+
+        [Test]
+        public void VerifyRunExperimentWithNonDividerSteppingValue()
+        {
+            this.viewModel.ExperimentTime = 10;
+            this.viewModel.SelectedStopStep = 15;
+            this.viewModel.SelectedStepping = .9;
+            this.viewModel.CancelToken = new CancellationTokenSource();
+
+            Assert.DoesNotThrow(() => this.viewModel.RunExperimentTask());
+
+            this.dstController.Verify(x => x.GetNextExperimentStep(), Times.Exactly(7));
         }
 
         [Test]
