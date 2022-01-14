@@ -238,11 +238,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
             if (this.data != null)
             {
-                if (this.data.Value is int)
-                {
-                    this.data.Value = Convert.ToDouble(this.data.Value);
-                }
-
                 this.InitialValue = this.data.Value;
                 this.ActualValue = this.data.Value;
             }

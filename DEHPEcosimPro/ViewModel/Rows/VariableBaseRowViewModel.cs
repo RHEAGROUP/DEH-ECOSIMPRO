@@ -329,7 +329,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
 
             this.UpdateValueCollection(update.Value, update.Time);
 
-            this.ActualValue = Convert.ToDouble(update.Value);
+            this.ActualValue = update.Value;
             this.AverageValue = this.ComputeAverageValue();
         }
 

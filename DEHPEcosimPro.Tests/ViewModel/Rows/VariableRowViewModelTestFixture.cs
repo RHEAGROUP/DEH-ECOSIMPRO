@@ -308,28 +308,5 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             Assert.IsTrue(viewModel.IsValid());
             Assert.IsTrue(viewModel.IsVariableMappingValid);
         }
-
-        [Test]
-        public void VerifyIntToDoubleConversion()
-        {
-            var id = Guid.NewGuid();
-            const string name = "DummyVariable0";
-            const int value = 2;
-
-            var viewModel = new VariableRowViewModel((new ReferenceDescription()
-            {
-                NodeId = new ExpandedNodeId(id),
-                DisplayName = new LocalizedText("", name)
-            }, new DataValue() { Value = value, ServerTimestamp = DateTime.MinValue }));
-
-            Assert.AreEqual(name, viewModel.Name);
-            Assert.AreEqual(value, viewModel.ActualValue);
-            Assert.AreNotEqual(value.GetType(), viewModel.ActualValue.GetType());
-            Assert.IsNotEmpty(viewModel.Values);
-            Assert.AreEqual(value, viewModel.InitialValue);
-            Assert.IsNull(viewModel.AverageValue);
-            Assert.IsNull(viewModel.SelectedScale);
-            Assert.IsNull(viewModel.IsVariableMappingValid);
-        }
     }
 }
