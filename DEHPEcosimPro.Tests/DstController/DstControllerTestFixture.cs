@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DstControllerTestFixture.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2020 RHEA System S.A.
 // 
@@ -658,11 +658,15 @@ namespace DEHPEcosimPro.Tests.DstController
             this.opcClient.Setup(x => x.ReadNode(new NodeId("CINT"))).Returns(new DataValue(new Variant(2.25)));
             Assert.DoesNotThrow(() => this.controller.GetNextExperimentStep());
 
+            this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Returns(new DataValue(new Variant(2)));
+            this.opcClient.Setup(x => x.ReadNode(new NodeId("CINT"))).Returns(new DataValue(new Variant(2)));
+            Assert.DoesNotThrow(() => this.controller.GetNextExperimentStep());
+
             this.opcClient.Verify(x =>
                     x.CallMethod(It.IsAny<NodeId>(), It.IsAny<NodeId>(), It.IsAny<string>()),
-                Times.Once);
+                Times.Exactly(2));
 
-            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(4));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(7));
         }
 
         [Test]
