@@ -8,6 +8,7 @@
              xmlns:viewModels="clr-namespace:DEHPEcosimPro.ViewModel.Rows"
              xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
              xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+             xmlns:behaviors1="clr-namespace:DEHPEcosimPro.Behaviors"
              d:DesignHeight="450" d:DesignWidth="800" mc:Ignorable="d">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -61,30 +62,32 @@
                                       TreeDerivationMode="HierarchicalDataTemplate"
                                       TreeLineStyle="Solid"
                                       VerticalScrollbarVisibility="Auto">
+                        <dxmvvm:Interaction.Behaviors>
+                            <behaviors1:TreeListSortingBehavior/>
+                        </dxmvvm:Interaction.Behaviors>
                         <dxg:TreeListView.ContextMenu>
                             <ContextMenu Name="RowContextMenu" />
-                    </dxg:TreeListView.ContextMenu>
-                    <dxg:TreeListView.RowStyle>
-                        <Style TargetType="{x:Type dxg:RowControl}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Row.IsHighlighted}" Value="True">
-                                    <Setter Property="Background" Value="Yellow"/>
-                                    <Setter Property="FontWeight" Value="Bold" />
-                                    <Setter Property="Foreground" Value="Blue" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                            <Setter Property="ToolTip" Value="{Binding Row.Tooltip}" />
-                        </Style>
-                    </dxg:TreeListView.RowStyle>
-                </dxg:TreeListView>
+                        </dxg:TreeListView.ContextMenu>
+                        <dxg:TreeListView.RowStyle>
+                            <Style TargetType="{x:Type dxg:RowControl}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Row.IsHighlighted}" Value="True">
+                                        <Setter Property="Background" Value="Yellow"/>
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="Foreground" Value="Blue" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                                <Setter Property="ToolTip" Value="{Binding Row.Tooltip}" />
+                            </Style>
+                        </dxg:TreeListView.RowStyle>
+                    </dxg:TreeListView>
                 </dxg:TreeListControl.View>
                 <dxg:TreeListControl.Columns>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />
-                    <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" />
-                    <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue"/>
+                    <dxg:TreeListColumn AllowEditing="False" FieldName="ActualValue" SortMode="Custom" />
+                    <dxg:TreeListColumn AllowEditing="False" FieldName="InitialValue" SortMode="Custom"/>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="AverageValue"/>
                 </dxg:TreeListControl.Columns>
-
             </dxg:TreeListControl>
         </Grid>
     </dx:LoadingDecorator>
