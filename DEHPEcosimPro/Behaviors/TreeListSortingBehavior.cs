@@ -2,7 +2,7 @@
 // <copyright file="TreeListSortingBehavior.cs" company="RHEA System S.A.">
 //    Copyright (c) 2020-2022 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Antoine Théate
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -25,16 +25,21 @@
 namespace DEHPEcosimPro.Behaviors
 {
     using System;
+    using System.Diagnostics.CodeAnalysis;
 
     using DevExpress.Mvvm.UI.Interactivity;
     using DevExpress.Xpf.Grid;
     using DevExpress.Xpf.Grid.TreeList;
 
+    /// <summary>
+    /// The <see cref="TreeListSortingBehavior"/> takes care of sorting correctly many different object types inside a <see cref="TreeListView"/>
+    /// </summary>
     public class TreeListSortingBehavior: Behavior<TreeListView>
     {
         /// <summary>
         /// Register event handlers
         /// </summary>
+        [ExcludeFromCodeCoverage]
         protected override void OnAttached()
         {
             base.OnAttached();
@@ -44,6 +49,7 @@ namespace DEHPEcosimPro.Behaviors
         /// <summary>
         /// Unregister event handlers
         /// </summary>
+        [ExcludeFromCodeCoverage]
         protected override void OnDetaching()
         {
             base.OnDetaching();
@@ -57,8 +63,8 @@ namespace DEHPEcosimPro.Behaviors
         /// <param name="e">The argument</param>
         public void AssociatedObject_CustomColumnSort(object sender, TreeListCustomColumnSortEventArgs e)
         {
-            IComparable value1 = e.Value1 as IComparable;
-            IComparable value2 = e.Value2 as IComparable;
+            var value1 = e.Value1 as IComparable;
+            var value2 = e.Value2 as IComparable;
             e.Handled = true;
 
             if (value1 == null)
@@ -73,21 +79,21 @@ namespace DEHPEcosimPro.Behaviors
                 return;
             }
 
-            Type type1 = e.Value1.GetType();
-            Type type2 = e.Value2.GetType();
+            var type1 = e.Value1.GetType();
+            var type2 = e.Value2.GetType();
 
             if (type1 != type2)
             {
                 try
                 {
-                    decimal value1InDecimal = Convert.ToDecimal(e.Value1);
-                    decimal value2InDecimal = Convert.ToDecimal(e.Value2);
+                    var value1InDecimal = Convert.ToDecimal(e.Value1);
+                    var value2InDecimal = Convert.ToDecimal(e.Value2);
                     e.Result = value1InDecimal.CompareTo(value2InDecimal);
                     return;
                 }
                 catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
                 {
-                    int hashCompare = type1.GetHashCode().CompareTo(type2.GetHashCode());
+                    var hashCompare = type1.GetHashCode().CompareTo(type2.GetHashCode());
                     e.Result = hashCompare != 0 ? hashCompare : string.CompareOrdinal(type1.Name, type2.Name);
                     return;
                 }
