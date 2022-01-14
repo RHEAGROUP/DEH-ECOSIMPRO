@@ -108,6 +108,11 @@ namespace DEHPEcosimPro.ViewModel
         /// Backing field for <see cref="SelectedStepping"/> 
         /// </summary>
         private double selectedStepping = .01;
+
+        /// <summary>
+        /// Saves the initial value of <see cref="SelectedStepping"/> before the experiment runs
+        /// </summary>
+        private double initialSelectedStepping;
         
         /// <summary>
         /// Backing field for <see cref="ExperimentProgress"/> 
@@ -418,6 +423,7 @@ namespace DEHPEcosimPro.ViewModel
                 this.stopWatch = new Stopwatch();
                 this.stopWatch.Start();
                 this.CancelToken = new CancellationTokenSource();
+                this.initialSelectedStepping = this.SelectedStepping;
 
                 Task.Run(this.RunExperimentTask, this.CancelToken.Token).ContinueWith(t =>
                     {
@@ -445,13 +451,19 @@ namespace DEHPEcosimPro.ViewModel
         /// </summary>
         private void CallNextCint()
         {
-            if (this.CancelToken.IsCancellationRequested || Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0)
+            if (this.CancelToken.IsCancellationRequested || Math.Abs(this.ExperimentTime - this.SelectedStopStep) <= 0 )
             {
                 this.EndRun();
             }
             else
             {
                 this.ExperimentButtonText = $"Running ({this.ExperimentProgress}%) Press to pause";
+
+                if (this.ExperimentTime + this.SelectedStepping > this.SelectedStopStep)
+                { 
+                    this.SelectedStepping = this.SelectedStopStep - this.ExperimentTime;
+                }
+
                 this.dstController.GetNextExperimentStep();
             }
         }
@@ -463,6 +475,7 @@ namespace DEHPEcosimPro.ViewModel
         {
             this.ExperimentButtonText = this.ExperimentTime < this.SelectedStopStep ? $"Paused ({ this.ExperimentProgress}%) Press to Continue" : "Run";
             this.dstController.IsExperimentRunning = false;
+            this.SelectedStepping = this.initialSelectedStepping;
 
             if (this.stopWatch is {})
             {

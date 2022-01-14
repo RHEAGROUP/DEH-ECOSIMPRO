@@ -246,7 +246,7 @@
 &lt;copyright file="$FILENAME$" company="RHEA System S.A."&gt;&#xD;
    Copyright (c) 2020-$CURRENT_YEAR$ RHEA System S.A.&#xD;
 &#xD;
-   Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski.&#xD;
+   Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Antoine Théate.&#xD;
 &#xD;
    This file is part of DEHPEcosimPro&#xD;
 &#xD;
