@@ -706,7 +706,13 @@ namespace DEHPEcosimPro.DstController
             var cint = this.ReadNode(this.References
                 .FirstOrDefault(x => x.BrowseName.Name == "CINT")).Value;
 
-            var places = Convert.ToDouble(cint).ToString(CultureInfo.InvariantCulture).Split('.')[1];
+            var places = Convert.ToDouble(cint).ToString(CultureInfo.InvariantCulture);
+
+            // If we put 1 (for example) as Stepping, there is no '.' inside the string, invoking IndexOutOfRangeException
+            if (places.Contains('.'))
+            {
+                places = places.Split('.')[1];
+            }
 
             var time = Math.Round(result, places.Length, MidpointRounding.AwayFromZero);
 
