@@ -197,9 +197,10 @@ namespace DEHPEcosimPro.ViewModel
             this.CallRunMethodCommand.Subscribe(_ => this.RunExperiment());
 
             this.CallResetMethodCommand = ReactiveCommand.Create(
-                this.WhenAnyValue(vm => vm.dstController.IsSessionOpen));
-            
-            this.CallResetMethodCommand.Subscribe(_ => this.Reset());
+                this.WhenAnyValue(vm => vm.dstController.IsSessionOpen)
+                    .ObserveOn(RxApp.MainThreadScheduler));
+            this.CallResetMethodCommand.
+                Subscribe(_ => this.Reset());
 
             this.WhenAnyValue(x => x.dstController.IsExperimentRunning)
                 .Subscribe(x => this.IsExperimentRunning = x);

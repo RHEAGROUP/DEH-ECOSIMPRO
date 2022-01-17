@@ -282,6 +282,7 @@ namespace DEHPEcosimPro.DstController
         private void InitializeObservables()
         {
             this.WhenAnyValue(x => x.opcClientService.OpcClientStatusCode)
+                .SubscribeOn(RxApp.TaskpoolScheduler)
                 .Subscribe(this.WhenOpcConnectionStatusChange);
 
             this.WhenAnyValue(x => x.IsExperimentRunning)
@@ -295,18 +296,21 @@ namespace DEHPEcosimPro.DstController
         /// <param name="isRunning">A value indicating whether the experiment is running</param>
         private void WhenIsExperimentRunningChanged(bool isRunning)
         {
-            if (this.CanLoadSelectedValues && !isRunning)
+            if (this.IsSessionOpen)
             {
-                var numberOfMappedThings = this.LoadMapping();
-                this.statusBar.Append($"{numberOfMappedThings} mapped element(s) has been loaded from the saved mapping configuration " +
-                                      $"{this.mappingConfigurationService.ExternalIdentifierMap.Name}");
+                if (this.CanLoadSelectedValues && !isRunning)
+                {
+                    var numberOfMappedThings = this.LoadMapping();
+                    this.statusBar.Append($"{numberOfMappedThings} mapped element(s) has been loaded from the saved mapping configuration " +
+                                          $"{this.mappingConfigurationService.ExternalIdentifierMap.Name}");
 
-                this.canLoadSelectedValues = false;
-            }
+                    this.canLoadSelectedValues = false;
+                }
 
-            if (isRunning)
-            {
-                this.canLoadSelectedValues = true;
+                if (isRunning)
+                {
+                    this.canLoadSelectedValues = true;
+                }
             }
         }
 
@@ -342,11 +346,18 @@ namespace DEHPEcosimPro.DstController
                 }
                 else
                 {
-                    this.Variables.Clear();
-                    this.VariableRowViewModels.Clear();
-                    this.Methods.Clear();
-                    this.TimeNodeId = null;
-                    this.ClearSubscriptions();
+                    if (clientStatusCode is OpcClientStatusCode.Disconnected or OpcClientStatusCode.KeepAliveStopped)
+                    {
+                        this.CloseSession();
+                    }
+                    else
+                    {
+                        this.Variables.Clear();
+                        this.VariableRowViewModels.Clear();
+                        this.Methods.Clear();
+                        this.TimeNodeId = null;
+                        this.ClearSubscriptions();
+                    }
                 }
 
                 this.IsSessionOpen = isOpcSessionOpen;
