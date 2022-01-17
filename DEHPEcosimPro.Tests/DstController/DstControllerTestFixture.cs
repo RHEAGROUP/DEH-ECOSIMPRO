@@ -696,6 +696,11 @@ namespace DEHPEcosimPro.Tests.DstController
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
                 this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
 
+            this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.ErrorAddSubscription);
+            this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
+                this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+
             this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Throws<InvalidOperationException>();
 
@@ -705,11 +710,11 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(2));
+                Times.Exactly(3));
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(2));
+                Times.Exactly(3));
         }
 
         [Test]
