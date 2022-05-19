@@ -198,6 +198,12 @@ namespace DEHPEcosimPro.Tests.DstController
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            CDPMessageBus.Current.ClearSubscriptions();
+        }
+
         [Test]
         public void VerifyProperties()
         {
