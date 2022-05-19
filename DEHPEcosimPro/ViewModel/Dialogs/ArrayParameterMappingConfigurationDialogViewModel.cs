@@ -24,8 +24,6 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
-    using System;
-    using System.Collections.Generic;
     using System.Linq;
 
     using CDP4Common.EngineeringModelData;
@@ -44,16 +42,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     public class ArrayParameterMappingConfigurationDialogViewModel : ReactiveObject, ICloseWindowViewModel
     {
         /// <summary>
-        /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialogViewModel"/>
+        /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialogViewModel" />
         /// </summary>
         public ArrayParameterMappingConfigurationDialogViewModel()
         {
         }
 
         /// <summary>
-        /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialogViewModel"/>
-        /// <param name="variable">The <see cref="ArrayVariableRowViewModel"/></param>
-        /// <param name="parameter">The <see cref="ParameterBase"/></param>
+        /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialogViewModel" />
+        /// <param name="variable">The <see cref="ArrayVariableRowViewModel" /></param>
+        /// <param name="parameter">The <see cref="ParameterBase" /></param>
         /// </summary>
         public ArrayParameterMappingConfigurationDialogViewModel(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
         {
@@ -65,7 +63,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.ParameterNames.AddRange(parameterType.DependentParameterType
                     .Select(x => x.ParameterType.ShortName));
             }
-            
+
             this.hasOnlyOneDimension = variable.HasOnlyOneDimension;
 
             if (variable.HasOnlyOneDimension)
@@ -79,12 +77,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.MappingRows.Add(new ArrayParameterMappingConfigurationRowViewModel(group.Key, group));
                 }
             }
-        
+
             this.ParameterName = parameter.ModelCode();
         }
 
         /// <summary>
-        /// Gets or sets the <see cref="ArrayVariableRowViewModel"/> that is to be mapped
+        /// Gets or sets the <see cref="ArrayVariableRowViewModel" /> that is to be mapped
         /// </summary>
         public ArrayVariableRowViewModel ArrayVariable { get; set; }
 
@@ -99,12 +97,12 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public bool hasOnlyOneDimension { get; set; }
 
         /// <summary>
-        /// Gets or sets a collection of <see cref="ArrayParameterMappingConfigurationRowViewModel"/>
+        /// Gets or sets a collection of <see cref="ArrayParameterMappingConfigurationRowViewModel" />
         /// </summary>
         public ReactiveList<ArrayParameterMappingConfigurationRowViewModel> MappingRows { get; } = new();
 
         /// <summary>
-        /// Gets or sets a collection of <see cref="string"/> that will feed the dropdown of the dialog, from parameter
+        /// Gets or sets a collection of <see cref="string" /> that will feed the dropdown of the dialog, from parameter
         /// </summary>
         public ReactiveList<string> ParameterNames { get; set; } = new();
 
