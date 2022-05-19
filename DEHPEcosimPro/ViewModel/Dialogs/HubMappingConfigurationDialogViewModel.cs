@@ -181,7 +181,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="statusBarService">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService" /></param>
-        /// <param name="mappingConfigurationService">The <see cref="IMappingConfigurationService" /></param>
         public HubMappingConfigurationDialogViewModel(IHubController hubController,
             IDstController dstController, IStatusBarControlViewModel statusBarService, INavigationService navigationService) 
             : base(hubController, dstController, statusBarService)
@@ -318,22 +317,37 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <returns>A <see cref="ValidationResultKind"/></returns>
         private ValidationResultKind AreVariableTypesCompatible(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
         {
-            if (!this.AreArraysCompatible(variable, parameter))
+            if (this.AreArraysCompatible(variable, parameter))
             {
-                return ValidationResultKind.Invalid;
+                var viewModel = new ArrayParameterMappingConfigurationDialogViewModel(variable, parameter);
+
+                if (this.navigationService
+                        .ShowDxDialog<ArrayParameterMappingConfigurationDialog, ArrayParameterMappingConfigurationDialogViewModel>(viewModel)
+                    != true)
+                {
+                    return ValidationResultKind.InConclusive;
+                }
+
+                this.MapParameterToVariable(viewModel, parameter);
+                return ValidationResultKind.Valid;
+            }
+            
+            if(this.AreTwoDimensionsArrayCompatible(variable, parameter))
+            {
+                var viewModel = new TwoDimensionsArrayMappingConfigurationDialogViewModel(parameter);
+
+                if (this.navigationService
+                        .ShowDxDialog<TwoDimensionsArrayMappingConfigurationDialog, TwoDimensionsArrayMappingConfigurationDialogViewModel>(viewModel)
+                    != true)
+                {
+                    return ValidationResultKind.InConclusive;
+                }
+
+                this.MapParameterToVariable(variable, viewModel.SelectedItem, parameter);
+                return ValidationResultKind.Valid;
             }
 
-            var viewModel = new ArrayParameterMappingConfigurationDialogViewModel(variable, parameter);
-
-            if(this.navigationService
-                .ShowDxDialog<ArrayParameterMappingConfigurationDialog, ArrayParameterMappingConfigurationDialogViewModel>(viewModel)
-               != true)
-            {
-                return ValidationResultKind.InConclusive;
-            }
-
-            this.MapParameterToVariable(viewModel, parameter);
-            return ValidationResultKind.Valid;
+            return ValidationResultKind.Invalid;
         }
 
         /// <summary>
@@ -558,9 +572,103 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             }
 
             var result = parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState)
-                       .ActualValue.Count / sampledFunctionParameterType.NumberOfValues == variable.NumberOfValues;
+                             .ActualValue.Count / sampledFunctionParameterType.NumberOfValues == variable.NumberOfValues;
 
             return result;
+        }
+
+        /// <summary>
+        /// Verifies if the <see cref="ArrayVariableRowViewModel"/> is a 2 dimensions array and if it is compatible
+        /// with the provided <see cref="ParameterOrOverrideBase"/>
+        /// </summary>
+        /// <param name="variable">The <see cref="ArrayVariableRowViewModel"/></param>
+        /// <param name="parameter">The <see cref="ParameterOrOverrideBase"/></param>
+        /// <returns>A value indicating if the <see cref="ArrayVariableRowViewModel"/> and the <see cref="ParameterOrOverrideBase"/>
+        /// are compatible</returns>
+        private bool AreTwoDimensionsArrayCompatible(ArrayVariableRowViewModel variable, ParameterOrOverrideBase parameter)
+        {
+            if (parameter.ParameterType is not SampledFunctionParameterType sampledFunctionParameterType)
+            {
+                return false;
+            }
+
+            if (sampledFunctionParameterType.NumberOfValues != 2)
+            {
+                return false;
+            }
+
+            var rowCount = parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState)
+                .ActualValue.Count / sampledFunctionParameterType.NumberOfValues;
+
+            return (variable.Dimensions.Count == 2 && variable.Dimensions.Contains(rowCount) 
+                                                   && variable.Dimensions.Contains(sampledFunctionParameterType.NumberOfValues));
+        }
+
+        /// <summary>
+        /// Maps the <see cref="ArrayVariableRowViewModel"/> values based on the chosen <see cref="IParameterTypeAssignment"/>
+        /// </summary>
+        /// <param name="variable">The <see cref="ArrayVariableRowViewModel"/></param>
+        /// <param name="parameterTypeAssignment">The <see cref="IParameterTypeAssignment"/></param>
+        /// <param name="parameter">The <see cref="ParameterOrOverrideBase"/></param>
+        private void MapParameterToVariable(ArrayVariableRowViewModel variable, IParameterTypeAssignment parameterTypeAssignment, ParameterOrOverrideBase parameter)
+        {
+            this.MappedElements.Remove(this.SelectedMappedElement);
+
+            if (parameter.ParameterType is not SampledFunctionParameterType parameterType)
+            {
+                this.statusBarService.Append($"The selected parameter is not supported for mapping to a array opc variable");
+                return;
+            }
+
+            var isSelectedParameterTypeIsIndependent = parameterTypeAssignment is IndependentParameterTypeAssignment;
+
+            var actualValues = parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState).ActualValue;
+
+            var rowCount = actualValues.Count / parameterType.NumberOfValues;
+
+            for (var rowIndex = 0; rowIndex < rowCount; rowIndex++)
+            {
+                var independentValue = actualValues[2 * rowIndex];
+                var dependentValue = actualValues[(2 * rowIndex)+1];
+
+                var firstElement = new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = parameter,
+
+                    SelectedValue = new ValueSetValueRowViewModel(
+                        parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState), 
+                        isSelectedParameterTypeIsIndependent ? independentValue : dependentValue, parameter.Scale),
+
+                    SelectedVariable = variable.Variables[rowIndex *2]
+                };
+
+                firstElement.VerifyValidity();
+
+                var existingRow = this.MappedElements.FirstOrDefault(x =>
+                    x.SelectedVariable.Reference.NodeId.Identifier.Equals(firstElement.SelectedVariable.Reference.NodeId.Identifier));
+
+                this.MappedElements.Remove(existingRow);
+                this.MappedElements.Add(firstElement);
+
+                var secondElement = new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = parameter,
+
+                    SelectedValue = new ValueSetValueRowViewModel(
+                        parameter.QueryParameterBaseValueSet(this.SelectedOption, this.SelectedState),
+                        isSelectedParameterTypeIsIndependent ? dependentValue : independentValue, parameter.Scale),
+
+                    SelectedVariable = variable.Variables[(rowIndex * 2)+1]
+                };
+
+                secondElement.VerifyValidity();
+
+                var existingSecondRow = this.MappedElements.FirstOrDefault(x =>
+                    x.SelectedVariable.Reference.NodeId.Identifier.Equals(secondElement.SelectedVariable.Reference.NodeId.Identifier));
+
+                this.MappedElements.Remove(existingSecondRow);
+                this.MappedElements.Add(secondElement);
+            }
         }
 
         /// <summary>
