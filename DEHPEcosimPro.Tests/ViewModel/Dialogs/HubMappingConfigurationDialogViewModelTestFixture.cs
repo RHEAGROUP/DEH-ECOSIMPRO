@@ -53,6 +53,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Dialogs;
     using DEHPEcosimPro.ViewModel.Rows;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using Moq;
 
@@ -943,7 +944,84 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.viewModel.SelectedVariable = array;
             Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
         }
-        
+
+        [Test]
+        public void VerifyTwoDimensionsArraysCompatible()
+        {
+            var listOfVariableRow = new List<VariableRowViewModel>
+            {
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[1,1]"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = 6, ServerTimestamp = DateTime.MinValue })),
+                new VariableRowViewModel((
+                    new ReferenceDescription
+                    {
+                        DisplayName = new LocalizedText(string.Empty, "Mos.a[1,2]"),
+                        NodeId = new NodeId(Guid.NewGuid())
+                    },
+                    new DataValue { Value = 5, ServerTimestamp = DateTime.MinValue }))
+            };
+
+            var array = new ArrayVariableRowViewModel("", listOfVariableRow);
+
+            var parameter = new Parameter
+            {
+                Iid = Guid.NewGuid(),
+                ParameterType = new SampledFunctionParameterType(Guid.NewGuid(), null, null)
+                {
+                    Name = "Kettle[1]",
+                    IndependentParameterType =
+                    {
+                        new IndependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new DateTimeParameterType(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Timestamp"
+                            }
+                        }
+                    },
+                    DependentParameterType =
+                    {
+                        new DependentParameterTypeAssignment(Guid.NewGuid(), null, null)
+                        {
+                            ParameterType = new SimpleQuantityKind(Guid.NewGuid(), null, null)
+                            {
+                                Name = "Value"
+                            }
+                        }
+                    }
+                }
+            };
+
+            this.parameter1.Scale = this.measurementScale;
+
+            parameter.ValueSet.Add(new ParameterValueSet
+            {
+                Computed = new ValueArray<string>(new[] { "20", "21" }),
+                ValueSwitch = ParameterSwitchKind.COMPUTED,
+                ActualOption = this.viewModel.SelectedOption,
+                ActualState = this.viewModel.SelectedState
+            });
+
+            var mappedElementDefinitionRowViewModel = new MappedElementDefinitionRowViewModel();
+            this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
+            this.viewModel.SelectedMappedElement.SelectedParameter = parameter;
+            this.viewModel.SelectedVariable = array;
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
+
+            this.navigation.Setup(x => x.ShowDxDialog<TwoDimensionsArrayMappingConfigurationDialog,
+                TwoDimensionsArrayMappingConfigurationDialogViewModel>(It.IsAny<TwoDimensionsArrayMappingConfigurationDialogViewModel>())).Returns(true);
+
+            this.viewModel.SelectedMappedElement = mappedElementDefinitionRowViewModel;
+            this.viewModel.SelectedMappedElement.SelectedParameter = parameter;
+            this.viewModel.SelectedVariable = array;
+            Assert.DoesNotThrow(() => this.viewModel.AreVariableTypesCompatible());
+        }
+
         [Test]
         public void TestAreArraysCompatible_1x1()
         {
