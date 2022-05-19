@@ -1,0 +1,30 @@
+﻿<dx:DXDialogWindow x:Class="DEHPEcosimPro.Views.Dialogs.TwoDimensionsArrayMappingConfigurationDialog"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+                   xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+                   xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+                   xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
+                   mc:Ignorable="d"
+                   Title="Two Dimensions Array Mapping Configuration" Height="120" Width="500"
+                   Topmost="True" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <dxmvvm:Interaction.Behaviors>
+        <behaviors:CloseWindowBehavior/>
+    </dxmvvm:Interaction.Behaviors>
+    <Grid VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Label Grid.Row="0" Content="The first column/row of the Array will contained values from : "></Label>
+        <dxe:ComboBoxEdit Margin="2 0 0 0" Height="25" Grid.Row="0" ItemsSource="{Binding ParameterTypeAssignments}"
+                          SelectedItem="{Binding SelectedItem}" AllowNullInput="False"
+                          DisplayMember="ParameterType.Name" Grid.Column="1"/>
+    </Grid>
+    <dx:DXDialogWindow.FooterButtons>
+        <dx:DialogButton ToolTip="Proceed" Content="Proceed" MinWidth="65" DialogResult="OK"/>
+        <dx:DialogButton ToolTip="Cancel" IsDefault="True" Content="Cancel" IsCancel="True" MinWidth="65" DialogResult="Cancel"/>
+    </dx:DXDialogWindow.FooterButtons>
+</dx:DXDialogWindow>
