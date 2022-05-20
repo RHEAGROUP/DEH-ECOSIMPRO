@@ -648,7 +648,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.DoesNotThrow(() => this.controller.ResetVariables());
             this.controller.Variables.Clear();
             Assert.DoesNotThrow(() => this.controller.ResetVariables());
-            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.AtLeastOnce);
         }
 
         [Test]
@@ -717,11 +717,11 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.AtLeast(2));
+                Times.AtLeastOnce);
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.AtLeast(2));
+                Times.AtLeastOnce);
         }
 
         [Test]
