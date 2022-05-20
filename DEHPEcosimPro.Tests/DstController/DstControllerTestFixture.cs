@@ -722,6 +722,7 @@ namespace DEHPEcosimPro.Tests.DstController
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
                 Times.AtLeastOnce);
+
         }
 
         [Test]
