@@ -716,11 +716,11 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(3));
+                Times.AtLeast(2));
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(3));
+                Times.AtLeast(2));
         }
 
         [Test]
