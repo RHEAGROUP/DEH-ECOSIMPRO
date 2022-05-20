@@ -553,7 +553,7 @@ namespace DEHPEcosimPro.Tests.DstController
         public void VerifyReadNode()
         {
             Assert.DoesNotThrow(() => this.controller.ReadNode(new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") }));
-            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.AtLeastOnce);
         }
 
         [Test]
