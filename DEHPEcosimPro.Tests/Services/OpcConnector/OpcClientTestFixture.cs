@@ -102,6 +102,12 @@ namespace DEHPEcosimPro.Tests.Services.OpcConnector
             await this.client.Connect(Endpoint);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            this.client.CloseSession();
+        }
+
         [Test]
         public async Task VerifyConnect()
         {
