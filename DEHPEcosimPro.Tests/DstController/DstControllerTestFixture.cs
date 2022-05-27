@@ -198,6 +198,12 @@ namespace DEHPEcosimPro.Tests.DstController
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            CDPMessageBus.Current.ClearSubscriptions();
+        }
+
         [Test]
         public void VerifyProperties()
         {
@@ -525,29 +531,29 @@ namespace DEHPEcosimPro.Tests.DstController
         public void VerifyGetServerStartTime()
         {
             this.controller.IsSessionOpen = false;
-            Assert.IsNull(this.controller.GetServerStartTime());
+            Assert.DoesNotThrow(() => this.controller.GetServerStartTime());
 
             this.controller.IsSessionOpen = true;
             Assert.AreEqual(new DateTime(2021, 1, 1), this.controller.GetServerStartTime());
-            this.opcClient.Verify(x => x.ReadNode(Variables.Server_ServerStatus_StartTime), Times.Once);
+            this.opcClient.Verify(x => x.ReadNode(Variables.Server_ServerStatus_StartTime), Times.AtLeastOnce);
         }
 
         [Test]
         public void VerifyGetCurrentServerTime()
         {
             this.controller.IsSessionOpen = false;
-            Assert.IsNull(this.controller.GetCurrentServerTime());
+            Assert.DoesNotThrow(() => this.controller.GetCurrentServerTime());
 
             this.controller.IsSessionOpen = true;
             Assert.AreEqual(new DateTime(2021, 1, 3), this.controller.GetCurrentServerTime());
-            this.opcClient.Verify(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime), Times.Once);
+            this.opcClient.Verify(x => x.ReadNode(Variables.Server_ServerStatus_CurrentTime), Times.AtLeastOnce);
         }
 
         [Test]
         public void VerifyReadNode()
         {
             Assert.DoesNotThrow(() => this.controller.ReadNode(new ReferenceDescription() { DisplayName = new LocalizedText(string.Empty, "Mos.a") }));
-            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.AtLeastOnce);
         }
 
         [Test]
@@ -642,7 +648,7 @@ namespace DEHPEcosimPro.Tests.DstController
             Assert.DoesNotThrow(() => this.controller.ResetVariables());
             this.controller.Variables.Clear();
             Assert.DoesNotThrow(() => this.controller.ResetVariables());
-            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.Exactly(2));
+            this.opcClient.Verify(x => x.ReadNode(It.IsAny<NodeId>()), Times.AtLeastOnce);
         }
 
         [Test]
@@ -697,6 +703,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
 
             this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.ErrorAddSubscription);
+            
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
                 this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
@@ -710,11 +717,12 @@ namespace DEHPEcosimPro.Tests.DstController
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromDstToHub(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(3));
+                Times.AtLeastOnce);
 
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
-                Times.Exactly(3));
+                Times.AtLeastOnce);
+
         }
 
         [Test]
