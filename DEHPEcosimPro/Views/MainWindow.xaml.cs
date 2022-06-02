@@ -24,6 +24,8 @@
 
 namespace DEHPEcosimPro.Views
 {
+    using System.Diagnostics.CodeAnalysis;
+
     using DevExpress.Xpf.Core;
 
     /// <summary>
@@ -34,6 +36,7 @@ namespace DEHPEcosimPro.Views
         /// <summary>
         /// Initializes a new <see cref="MainWindow"/>
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public MainWindow()
         {
             this.InitializeComponent();
