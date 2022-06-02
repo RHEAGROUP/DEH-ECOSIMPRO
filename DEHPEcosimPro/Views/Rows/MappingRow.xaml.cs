@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.Views.Rows
 {
+    using System.Diagnostics.CodeAnalysis;
     using System.Windows.Controls;
 
     /// <summary>
@@ -34,6 +35,7 @@ namespace DEHPEcosimPro.Views.Rows
         /// <summary>
         /// Initializes a new <see cref="MappingRow"/>
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public MappingRow()
         {
             this.InitializeComponent();

@@ -24,6 +24,8 @@
 
 namespace DEHPEcosimPro.Views.Dialogs
 {
+    using System.Diagnostics.CodeAnalysis;
+
     using DevExpress.Xpf.Core;
 
     /// <summary>
@@ -34,6 +36,7 @@ namespace DEHPEcosimPro.Views.Dialogs
         /// <summary>
         /// Initializes a new <see cref="ArrayParameterMappingConfigurationDialog"/>
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public ArrayParameterMappingConfigurationDialog()
         {
             this.InitializeComponent();
