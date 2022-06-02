@@ -30,10 +30,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using CDP4Common.EngineeringModelData;
 
-    using CDP4Dal;
-
     using DEHPCommon.Enumerators;
-    using DEHPCommon.Events;
     using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
@@ -64,22 +61,19 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.dstController.Setup(x => x.TransferMappedThingsToHub()).Returns(Task.CompletedTask);
 
             this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
+            
             this.dstController.Setup(x => x.DstMapResult)
                 .Returns(new ReactiveList<ElementBase>());
 
             this.dstController.Setup(x => x.HubMapResult)
                 .Returns(new ReactiveList<MappedElementDefinitionRowViewModel>());
             
-            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ElementBase>()
-            {
-                new ElementDefinition()
-            });
+            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ParameterOrOverrideBase>());
 
             this.dstController.Setup(x => x.SelectedHubMapResultToTransfer).Returns(new ReactiveList<MappedElementDefinitionRowViewModel>()
             {
                 new MappedElementDefinitionRowViewModel()
             });
-
 
             this.exchangeHistoryService = new Mock<IExchangeHistoryService>();
 
@@ -101,17 +95,13 @@ namespace DEHPEcosimPro.Tests.ViewModel
         {
             Assert.IsFalse(this.viewModel.TransferCommand.CanExecute(null));
 
-            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer)
-                .Returns(new ReactiveList<ElementBase>()
-                {
-                    new ElementDefinition()
-                    {
-                        Parameter = { new Parameter()}
-                    }
-                });
-
             this.dstController.Setup(x => x.MappingDirection)
                 .Returns(MappingDirection.FromDstToHub);
+
+            this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ParameterOrOverrideBase>()
+            {
+                new Parameter()
+            });
 
             this.viewModel.UpdateNumberOfThingsToTransfer();
             Assert.IsTrue(this.viewModel.TransferCommand.CanExecute(null));

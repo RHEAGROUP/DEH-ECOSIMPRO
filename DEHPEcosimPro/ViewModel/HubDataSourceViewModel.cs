@@ -171,8 +171,7 @@ namespace DEHPEcosimPro.ViewModel
                 if ((this.dstController.DstMapResult.Any() && this.NavigationService.ShowDxDialog<HubLogoutConfirmDialog>() is true)
                     || !this.dstController.DstMapResult.Any())
                 {
-                    this.dstController.HubMapResult.Clear();
-                    this.dstController.DstMapResult.Clear();
+                    this.dstController.ClearMappingCollections();
                     this.ObjectBrowser.Things.Clear();
                     this.hubController.Close();
                 }

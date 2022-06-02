@@ -32,7 +32,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     using CDP4Common.EngineeringModelData;
     using CDP4Common.SiteDirectoryData;
 
-    using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
@@ -212,7 +211,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNotEmpty(this.viewModel.AvailableElementDefinitions);
             Assert.IsEmpty(this.viewModel.AvailableElementUsages);
             Assert.IsEmpty(this.viewModel.AvailableParameters);
-            Assert.IsNotEmpty(this.viewModel.AvailableOptions);
+            Assert.IsEmpty(this.viewModel.AvailableOptions);
             Assert.IsNotEmpty(this.viewModel.Variables);
             Assert.IsNotNull(this.viewModel.ContinueCommand);
         }

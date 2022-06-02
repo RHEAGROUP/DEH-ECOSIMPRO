@@ -35,7 +35,6 @@ namespace DEHPEcosimPro.DstController
 
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Services.OpcConnector;
-    using DEHPEcosimPro.ViewModel.Dialogs;
 
     using Opc.Ua;
 
@@ -92,9 +91,9 @@ namespace DEHPEcosimPro.DstController
         ReactiveList<ElementBase> DstMapResult { get; }
 
         /// <summary>
-        /// Gets the colection of <see cref="ElementBase"/> that are selected to be transfered
+        /// Gets the colection of <see cref="ParameterOrOverrideBase"/> that are selected to be transfered
         /// </summary>
-        ReactiveList<ElementBase> SelectedDstMapResultToTransfer { get; }
+        ReactiveList<ParameterOrOverrideBase> SelectedDstMapResultToTransfer { get; }
 
         /// <summary>
         /// Gets the colection of <see cref="MappedElementDefinitionRowViewModel"/> that are selected to be transfered
@@ -256,5 +255,10 @@ namespace DEHPEcosimPro.DstController
         /// </summary>
         /// <returns>A <see cref="Task"/></returns>
         Task UpdateParametersValueSets();
+
+        /// <summary>
+        /// Clears all collections containing  mapped element for any direction
+        /// </summary>
+        void ClearMappingCollections();
     }
 }

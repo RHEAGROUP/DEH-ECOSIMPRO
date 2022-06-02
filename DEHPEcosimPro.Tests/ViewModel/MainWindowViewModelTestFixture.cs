@@ -24,15 +24,23 @@
 
 namespace DEHPEcosimPro.Tests.ViewModel
 {
+    using System;
+
+    using CDP4Common.EngineeringModelData;
+    using CDP4Common.SiteDirectoryData;
+
     using DEHPCommon.Enumerators;
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views.ExchangeHistory;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using Moq;
 
@@ -52,6 +60,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<IMappingViewModel> mappingViewModel;
         private Mock<INavigationService> navigationService;
         private Mock<IDifferenceViewModel> differenceViewModel;
+        private Mock<IHubController> hubController;
+        private Mock<IMappingConfigurationService> mappingConfiguration;
+        private ExternalIdentifierMap map;
+        private Iteration iteration;
 
         [SetUp]
         public void Setup()
@@ -66,11 +78,45 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.mappingViewModel = new Mock<IMappingViewModel>();
             this.navigationService = new Mock<INavigationService>();
             this.differenceViewModel = new Mock<IDifferenceViewModel>();
+            this.hubController = new Mock<IHubController>();
+            this.mappingConfiguration = new Mock<IMappingConfigurationService>();
+            this.map = new ExternalIdentifierMap(Guid.NewGuid(), null, null);
+            this.mappingConfiguration.Setup(x => x.ExternalIdentifierMap).Returns(this.map);
+            this.navigationService.Setup(x => x.ShowDialog<MappingConfigurationServiceDialog>()).Returns(true);
+
+            var person = new Person(Guid.NewGuid(), null, null) { GivenName = "test", DefaultDomain = new DomainOfExpertise() };
+
+            var participant = new Participant(Guid.NewGuid(), null, null)
+            {
+                Person = person
+            };
+
+            var engineeringModelSetup = new EngineeringModelSetup(Guid.NewGuid(), null, null)
+            {
+                Participant = { participant },
+                Name = "est"
+            };
+
+            this.iteration = new Iteration(Guid.NewGuid(), null, null)
+            {
+                IterationSetup = new IterationSetup(Guid.NewGuid(), null, null)
+                {
+                    IterationNumber = 23,
+                    Container = engineeringModelSetup
+                },
+                Container = new EngineeringModel(Guid.NewGuid(), null, null)
+                {
+                    EngineeringModelSetup = engineeringModelSetup
+                }
+            };
+
+            this.iteration.ExternalIdentifierMap.Add(this.map);
+            this.hubController.Setup(x => x.OpenIteration).Returns(this.iteration);
 
             this.viewModel = new MainWindowViewModel(this.hubDataSourceViewModel.Object, this.dstDataSourceViewModel.Object,
                 this.statusBarViewModel.Object, this.hubNetChangePreviewViewModel.Object, this.dstNetChangePreviewViewModel.Object,
                 this.dstController.Object, this.transferControlViewModel.Object, this.mappingViewModel.Object, this.navigationService.Object,
-                this.differenceViewModel.Object);
+                this.differenceViewModel.Object,this.hubController.Object, this.mappingConfiguration.Object);
         }
 
         [Test]
@@ -84,6 +130,8 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsNotNull(this.viewModel.ChangeMappingDirection);
             Assert.IsNotNull(this.viewModel.TransferControlViewModel);
             Assert.IsNotNull(this.viewModel.OpenExchangeHistory);
+            Assert.IsNotNull(this.viewModel.OpenMappingConfigurationDialog);
+            Assert.IsEmpty(this.viewModel.CurrentMappingConfigurationName);
         }
 
         [Test]
@@ -107,6 +155,22 @@ namespace DEHPEcosimPro.Tests.ViewModel
             Assert.IsTrue(this.viewModel.OpenExchangeHistory.CanExecute(null));
             Assert.DoesNotThrow(() => this.viewModel.OpenExchangeHistory.Execute(null));
             this.navigationService.Verify(x => x.ShowDialog<ExchangeHistory>(), Times.Once);
+        }
+
+        [Test]
+        public void VerifyOpenMappingServiceDialogCommand()
+        {
+            Assert.IsTrue(this.viewModel.OpenMappingConfigurationDialog.CanExecute(null));
+            Assert.DoesNotThrow(() => this.viewModel.OpenMappingConfigurationDialog.Execute(null));
+            Assert.IsEmpty(this.viewModel.CurrentMappingConfigurationName);
+
+            this.map.Name = "AName";
+            Assert.DoesNotThrow(() => this.viewModel.OpenMappingConfigurationDialog.Execute(null));
+            Assert.IsNotEmpty(this.viewModel.CurrentMappingConfigurationName);
+
+            this.navigationService.Verify(x => x.ShowDialog<MappingConfigurationServiceDialog>(), Times.Exactly(2));
+            this.dstController.Verify(x => x.ClearMappingCollections(), Times.Exactly(2));
+            this.dstController.Verify(x => x.LoadMapping(), Times.Exactly(2));
         }
     }
 }

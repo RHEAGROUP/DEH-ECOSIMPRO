@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
     using CDP4Common.Extensions;
+    using CDP4Common.SiteDirectoryData;
 
     using CDP4Dal.Operations;
 
@@ -69,6 +70,12 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         private ExternalIdentifierMap externalIdentifierMap;
 
         /// <summary>
+        /// Get a value indicating wheter the current <see cref="ExternalIdentifierMap" /> is the default one
+        /// </summary>
+        public bool IsTheCurrentIdentifierMapTemporary => this.ExternalIdentifierMap.Iid == Guid.Empty
+                                                          && string.IsNullOrWhiteSpace(this.ExternalIdentifierMap.Name);
+
+        /// <summary>
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
         /// </summary>
         public ExternalIdentifierMap ExternalIdentifierMap
@@ -103,6 +110,8 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         {
             this.statusBar = statusBarControl;
             this.hubController = hubController;
+
+            this.ExternalIdentifierMap = new ExternalIdentifierMap();
         }
 
         /// <summary>
@@ -254,6 +263,15 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
 
                 this.LoadsCorrespondances(element, idCorrespondences);
                 element.MappingConfigurations.AddRange(this.ExternalIdentifierMap.Correspondence.Where(x => idCorrespondences.Any(c => c.Iid == x.Iid)).ToList());
+                
+                if (element.SelectedParameter is { ParameterType: QuantityKind quantityKind } selectedParameter)
+                {
+                    var scaleIid = idCorrespondences.FirstOrDefault(x =>
+                        quantityKind.AllPossibleScale.Any(scale => scale.Iid == x.InternalId)).InternalId;
+
+                    element.SelectedScale = quantityKind.AllPossibleScale.FirstOrDefault(x => x.Iid == scaleIid) ?? selectedParameter.Scale;
+                }
+
                 mappedVariables.Add(element);
             }
             
@@ -301,6 +319,12 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// <param name="iterationClone">The <see cref="Iteration"/> clone</param>
         public void PersistExternalIdentifierMap(IThingTransaction transaction, Iteration iterationClone)
         {
+            if (this.IsTheCurrentIdentifierMapTemporary)
+            {
+                this.logger.Error($"The current mapping with {this.ExternalIdentifierMap.Correspondence.Count} correspondences will not be saved as it is temporary");
+                return;
+            }
+
             if (this.ExternalIdentifierMap.Iid == Guid.Empty)
             {
                 this.ExternalIdentifierMap = this.ExternalIdentifierMap.Clone(true);
@@ -327,19 +351,27 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         }
 
         /// <summary>
-        /// Creates and sets the <see cref="ExternalIdentifierMap"/>
+        /// Creates the <see cref="ExternalIdentifierMap" />
         /// </summary>
-        /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap"/></param>
-        /// <returns>A newly created <see cref="ExternalIdentifierMap"/></returns>
-        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName)
+        /// <param name="newName">The model name to use for creating the new <see cref="ExternalIdentifierMap" /></param>
+        /// <param name="addTheTemporyMapping">a value indicating whether the current temporary should be transfered to new one</param>
+        /// <returns>A newly created <see cref="ExternalIdentifierMap" /></returns>
+        public ExternalIdentifierMap CreateExternalIdentifierMap(string newName, bool addTheTemporyMapping)
         {
-            return new()
+            var newExternalIdentifierMap = new ExternalIdentifierMap
             {
                 Name = newName,
                 ExternalToolName = DstController.ThisToolName,
                 ExternalModelName = newName,
                 Owner = this.hubController.CurrentDomainOfExpertise
             };
+
+            if (addTheTemporyMapping)
+            {
+                newExternalIdentifierMap.Correspondence.AddRange(this.ExternalIdentifierMap.Correspondence);
+            }
+
+            return newExternalIdentifierMap;
         }
 
         /// <summary>
@@ -403,6 +435,8 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
 
                 this.AddToExternalIdentifierMap(variable.Key.Iid, new ExternalIdentifier() { Identifier = variable.Value.Reference.NodeId.Identifier });
 
+                this.AddToExternalIdentifierMap(variable.Value);
+
                 if (variable.Key.GetContainerOfType<ElementUsage>() is { } elementUsage)
                 {
                     this.AddToExternalIdentifierMap(elementUsage.Iid, new ExternalIdentifier() { Identifier = variable.Value.Reference.NodeId.Identifier });
@@ -415,6 +449,38 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
             }
 
             this.logger.Debug($"{this.ExternalIdentifierMap.Correspondence.Count-oldCount} correspondences added to the ExternalIdentifierMap");
+        }
+
+        /// <summary>
+        /// Adds as many correspondence as <paramref name="variable" /> values
+        /// </summary>
+        /// <param name="variable">The <see cref="VariableRowViewModel" />
+        /// </param>
+        private void AddToExternalIdentifierMap(VariableRowViewModel variable)
+        {
+            if (variable.SelectedActualFiniteState != null)
+            {
+                this.AddToExternalIdentifierMap(variable.SelectedActualFiniteState.Iid, new ExternalIdentifier
+                {
+                    Identifier = variable.Reference.NodeId.Identifier
+                });
+            }
+
+            if (variable.SelectedOption != null)
+            {
+                this.AddToExternalIdentifierMap(variable.SelectedOption.Iid, new ExternalIdentifier
+                {
+                    Identifier = variable.Reference.NodeId.Identifier
+                });
+            }
+
+            if (variable.SelectedScale != null)
+            {
+                this.AddToExternalIdentifierMap(variable.SelectedScale.Iid, new ExternalIdentifier
+                {
+                    Identifier = variable.Reference.NodeId.Identifier
+                });
+            }
         }
 
         /// <summary>
@@ -450,6 +516,11 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// </summary>
         public void RefreshExternalIdentifierMap()
         {
+            if (this.IsTheCurrentIdentifierMapTemporary)
+            {
+                return;
+            }
+
             this.hubController.GetThingById(this.ExternalIdentifierMap.Iid, this.hubController.OpenIteration, out ExternalIdentifierMap map);
             this.ExternalIdentifierMap = map.Clone(true);
         }

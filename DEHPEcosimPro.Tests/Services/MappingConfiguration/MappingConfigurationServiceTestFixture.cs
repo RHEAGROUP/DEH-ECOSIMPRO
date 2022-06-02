@@ -138,7 +138,7 @@ namespace DEHPEcosimPro.Tests.Services.MappingConfiguration
         [Test]
         public void VerifyProperies()
         {
-            Assert.IsNull(this.service.ExternalIdentifierMap);
+            Assert.IsNotNull(this.service.ExternalIdentifierMap);
         }
 
         [Test]
@@ -150,7 +150,7 @@ namespace DEHPEcosimPro.Tests.Services.MappingConfiguration
         [Test]
         public void VerifyCreateExternalIdentifierMap()
         {
-            var newExternalIdentifierMap = this.service.CreateExternalIdentifierMap("Name");
+            var newExternalIdentifierMap = this.service.CreateExternalIdentifierMap("Name", false);
             this.service.ExternalIdentifierMap = newExternalIdentifierMap;
             Assert.AreEqual("Name", this.service.ExternalIdentifierMap.Name);
             Assert.AreEqual("Name", this.service.ExternalIdentifierMap.ExternalModelName);
@@ -159,7 +159,7 @@ namespace DEHPEcosimPro.Tests.Services.MappingConfiguration
         [Test]
         public void VerifyAddToExternalIdentifierMap()
         {
-            this.service.ExternalIdentifierMap = this.service.CreateExternalIdentifierMap("test");
+            this.service.ExternalIdentifierMap = this.service.CreateExternalIdentifierMap("test", true);
 
             var internalId = Guid.NewGuid();
             this.service.AddToExternalIdentifierMap(internalId, this.externalIdentifiers[0]);
@@ -319,6 +319,10 @@ namespace DEHPEcosimPro.Tests.Services.MappingConfiguration
                 Correspondence = { new IdCorrespondence(Guid.NewGuid(), null, null) }
             };
 
+            Assert.DoesNotThrow(() => this.service.PersistExternalIdentifierMap(transactionMock.Object, iteration));
+            Assert.AreEqual(0, iteration.ExternalIdentifierMap.Count);
+
+            this.service.ExternalIdentifierMap.Name = "Name";
             Assert.DoesNotThrow(() => this.service.PersistExternalIdentifierMap(transactionMock.Object, iteration));
 
             Assert.AreEqual(1, iteration.ExternalIdentifierMap.Count);
