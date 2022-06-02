@@ -25,7 +25,6 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
     using System.Windows.Input;
@@ -43,8 +42,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
     using DEHPEcosimPro.Views.Dialogs;
-
-    using DevExpress.CodeParser;
 
     using Opc.Ua;
 
@@ -73,6 +70,39 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         private VariableRowViewModel selectedThing;
 
         /// <summary>
+        /// Backing field for <see cref="ElementUsageSelectedIndex"/>
+        /// </summary>
+        private int elementUsageSelectedIndex;
+
+        /// <summary>
+        /// Backing field for <see cref="CanContinue"/>
+        /// </summary>
+        private bool canContinue;
+
+        /// <summary>
+        /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
+        /// </summary>
+        /// <param name="hubController">The <see cref="IHubController"/></param>
+        /// <param name="dstController">The <see cref="IDstController"/></param>
+        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
+        /// <param name="navigation">The <see cref="INavigationService"/></param>
+        public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController,
+            IStatusBarControlViewModel statusBar, INavigationService navigation) :
+            base(hubController, dstController, statusBar)
+        {
+            this.navigation = navigation;
+        }
+
+        /// <summary>
+        /// The index of the selected index inside the <see cref="VariableRowViewModel.SelectedElementUsages" />
+        /// </summary>
+        public int ElementUsageSelectedIndex
+        {
+            get => this.elementUsageSelectedIndex;
+            set => this.RaiseAndSetIfChanged(ref this.elementUsageSelectedIndex, value);
+        }
+
+        /// <summary>
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>
         /// </summary>
         public VariableRowViewModel SelectedThing
@@ -80,11 +110,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             get => this.selectedThing;
             set => this.RaiseAndSetIfChanged(ref this.selectedThing, value);
         }
-        
-        /// <summary>
-        /// Backing field for <see cref="CanContinue"/>
-        /// </summary>
-        private bool canContinue;
 
         /// <summary>
         /// Gets or sets a value indicating whether <see cref="MappingConfigurationDialogViewModel.ContinueCommand"/> can execute
@@ -98,37 +123,42 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Gets the collection of the available <see cref="Option"/> from the connected Hub Model
         /// </summary>
-        public ReactiveList<Option> AvailableOptions { get; } = new ReactiveList<Option>();
+        public ReactiveList<Option> AvailableOptions { get; } = new ();
 
         /// <summary>
         /// Gets the collection of the available <see cref="ElementDefinition"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<ElementDefinition> AvailableElementDefinitions { get; } = new ReactiveList<ElementDefinition>();
+        public ReactiveList<ElementDefinition> AvailableElementDefinitions { get; } = new ();
 
         /// <summary>
         /// Gets the collection of the available <see cref="ElementUsage"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<ElementUsage> AvailableElementUsages { get; } = new ReactiveList<ElementUsage>();
+        public ReactiveList<ElementUsage> AvailableElementUsages { get; } = new ();
 
         /// <summary>
         /// Gets the collection of the available <see cref="ParameterType"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<ParameterType> AvailableParameterTypes { get; } = new ReactiveList<ParameterType>();
+        public ReactiveList<ParameterType> AvailableParameterTypes { get; } = new ();
+
+        /// <summary>
+        /// Gets the collections of the available <see cref="MeasurementScale" /> from the current <see cref="ParameterType"/>
+        /// </summary>
+        public ReactiveList<MeasurementScale> AvailableScales { get; } = new();
 
         /// <summary>
         /// Gets the collection of the available <see cref="Parameter"/>s from the connected Hub Model
         /// </summary>
-        public ReactiveList<ParameterOrOverrideBase> AvailableParameters { get; } = new ReactiveList<ParameterOrOverrideBase>();
+        public ReactiveList<ParameterOrOverrideBase> AvailableParameters { get; } = new ();
         
         /// <summary>
         /// Gets the collection of the available <see cref="ActualFiniteState"/>s depending on the selected <see cref="Parameter"/>
         /// </summary>
-        public ReactiveList<ActualFiniteState> AvailableActualFiniteStates { get; } = new ReactiveList<ActualFiniteState>();
+        public ReactiveList<ActualFiniteState> AvailableActualFiniteStates { get; } = new ();
 
         /// <summary>
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        public ReactiveList<VariableRowViewModel> Variables { get; } = new ReactiveList<VariableRowViewModel>();
+        public ReactiveList<VariableRowViewModel> Variables { get; } = new ();
         
         /// <summary>
         /// Gets or sets the command that applies the configured time step at the current <see cref="SelectedThing"/>
@@ -139,20 +169,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// Gets or sets the command that Add or Remove all available values to the <see cref="SelectedThing"/> <see cref="VariableRowViewModel.SelectedValues"/>
         /// </summary>
         public ReactiveCommand<object> SelectAllValuesCommand { get; set; }
-
-        /// <summary>
-        /// Initializes a new <see cref="DstMappingConfigurationDialogViewModel"/>
-        /// </summary>
-        /// <param name="hubController">The <see cref="IHubController"/></param>
-        /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
-        /// <param name="navigation">The <see cref="INavigationService"/></param>
-        public DstMappingConfigurationDialogViewModel(IHubController hubController, IDstController dstController, 
-            IStatusBarControlViewModel statusBar, INavigationService navigation) :
-                base(hubController, dstController, statusBar)
-        {
-            this.navigation = navigation;
-        }
 
         /// <summary>
         /// Initializes this view model properties
@@ -208,6 +224,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 });
             });
 
+            this.WhenAnyValue(x => x.ElementUsageSelectedIndex)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                {
+                    this.UpdateAvailableParameters();
+                    this.UpdateAvailableParameterType();
+                    this.CheckCanExecute();
+                }));
+
             this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
@@ -222,6 +247,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
+                    this.UpdateAvailableScales();
                     this.UpdateSelectedParameter();
                     this.UpdateSelectedScale();
                     this.NotifyIfParameterTypeIsNotAllowed();
@@ -234,6 +260,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 {
                     this.UpdateSelectedParameterType();
                     this.UpdateAvailableActualFiniteStates();
+                    this.UpdateAvailableOptions();
                     this.CheckCanExecute();
                 }));
 
@@ -359,15 +386,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 return;
             }
 
-            if (this.SelectedThing.SelectedParameter is {} parameter)
+            if (this.SelectedThing.SelectedParameter is { } parameter)
             {
                 this.SelectedThing.SelectedScale = parameter.Scale;
                 return;
             }
-                
-            this.SelectedThing.SelectedScale = 
-                this.SelectedThing.SelectedParameterType is QuantityKind quantityKind 
-                ? quantityKind.DefaultScale 
+
+            this.SelectedThing.SelectedScale ??= this.SelectedThing.SelectedParameterType is QuantityKind quantityKind
+                ? quantityKind.DefaultScale
                 : null;
         }
 
@@ -406,7 +432,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <param name="allowScalarParameterType">A value indicating whether the <see cref="ScalarParameterType"/>s should be included in the <see cref="AvailableParameterTypes"/></param>
         public void UpdateAvailableParameterType(bool? allowScalarParameterType = null)
         {
+            var parameterTypeWasNull = this.SelectedThing?.SelectedParameterType == null;
+
             this.AvailableParameterTypes.Clear();
+
+            if (this.SelectedThing != null && this.SelectedThing.SelectedElementUsages.Count != 0)
+            {
+                return;
+            }
 
             allowScalarParameterType ??= !(this.SelectedThing?.SelectedValues.Count > 1);
 
@@ -424,7 +457,32 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 .Where(this.FilterParameterType)
                 .OrderBy(x => x.Name);
 
-                this.AvailableParameterTypes.AddRange(filteredParameterTypes);
+            this.AvailableParameterTypes.AddRange(filteredParameterTypes);
+
+            if (this.SelectedThing != null && parameterTypeWasNull)
+            {
+                this.SelectedThing.SelectedParameterType = null;
+            }
+        }
+
+        /// <summary>
+        /// Update the <see cref="AvailableScales"/> collection
+        /// </summary>
+        public void UpdateAvailableScales()
+        {
+            var previousScale = this.SelectedThing?.SelectedScale;
+
+            this.AvailableScales.Clear();
+
+            if (this.SelectedThing?.SelectedParameterType is QuantityKind quantityKind)
+            {
+                this.AvailableScales.AddRange(quantityKind.AllPossibleScale);
+            }
+
+            if (previousScale != null && this.AvailableScales.Any(x => x.Iid == previousScale.Iid))
+            {
+                this.SelectedThing.SelectedScale = previousScale;
+            }
         }
 
         /// <summary>
@@ -452,7 +510,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.AvailableActualFiniteStates.Clear();
 
-            if (this.SelectedThing?.SelectedParameter is { } parameter && parameter.StateDependence is { } stateDependence)
+            if (this.SelectedThing?.SelectedParameter is { StateDependence: { } stateDependence })
             {
                 this.AvailableActualFiniteStates.AddRange(stateDependence.ActualState);
                 this.SelectedThing.SelectedActualFiniteState = this.AvailableActualFiniteStates.FirstOrDefault();
@@ -464,7 +522,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// </summary>
         private void UpdateAvailableOptions()
         {
-            this.AvailableOptions.AddRange(this.HubController.OpenIteration.Option.Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
+            this.AvailableOptions.Clear();
+
+            if (this.SelectedThing?.SelectedParameter?.IsOptionDependent == true)
+            {
+                this.AvailableOptions.AddRange(this.HubController.OpenIteration.Option
+                    .Where(x => this.AvailableOptions.All(o => o.Iid != x.Iid)));
+            }
         }
 
         /// <summary>
@@ -478,10 +542,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             {
                 return;
             }
-
+            
             var parameters = element.Parameter.ToList();
-                
-            if(element.Iid != Guid.Empty)
+
+            foreach (var elementUsage in this.SelectedThing?.SelectedElementUsages)
+            {
+                parameters.RemoveAll(x => elementUsage.ParameterOverride.All(parameterOverride => parameterOverride.Parameter.Iid != x.Iid));
+            }
+
+            if (element.Iid != Guid.Empty)
             {
                 parameters = parameters.Where(x => this.HubController.Session.PermissionService.CanWrite(x)).ToList();
             }
@@ -521,7 +590,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
             if (this.SelectedThing?.SelectedElementDefinition is { } elementDefinition && elementDefinition.Iid != Guid.Empty)
             {
                 var elementUsages = this.AvailableElementDefinitions.SelectMany(d => d.ContainedElement)
-                    .Where(u => u.ElementDefinition.Iid == elementDefinition.Iid);
+                    .Where(u => u.ElementDefinition.Iid == elementDefinition.Iid && u.ParameterOverride.Any());
 
                 if (this.SelectedThing.SelectedOption is { } option)
                 {

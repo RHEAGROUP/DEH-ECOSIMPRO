@@ -53,29 +53,18 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
     public class DstLoginViewModelTestFixture
     {
         private Mock<IDstController> dstController;
-        private Mock<IHubController> hubController;
         private Mock<IStatusBarControlViewModel> statusBar;
         private Mock<IUserPreferenceService<AppSettings>> userPreferenceService;
         private DstLoginViewModel viewModel;
-        private Mock<IMappingConfigurationService> mappingConfigurationService;
 
         [SetUp]
         public void Setup()
         {
             RxApp.MainThreadScheduler = Scheduler.CurrentThread;
 
-            this.mappingConfigurationService = new Mock<IMappingConfigurationService>();
-
             this.dstController = new Mock<IDstController>();
             this.dstController.Setup(x => x.IsSessionOpen).Returns(true);
             this.dstController.Setup(x => x.Connect(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IUserIdentity>(), 1000)).Returns(Task.CompletedTask);
-
-            this.hubController = new Mock<IHubController>();
-
-            this.hubController.Setup(x => x.AvailableExternalIdentifierMap(It.IsAny<string>())).Returns(new List<ExternalIdentifierMap>()
-            {
-                new ExternalIdentifierMap(), new ExternalIdentifierMap(), new ExternalIdentifierMap()
-            });
 
             this.statusBar = new Mock<IStatusBarControlViewModel>();
             this.statusBar.Setup(x => x.Append(It.IsAny<string>(), It.IsAny<StatusBarMessageSeverity>()));
@@ -84,7 +73,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             this.userPreferenceService.SetupProperty(s => s.UserPreferenceSettings, new AppSettings { SavedOpcUris = new List<string>() });
 
             this.viewModel = new DstLoginViewModel(this.dstController.Object, this.statusBar.Object, 
-                this.userPreferenceService.Object, this.hubController.Object, this.mappingConfigurationService.Object);
+                this.userPreferenceService.Object);
         }
 
         [Test]
@@ -102,22 +91,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             Assert.IsNull(this.viewModel.Password);
             Assert.IsNull(this.viewModel.UserName);
             Assert.IsFalse(this.viewModel.RequiresAuthentication);
-            
-            Assert.IsFalse(this.viewModel.CreateNewMappingConfigurationChecked);
-            Assert.IsNull(this.viewModel.ExternalIdentifierMapNewName);
-            Assert.IsNull(this.viewModel.SelectedExternalIdentifierMap);
-            Assert.AreEqual(3, this.viewModel.AvailableExternalIdentifierMap.Count);
-        }
-
-        [Test]
-        public void VerifySpecifyExternalIdentifierMap()
-        {
-            this.viewModel.ExternalIdentifierMapNewName = "Experiment0";
-            Assert.IsTrue(this.viewModel.CreateNewMappingConfigurationChecked);
-            this.viewModel.SelectedExternalIdentifierMap = this.viewModel.AvailableExternalIdentifierMap.First();
-            Assert.IsFalse(this.viewModel.CreateNewMappingConfigurationChecked);
-            this.viewModel.CreateNewMappingConfigurationChecked = true;
-            Assert.IsNull(this.viewModel.SelectedExternalIdentifierMap);
         }
 
         [Test]
@@ -125,11 +98,6 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
         {
             Assert.IsFalse(this.viewModel.LoginCommand.CanExecute(null));
             this.viewModel.Uri = "u://r.l";
-            Assert.IsFalse(this.viewModel.LoginCommand.CanExecute(null));
-            this.viewModel.SelectedExternalIdentifierMap = this.viewModel.AvailableExternalIdentifierMap.First();
-            Assert.IsTrue(this.viewModel.LoginCommand.CanExecute(null));
-            this.viewModel.SelectedExternalIdentifierMap = null;
-            this.viewModel.ExternalIdentifierMapNewName = "new Name";
             Assert.IsTrue(this.viewModel.LoginCommand.CanExecute(null));
             this.viewModel.RequiresAuthentication = true;
             Assert.IsFalse(this.viewModel.LoginCommand.CanExecute(null));

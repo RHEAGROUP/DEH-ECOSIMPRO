@@ -180,7 +180,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
             Assert.IsTrue(this.viewModel.ConnectCommand.CanExecute(null));
             this.hubController.Setup(x => x.IsSessionOpen).Returns(true);
-            this.viewModel.ConnectCommand.Execute(null); //
+            this.viewModel.ConnectCommand.Execute(null);
             Assert.AreEqual("Connect", this.viewModel.ConnectButtonText);
             this.hubController.Setup(x => x.IsSessionOpen).Returns(false);
             this.viewModel.ConnectCommand.Execute(null);
@@ -195,7 +195,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
             this.viewModel.ConnectCommand.Execute(null);
             this.navigationService.Setup(x => x.ShowDxDialog<DXDialogWindow>()).Returns(false);
             this.viewModel.ConnectCommand.Execute(null);
-            this.hubController.Verify(x => x.Close(), Times.Exactly(3));
+            this.hubController.Verify(x => x.Close(), Times.Exactly(2));
             this.navigationService.Verify(x => x.ShowDialog<Login>(), Times.Once);
         }
 

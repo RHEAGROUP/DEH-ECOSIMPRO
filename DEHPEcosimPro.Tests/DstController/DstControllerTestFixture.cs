@@ -435,7 +435,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.SelectedDstMapResultToTransfer.Add(elementDefinition);
+            this.controller.SelectedDstMapResultToTransfer.AddRange(elementDefinition.Parameter);
 
             var parameterOverride = new ParameterOverride(Guid.NewGuid(), null, null)
             {
@@ -450,14 +450,16 @@ namespace DEHPEcosimPro.Tests.DstController
                 }
             };
 
-            this.controller.SelectedDstMapResultToTransfer.Add(new ElementUsage()
+            var elementUsage = new ElementUsage()
             {
                 ElementDefinition = elementDefinition,
-                ParameterOverride = 
+                ParameterOverride =
                 {
                     parameterOverride
                 }
-            });
+            };
+
+            this.controller.SelectedDstMapResultToTransfer.AddRange(elementUsage.ParameterOverride);
 
             this.hubController.Setup(x => 
                 x.GetThingById(It.IsAny<Guid>(), It.IsAny<Iteration>(), out parameter));
@@ -505,7 +507,7 @@ namespace DEHPEcosimPro.Tests.DstController
                 x.Append(It.IsAny<Thing>(), It.IsAny<ChangeKind>()), Times.Exactly(3));
 
             this.exchangeHistoryService.Verify(x => 
-                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>()), Times.Exactly(2));
+                x.Append(It.IsAny<ParameterValueSetBase>(), It.IsAny<IValueSet>(), ParameterSwitchKind.COMPUTED), Times.Exactly(2));
         }
 
         [Test]

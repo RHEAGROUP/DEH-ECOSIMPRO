@@ -215,8 +215,10 @@
                         </dxe:ComboBoxEdit>
                         <Label Grid.Row="2" Grid.Column="0" Content="Update Element Usages:" />
                         <dxe:ComboBoxEdit Grid.Row="2" Grid.Column="1" Margin="2" AllowNullInput="True" AutoComplete="True" ClearSelectionOnBackspace="True" DisplayMember="ElementDefinition.ShortName"
+                                                  SelectedIndex="{Binding ElementUsageSelectedIndex}"
                                                   EditValue="{Binding SelectedThing.SelectedElementUsages, Converter={StaticResource ListToElementUsageConverter}}"
                                                   ItemsSource="{Binding AvailableElementUsages}" 
+                                                  AllowUpdateTwoWayBoundPropertiesOnSynchronization="True"
                                                   ToolTip="Select one or more ElementUsage. &#x0a;When selecting ElementUsages of one ElementDefinition, &#x0a;All the parameterOverrides of the selected Parameter will be updated"
                                                   NullText="Select Element Usages" NullValueButtonPlacement="EditBox" ShowNullTextForEmptyValue="True" ValidateOnTextInput="False">
                             <dxe:ComboBoxEdit.StyleSettings>
@@ -261,7 +263,7 @@
                         </dxg:LookUpEdit>
                         <dxe:ComboBoxEdit Grid.Column="2" Margin="2" AllowNullInput="True" ApplyItemTemplateToSelectedItem="True" AutoComplete="True" ClearSelectionOnBackspace="True"
                                       DisplayMember="ShortName"
-                                      ItemsSource="{Binding SelectedThing.SelectedParameterType.AllPossibleScale}"
+                                      ItemsSource="{Binding AvailableScales}"
                                       NullText="-" NullValueButtonPlacement="EditBox"
                                       SelectedItem="{Binding SelectedThing.SelectedScale}"
                                       ToolTip="Select a scale if the parameter type allows to do so"

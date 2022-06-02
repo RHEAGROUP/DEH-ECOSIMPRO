@@ -81,7 +81,7 @@ namespace DEHPEcosimPro.MappingRules
         /// <summary>
         /// Holds a <see cref="Dictionary{TKey,TValue}"/> of <see cref="ParameterOrOverrideBase"/> and <see cref="NodeId.Identifier"/>
         /// </summary>
-        private readonly Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIdIdentifier = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
+        private readonly Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterNodeIdIdentifier = new();
 
         /// <summary>
         /// Transforms a <see cref="List{T}"/> of <see cref="VariableRowViewModel"/> into an <see cref="ElementBase"/>
@@ -95,6 +95,7 @@ namespace DEHPEcosimPro.MappingRules
                 this.mappingConfigurationService = AppContainer.Container.Resolve<IMappingConfigurationService>();
 
                 this.owner = this.hubController.CurrentDomainOfExpertise;
+                this.parameterNodeIdIdentifier.Clear();
 
                 foreach (var variable in input.ToList())
                 {
@@ -183,7 +184,6 @@ namespace DEHPEcosimPro.MappingRules
                     is {} parameter)
                 {
                     variable.SelectedParameter = parameter;
-                    variable.SelectedParameter.Scale = variable.SelectedScale;
                 }
 
                 else
@@ -207,6 +207,8 @@ namespace DEHPEcosimPro.MappingRules
                     variable.SelectedElementDefinition.Parameter.Add(variable.SelectedParameter);
                 }
             }
+
+            variable.SelectedParameter.Scale = variable.SelectedScale;
 
             this.UpdateValueSet(variable, variable.SelectedParameter);
 

@@ -1,8 +1,8 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HubNetChangePreviewViewModel.cs" company="RHEA System S.A.">
-//    Copyright (c) 2020-2021 RHEA System S.A.
+//    Copyright (c) 2020-2022 RHEA System S.A.
 // 
-//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Arielle Petit.
+//    Author: Sam Gerené, Alex Vorobiev, Alexander van Delft, Nathanael Smiechowski, Antoine Théate.
 // 
 //    This file is part of DEHPEcosimPro
 // 
@@ -28,7 +28,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
-    using System.Windows.Input;
 
     using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
@@ -52,76 +51,91 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using NLog;
-
     using ReactiveUI;
 
+    /// <summary>
+    /// View model for this hub net change preview panel
+    /// </summary>
     public class HubNetChangePreviewViewModel : NetChangePreviewViewModel, IHubNetChangePreviewViewModel
     {
         /// <summary>
-        /// Gets the current class logger
-        /// </summary>
-        private readonly Logger logger = LogManager.GetCurrentClassLogger();
-
-        /// <summary>
-        /// The <see cref="IDstController"/>
+        /// The <see cref="IDstController" />
         /// </summary>
         private readonly IDstController dstController;
 
         /// <summary>
-        /// The collection of <see cref="VariableRowViewModel"/> that represents the latest selection
+        /// A collection of View model that are highligthed
         /// </summary>
-        private readonly List<VariableRowViewModel> previousSelection = new List<VariableRowViewModel>();
+        private readonly List<IViewModelBase<ElementBase>> highlightedRows = new();
 
         /// <summary>
-        /// Gets or sets a value indicating that the tree in the case that
-        /// <see cref="DstController.DstMapResult"/> is not empty and the tree is not showing all changes
+        /// The collection of <see cref="VariableRowViewModel" /> that represents the latest selection
         /// </summary>
-        public bool IsDirty { get; set; }
+        private readonly List<VariableRowViewModel> previousSelection = new();
 
         /// <summary>
-        /// The command for the context menu that allows to deselect all selectable <see cref="ElementBase"/> for transfer.
-        /// It executes <see cref="SelectDeselectAllForTransfer"/>
+        /// Initializes a new instance of the
+        /// <see cref="T:DEHPCommon.UserInterfaces.ViewModels.NetChangePreview.NetChangePreviewViewModel" /> class.
+        /// </summary>
+        /// <param name="hubController">The <see cref="T:DEHPCommon.HubController.Interfaces.IHubController" /></param>
+        /// <param name="objectBrowserTreeSelectorService">
+        /// The
+        /// <see cref="T:DEHPCommon.Services.ObjectBrowserTreeSelectorService.IObjectBrowserTreeSelectorService" />
+        /// </param>
+        /// <param name="dstController">The <see cref="IDstController" /></param>
+        public HubNetChangePreviewViewModel(IHubController hubController, IObjectBrowserTreeSelectorService objectBrowserTreeSelectorService, IDstController dstController)
+            : base(hubController, objectBrowserTreeSelectorService)
+        {
+            this.dstController = dstController;
+
+            this.InitializeCommandsAndObservables();
+        }
+
+        /// <summary>
+        /// The command for the context menu that allows to deselect all selectable <see cref="ElementBase" /> for transfer.
+        /// It executes <see cref="SelectDeselectAllForTransfer" />
         /// </summary>
         public ReactiveCommand<object> DeselectAllCommand { get; set; }
 
         /// <summary>
-        /// The command for the context menu that allows to select all selectable <see cref="ElementBase"/> for transfer.
-        /// It executes <see cref="SelectDeselectAllForTransfer"/>
+        /// The command for the context menu that allows to select all selectable <see cref="ElementBase" /> for transfer.
+        /// It executes <see cref="SelectDeselectAllForTransfer" />
         /// </summary>
         public ReactiveCommand<object> SelectAllCommand { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:DEHPCommon.UserInterfaces.ViewModels.ObjectBrowserViewModel" /> class.
+        /// Computes the old values for each
+        /// <see cref="P:DEHPCommon.UserInterfaces.ViewModels.ObjectBrowserBaseViewModel.Things" />
         /// </summary>
-        /// <param name="hubController">The <see cref="T:DEHPCommon.HubController.Interfaces.IHubController" /></param>
-        /// <param name="objectBrowserTreeSelectorService">The <see cref="T:DEHPCommon.Services.ObjectBrowserTreeSelectorService.IObjectBrowserTreeSelectorService" /></param>
-        /// <param name="dstController">The <see cref="IDstController"/></param>
-        public HubNetChangePreviewViewModel(IHubController hubController, IObjectBrowserTreeSelectorService objectBrowserTreeSelectorService, IDstController dstController) : base(hubController, objectBrowserTreeSelectorService)
+        public override void ComputeValues()
         {
-            this.dstController = dstController;
-
-            this.InitializeObservable();
+            this.UpdateTreeBasedOnSelectionHandler(new List<VariableRowViewModel>());
         }
 
         /// <summary>
-        /// Initializes this view model <see cref="ICommand"/> and <see cref="Observable"/>
+        /// Initializes this view model <see cref="ReactiveCommand{T}" /> and <see cref="Observable" />
         /// </summary>
-        private void InitializeObservable()
+        private void InitializeCommandsAndObservables()
         {
             CDPMessageBus.Current.Listen<UpdateHubPreviewBasedOnSelectionEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.UpdateTreeBasedOnSelectionHandler(x.Selection.ToList()));
 
             CDPMessageBus.Current.Listen<SessionEvent>(this.HubController.Session)
-                .Where(x => x.Status == SessionStatus.EndUpdate)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x => { this.UpdateTreeBasedOnSelectionHandler(this.previousSelection); });
-
-            CDPMessageBus.Current.Listen<SessionEvent>(this.HubController.Session)
                 .Where(x => x.Status == SessionStatus.EndUpdate && this.HubController.OpenIteration != null)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x => { this.ComputeValuesWrapper(); });
+                .Subscribe(_ => this.ComputeValuesWrapper());
+
+            CDPMessageBus.Current.Listen<SessionEvent>(this.HubController.Session)
+                .Where(x => x.Status == SessionStatus.EndUpdate)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateTreeBasedOnSelectionHandler(this.previousSelection));
+
+            CDPMessageBus.Current.Listen<UpdateObjectBrowserTreeEvent>()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateTreeBasedOnSelectionHandler(this.previousSelection));
+
+            this.dstController.DstMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ => this.Reload());
 
             this.SelectedThings.BeforeItemsAdded.Subscribe(this.WhenItemSelectedChanges);
             this.SelectedThings.BeforeItemsRemoved.Subscribe(this.WhenItemSelectedChanges);
@@ -134,10 +148,125 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Occurs when the <see cref="NetChangePreviewViewModel.SelectedThings"/> gets a new element added or removed
+        /// Calls the <see cref="ComputeValues" /> with some household
         /// </summary>
-        /// <param name="row">The <see cref="object"/> row that was added or removed</param>
-        private void WhenItemSelectedChanges(object row)
+        public void ComputeValuesWrapper()
+        {
+            this.IsBusy = true;
+            var isExpanded = this.Things.First().IsExpanded;
+            this.ComputeValues();
+            this.Things.First().IsExpanded = isExpanded;
+            this.IsBusy = false;
+        }
+
+        /// <summary>
+        /// Executes the <see cref="SelectAllCommand" /> and the <see cref="DeselectAllCommand" />
+        /// </summary>
+        /// <param name="areSelected">A value indicating whether the elements are to be selected</param>
+        public void SelectDeselectAllForTransfer(bool areSelected = true)
+        {
+            foreach (var element in this.dstController.DstMapResult)
+            {
+                this.AddOrRemoveToSelectedThingsToTransfer(element, areSelected);
+
+                if (element is ElementDefinition elementDefinition)
+                {
+                    CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(areSelected, elementDefinition));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds or removes the <paramref name="element" /> to the selected thing to transfer
+        /// </summary>
+        /// <param name="element">The <see cref="ElementBase" /></param>
+        /// <param name="areSelected">A value indicating whether to selected the element</param>
+        private void AddOrRemoveToSelectedThingsToTransfer(ElementBase element, bool areSelected)
+        {
+            var elementRowViewModels = this.Things
+                .OfType<ElementDefinitionsBrowserViewModel>()
+                .FirstOrDefault()?
+                .ContainedRows;
+
+            switch (element)
+            {
+                case ElementDefinition:
+                    var definitionViewModel = elementRowViewModels?.OfType<ElementDefinitionRowViewModel>()
+                        .FirstOrDefault(x => x.Thing.Iid == element.Iid && x.Thing.ShortName == element.ShortName);
+
+                    if (definitionViewModel is null)
+                    {
+                        return;
+                    }
+
+                    definitionViewModel.IsSelectedForTransfer = areSelected;
+
+                    this.AddOrRemoveToSelectedThingsToTransfer(areSelected, definitionViewModel);
+
+                    this.AddOrRemoveToSelectedThingsToTransfer(definitionViewModel);
+                    break;
+                case ElementUsage:
+                    var usageViewModel = elementRowViewModels?.OfType<ElementDefinitionRowViewModel>()
+                        .SelectMany(x => x.ContainedRows.OfType<ElementUsageRowViewModel>())
+                        .FirstOrDefault(x => x.Thing.Iid == element.Iid && x.Thing.ShortName == element.ShortName);
+
+                    if (usageViewModel is null)
+                    {
+                        return;
+                    }
+
+                    usageViewModel.IsSelectedForTransfer = areSelected;
+
+                    this.AddOrRemoveToSelectedThingsToTransfer(areSelected, usageViewModel);
+
+                    this.AddOrRemoveToSelectedThingsToTransfer(usageViewModel);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException($"{nameof(element)} is of type {element.ClassKind} which is unsuported at this point.");
+            }
+        }
+
+        /// <summary>
+        /// Adds or removes the all transferable rows contained inside the <see cref="IHaveContainedRows" />
+        /// </summary>
+        /// <param name="areSelected">A value indicating whether to selected the element</param>
+        /// <param name="containerRows">The <see cref="IHaveContainedRows" /></param>
+        private void AddOrRemoveToSelectedThingsToTransfer(bool areSelected, IHaveContainedRows containerRows)
+        {
+            foreach (var parameterRow in containerRows.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
+            {
+                parameterRow.IsSelectedForTransfer = areSelected && this.IsThingTransferable(parameterRow);
+            }
+
+            foreach (var parameterGroup in containerRows.ContainedRows.OfType<ParameterGroupRowViewModel>())
+            {
+                this.AddOrRemoveToSelectedThingsToTransfer(parameterGroup, areSelected);
+            }
+        }
+
+        /// <summary>
+        /// Adds or removed the selected parameters contained inside the <see cref="ParameterGroupRowViewModel" />
+        /// </summary>
+        /// <param name="parameterGroup">TThe <see cref="ParameterGroupRowViewModel" /></param>
+        /// <param name="areSelected">A value indicating whether to selected the element</param>
+        private void AddOrRemoveToSelectedThingsToTransfer(ParameterGroupRowViewModel parameterGroup, bool areSelected)
+        {
+            foreach (var parameterRow in parameterGroup.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>())
+            {
+                parameterRow.IsSelectedForTransfer = areSelected && this.IsThingTransferable(parameterRow);
+            }
+
+            foreach (var subParameterGroup in parameterGroup.ContainedRows.OfType<ParameterGroupRowViewModel>())
+            {
+                this.AddOrRemoveToSelectedThingsToTransfer(subParameterGroup, areSelected);
+            }
+        }
+
+        /// <summary>
+        /// Occurs when the <see cref="NetChangePreviewViewModel.SelectedThings" /> gets a new element added or removed
+        /// </summary>
+        /// <param name="row">The <see cref="object" /> row that was added or removed</param>
+        public void WhenItemSelectedChanges(object row)
         {
             switch (row)
             {
@@ -147,12 +276,9 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                     if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel definitionRowViewModel)
                     {
-                        definitionRowViewModel.IsSelectedForTransfer = definitionRowViewModel.ContainedRows
-                            .OfType<ParameterOrOverrideBaseRowViewModel>()
-                            .Any(x => x.IsSelectedForTransfer);
+                        definitionRowViewModel.IsSelectedForTransfer = this.IsAnyChildrenSelectedForTransfer(definitionRowViewModel);
                     }
 
-                    //used by the DifferenceViewModel
                     CDPMessageBus.Current.SendMessage(new DifferenceEvent<ParameterOrOverrideBase>(parameterRow.IsSelectedForTransfer, parameterRow.Thing));
 
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterRow);
@@ -165,9 +291,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                     if (parameterOverrideRow.ContainerViewModel is ElementUsageRowViewModel definitionRowViewModel)
                     {
-                        definitionRowViewModel.IsSelectedForTransfer = definitionRowViewModel.ContainedRows
-                            .OfType<ParameterOrOverrideBaseRowViewModel>()
-                            .Any(x => x.IsSelectedForTransfer);
+                        definitionRowViewModel.IsSelectedForTransfer = this.IsAnyChildrenSelectedForTransfer(definitionRowViewModel);
                     }
 
                     this.AddOrRemoveToSelectedThingsToTransfer(parameterOverrideRow);
@@ -177,12 +301,11 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 {
                     elementDefinitionRow.IsSelectedForTransfer = !elementDefinitionRow.IsSelectedForTransfer;
 
-                    foreach (var parameter in elementDefinitionRow.ContainedRows.OfType<ParameterRowViewModel>().Where(this.IsThingTransferable))
+                    foreach (var parameter in this.GetAllTransferableRows(elementDefinitionRow))
                     {
                         parameter.IsSelectedForTransfer = elementDefinitionRow.IsSelectedForTransfer;
                     }
 
-                    //used by the DifferenceViewModel
                     CDPMessageBus.Current.SendMessage(new DifferenceEvent<ElementDefinition>(elementDefinitionRow.IsSelectedForTransfer, elementDefinitionRow.Thing));
 
                     this.AddOrRemoveToSelectedThingsToTransfer(elementDefinitionRow);
@@ -190,8 +313,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                 }
                 case ElementUsageRowViewModel elementUsageRow when this.IsThingTransferable(elementUsageRow):
                 {
-                    this.SelectChainOfContainerViewModel(elementUsageRow);
-
                     var definitionRowViewModel = this.Things.OfType<ElementDefinitionsBrowserViewModel>()
                         .SelectMany(r => r.ContainedRows.OfType<ElementDefinitionRowViewModel>())
                         .FirstOrDefault(r => r.Thing.ShortName == elementUsageRow.Thing.ElementDefinition.ShortName);
@@ -202,7 +323,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                         this.AddOrRemoveToSelectedThingsToTransfer(definitionRowViewModel);
                     }
 
-                    foreach (var parameterOverride in elementUsageRow.ContainedRows.OfType<ParameterOverrideRowViewModel>().Where(this.IsThingTransferable))
+                    foreach (var parameterOverride in this.GetAllTransferableRows(elementUsageRow))
                     {
                         parameterOverride.IsSelectedForTransfer = elementUsageRow.IsSelectedForTransfer;
                     }
@@ -214,111 +335,39 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Verifies that the <see cref="thingViewModel"/> is transferable
+        /// Retrieves all transferable rows contained inside a row
         /// </summary>
-        /// <param name="thingViewModel">The <see cref="ParameterOrOverrideBaseRowViewModel"/></param>
-        /// <returns>An assert</returns>
-        private bool IsThingTransferable(ParameterOrOverrideBaseRowViewModel thingViewModel)
+        /// <param name="row">The row</param>
+        /// <returns>A collection of transferable row</returns>
+        private List<ParameterOrOverrideBaseRowViewModel> GetAllTransferableRows(IHaveContainedRows row)
         {
-            var thingContainer = thingViewModel.ContainerViewModel.Thing;
+            var transferableRows = new List<ParameterOrOverrideBaseRowViewModel>();
 
-            var element = this.dstController.DstMapResult
-                .FirstOrDefault(x => x.ShortName == (thingContainer as IShortNamedThing)?.ShortName && x.Iid == thingContainer.Iid);
-
-            return element?.Iid == Guid.Empty || element?.Original != null;
-        }
-
-        /// <summary>
-        /// Verifies that the <see cref="thingViewModel"/> is transferable
-        /// </summary>
-        /// <typeparam name="TElement">The type of <see cref="ElementBase"/></typeparam>
-        /// <param name="thingViewModel"></param>
-        /// <returns>An assert</returns>
-        private bool IsThingTransferable<TElement>(IViewModelBase<TElement> thingViewModel) where TElement : ElementBase
-        {
-            var element = this.dstController.DstMapResult.OfType<TElement>()
-                .FirstOrDefault(x => x.Iid == thingViewModel.Thing.Iid && x.ShortName == thingViewModel.Thing.ShortName);
-
-            return element?.Iid == Guid.Empty || element?.Original != null;
-        }
-
-        /// <summary>
-        /// Adds or removes the <paramref name="row.Thing"/> and it's chain of container to the <see cref="IDstController.SelectedDstMapResultToTransfer"/>
-        /// </summary>
-        /// <typeparam name="TElement">The type of <see cref="ElementBase"/> the <paramref name="row"/> represents</typeparam>
-        /// <param name="row">The <see cref="IRowViewModelBase{T}"/> to select or deselect</param>
-        private void SelectChainOfContainerViewModel<TElement>(IRowViewModelBase<TElement> row) where TElement : ElementBase
-        {
-            this.AddOrRemoveToSelectedThingsToTransfer(row);
-
-            if (row.ContainerViewModel is RowViewModelBase<ElementDefinition> container)
+            foreach (var containedRow in row.ContainedRows)
             {
-                this.SelectChainOfContainerViewModel(container);
+                if (containedRow is ParameterGroupRowViewModel parameterGroup)
+                {
+                    transferableRows.AddRange(this.GetAllTransferableRows(parameterGroup));
+                }
+                else if (containedRow is ParameterOrOverrideBaseRowViewModel parameterOrOverrideBaseRowViewModel
+                         && this.IsThingTransferable(parameterOrOverrideBaseRowViewModel))
+                {
+                    transferableRows.Add(parameterOrOverrideBaseRowViewModel);
+                }
             }
+
+            return transferableRows;
         }
 
         /// <summary>
-        /// Adds or removes the <paramref name="element"/> to the selected thing to transfer
-        /// </summary>
-        /// <param name="element">The <see cref="ElementBase"/></param>
-        /// <param name="areSelected">A value indicating whether to selected the element</param>
-        private void AddOrRemoveToSelectedThingsToTransfer(ElementBase element, bool areSelected)
-        {
-            var elementRowViewModels = this.Things
-                .OfType<ElementDefinitionsBrowserViewModel>()
-                .FirstOrDefault()?
-                .ContainedRows;
-
-            switch (element)
-            {
-                case ElementDefinition _:
-                    var definitionViewModel = elementRowViewModels?.OfType<ElementDefinitionRowViewModel>().FirstOrDefault(x => x.Thing.Iid == element.Iid && x.Thing.ShortName == element.ShortName);
-
-                    if (definitionViewModel is null)
-                    {
-                        return;
-                    }
-
-                    definitionViewModel.IsSelectedForTransfer = areSelected;
-
-                    foreach (var parameterRow in definitionViewModel.ContainedRows.OfType<ParameterRowViewModel>())
-                    {
-                        parameterRow.IsSelectedForTransfer = areSelected;
-                    }
-
-                    this.AddOrRemoveToSelectedThingsToTransfer(definitionViewModel);
-                    break;
-                case ElementUsage _:
-                    var usageViewModel = elementRowViewModels?.OfType<ElementDefinitionRowViewModel>().SelectMany(x => x.ContainedRows.OfType<ElementUsageRowViewModel>()).FirstOrDefault(x => x.Thing.Iid == element.Iid && x.Thing.ShortName == element.ShortName);
-
-                    if (usageViewModel is null)
-                    {
-                        return;
-                    }
-
-                    usageViewModel.IsSelectedForTransfer = areSelected;
-
-                    foreach (var parameterRow in usageViewModel.ContainedRows.OfType<ParameterRowViewModel>())
-                    {
-                        parameterRow.IsSelectedForTransfer = areSelected;
-                    }
-
-                    this.AddOrRemoveToSelectedThingsToTransfer(usageViewModel);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException($"{nameof(element)} is of type {element.ClassKind} which is unsuported at this point.");
-            }
-        }
-
-        /// <summary>
-        /// Adds or removes the selected parameters to the <see cref="IDstController.SelectedDstMapResultToTransfer"/>
+        /// Adds or removes the selected parameters to the <see cref="IDstController.SelectedDstMapResultToTransfer" />
         /// </summary>
         /// <param name="parameterRow">The parameter row view model</param>
         private void AddOrRemoveToSelectedThingsToTransfer(IHaveContainerViewModel parameterRow)
         {
             (parameterRow.ContainerViewModel switch
             {
-                RowViewModelBase<ElementDefinition> definitionRowViewModel => (Action) (() =>
+                RowViewModelBase<ElementDefinition> definitionRowViewModel => (Action)(() =>
                     this.AddOrRemoveToSelectedThingsToTransfer(definitionRowViewModel)),
                 RowViewModelBase<ElementUsage> usageRowViewModelBase => () =>
                     this.AddOrRemoveToSelectedThingsToTransfer(usageRowViewModelBase),
@@ -328,10 +377,10 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Adds or removes the selected parameters to the <see cref="IDstController.SelectedDstMapResultToTransfer"/>
+        /// Adds or removes the selected parameters to the <see cref="IDstController.SelectedDstMapResultToTransfer" />
         /// </summary>
-        /// <typeparam name="TElement">The type of <paramref name="elementViewModel"/></typeparam>
-        /// <param name="elementViewModel">The <typeparamref name="TElement"/> element to update</param>
+        /// <typeparam name="TElement">The type of <paramref name="elementViewModel" /></typeparam>
+        /// <param name="elementViewModel">The <typeparamref name="TElement" /> element to update</param>
         private void AddOrRemoveToSelectedThingsToTransfer<TElement>(RowViewModelBase<TElement> elementViewModel) where TElement : ElementBase
         {
             var mappedElement = this.dstController.DstMapResult.OfType<TElement>()
@@ -363,66 +412,142 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
 
                     this.AddOrRemoveToSelectedThingsToTransfer(elementViewModel, elementUsage.ParameterOverride, parameterOverridesToAdd);
                     break;
-
-                default:
-                    this.logger.Warn($"{nameof(mappedElement)} type isn't supported by this adapter");
-                    break;
-            }
-
-            this.dstController.SelectedDstMapResultToTransfer.Remove(
-                this.dstController.SelectedDstMapResultToTransfer.FirstOrDefault(x => x.Iid == mappedElement.Iid && x.ShortName == mappedElement.ShortName));
-
-            if (elementViewModel.IsSelectedForTransfer)
-            {
-                this.dstController.SelectedDstMapResultToTransfer.Add(mappedElement);
             }
         }
 
         /// <summary>
-        /// Adds or removes the <paramref name="parentViewModel"/>  to the <see cref="IDstController.SelectedDstMapResultToTransfer"/>
+        /// Retrieves all contained rows of type <see cref="ParameterOrOverrideBaseRowViewModel" />
         /// </summary>
-        /// <param name="parentViewModel">The <see cref="IHaveContainedRows"/> container view model</param>
-        /// <param name="parameters">The <see cref="ContainerList{T}"/> of parameter</param>
-        /// <param name="parametersToAdd">The collection of Parameter to add</param>
-        private void AddOrRemoveToSelectedThingsToTransfer<TParameter>(IHaveContainedRows parentViewModel, ContainerList<TParameter> parameters, List<TParameter> parametersToAdd) where TParameter : ParameterOrOverrideBase
+        /// <param name="row">The row to get the contained rows</param>
+        /// <returns>A collection of <see cref="ParameterOrOverrideBaseRowViewModel" /></returns>
+        private List<ParameterOrOverrideBaseRowViewModel> GetAllParameterOrOverrideBaseRowViewModels(IHaveContainedRows row)
         {
-            var selectedParameters = parentViewModel.ContainedRows
-                .OfType<ParameterOrOverrideBaseRowViewModel>()
+            var transferableRows = new List<ParameterOrOverrideBaseRowViewModel>();
+
+            transferableRows.AddRange(row.ContainedRows.OfType<ParameterOrOverrideBaseRowViewModel>());
+
+            foreach (var containedRow in row.ContainedRows)
+            {
+                if (containedRow is ParameterGroupRowViewModel parameterGroup)
+                {
+                    transferableRows.AddRange(this.GetAllTransferableRows(parameterGroup));
+                }
+            }
+
+            return transferableRows;
+        }
+
+        /// <summary>
+        /// Adds or removes the <paramref name="parentViewModel" />  to the
+        /// <see cref="IDstController.SelectedDstMapResultToTransfer" />
+        /// </summary>
+        /// <param name="parentViewModel">The <see cref="IHaveContainedRows" /> container view model</param>
+        /// <param name="parameters">The <see cref="ContainerList{T}" /> of parameter</param>
+        /// <param name="parametersToAdd">The collection of Parameter to add</param>
+        private void AddOrRemoveToSelectedThingsToTransfer<TParameter>(IHaveContainedRows parentViewModel,
+            ContainerList<TParameter> parameters, List<TParameter> parametersToAdd) where TParameter : ParameterOrOverrideBase
+        {
+            var selectedParameters = this.GetAllParameterOrOverrideBaseRowViewModels(parentViewModel)
                 .Where(x => x.IsSelectedForTransfer)
                 .Select(x => x.Thing as TParameter)
-                .Where(x => x is {})
+                .Where(x => x is { })
                 .ToList();
 
-            parametersToAdd
-                .RemoveAll(p => selectedParameters?
-                    .FirstOrDefault(x => x.ParameterType.Iid == p.ParameterType.Iid) is { });
+            foreach (var parameter in parameters)
+            {
+                this.dstController.SelectedDstMapResultToTransfer.Remove(parameter);
+            }
+
+            parametersToAdd.RemoveAll(p => selectedParameters.FirstOrDefault(x => x.ParameterType.Iid == p.ParameterType.Iid) is { });
 
             parametersToAdd.AddRange(selectedParameters);
 
             parameters.Clear();
 
             parameters.AddRange(parametersToAdd);
+
+            this.dstController.SelectedDstMapResultToTransfer.AddRange(selectedParameters.Where(x => !this.dstController.SelectedDstMapResultToTransfer.Contains(x)));
+        }
+
+        /// <summary>
+        /// Verifies in all children of this row if there is any row selected for transfer
+        /// </summary>
+        /// <param name="row">The row to check the children</param>
+        /// <returns>True if any of the children is selected</returns>
+        private bool IsAnyChildrenSelectedForTransfer(IHaveContainedRows row)
+        {
+            foreach (var children in row.ContainedRows)
+            {
+                switch (children)
+                {
+                    case ParameterGroupRowViewModel parameterGroupRowViewModel when this.IsAnyChildrenSelectedForTransfer(parameterGroupRowViewModel):
+                    case ParameterOrOverrideBaseRowViewModel { IsSelectedForTransfer: true }:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="thingViewModel" /> is transferable
+        /// </summary>
+        /// <param name="thingViewModel">The <see cref="ParameterOrOverrideBaseRowViewModel" /></param>
+        /// <returns>An assert</returns>
+        private bool IsThingTransferable(ParameterOrOverrideBaseRowViewModel thingViewModel)
+        {
+            return this.dstController.ParameterVariable.Keys.Any(x => x.Iid == thingViewModel.Thing.Iid);
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="thingViewModel" /> is transferable
+        /// </summary>
+        /// <typeparam name="TElement">The type of <see cref="ElementBase" /></typeparam>
+        /// <param name="thingViewModel"></param>
+        /// <returns>An assert</returns>
+        private bool IsThingTransferable<TElement>(IViewModelBase<TElement> thingViewModel) where TElement : ElementBase
+        {
+            var element = this.dstController.DstMapResult.OfType<TElement>()
+                .FirstOrDefault(x => x.Iid == thingViewModel.Thing.Iid && x.ShortName == thingViewModel.Thing.ShortName);
+
+            return element?.Iid == Guid.Empty || element?.Original != null;
+        }
+
+        /// <summary>
+        /// Populates the context menu
+        /// </summary>
+        public override void PopulateContextMenu()
+        {
+            this.ContextMenu.Clear();
+
+            this.ContextMenu.Add(
+                new ContextMenuItemViewModel("Select all for transfer", "", this.SelectAllCommand, MenuItemKind.Copy, ClassKind.NotThing));
+
+            this.ContextMenu.Add(
+                new ContextMenuItemViewModel("Deselect all for transfer", "", this.DeselectAllCommand, MenuItemKind.Delete, ClassKind.NotThing));
         }
 
         /// <summary>
         /// Updates the tree and filter changed things based on a selection
         /// </summary>
-        /// <param name="selection">The collection of selected <see cref="VariableRowViewModel"/> </param>
+        /// <param name="selection">The collection of selected <see cref="VariableRowViewModel" /> </param>
         private void UpdateTreeBasedOnSelectionHandler(IReadOnlyCollection<VariableRowViewModel> selection)
         {
             if (this.dstController.DstMapResult.Any())
             {
                 this.IsBusy = true;
 
-                if (!selection.Any() && this.IsDirty)
+                this.ClearTree();
+
+                this.previousSelection.Clear();
+
+                if (!selection.Any())
                 {
-                    this.previousSelection.Clear();
-                    this.ComputeValuesWrapper();
+                    this.UpdateTreeBasedOnSelection(this.dstController.ParameterVariable.Values.ToList());
                 }
 
                 else if (selection.Any())
                 {
-                    this.previousSelection.Clear();
                     this.previousSelection.AddRange(selection);
                     this.UpdateTreeBasedOnSelection(selection);
                 }
@@ -432,116 +557,175 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Updates the trees with the selection 
+        /// Updates the trees with the selection
         /// </summary>
-        /// <param name="selection">The collection of selected <see cref="VariableRowViewModel"/> </param>
+        /// <param name="selection">The collection of selected <see cref="VariableRowViewModel" /> </param>
         private void UpdateTreeBasedOnSelection(IEnumerable<VariableRowViewModel> selection)
         {
-            this.RestoreThings();
+            var allParameters = new List<ParameterOrOverrideBase>();
 
-            var parametersToRemove = this.dstController.ParameterVariable
-                .Where(p => !selection.Any(v => p.Value.Equals(v.Reference.NodeId.Identifier)))
-                .Select(x => x.Key)
-                .ToList();
-
-            foreach (var variable in selection)
+             foreach (var variable in selection)
             {
-                var parameters = this.dstController.ParameterVariable
-                    .Where(v => v.Value.Equals(variable.Reference.NodeId.Identifier))
-                    .Select(x => x.Key);
+                allParameters.AddRange(this.dstController.ParameterVariable
+                    .Where(v => v.Value.Reference.NodeId.Identifier.Equals(variable.Reference.NodeId.Identifier))
+                    .Select(x => x.Key).ToList());
+            }
 
-                foreach (var parameterOrOverrideBase in parameters)
+            List<IRowViewModelBase<Thing>> rows = new();
+
+            Dictionary<ElementBase, List<ParameterOrOverrideBase>> elementBases = new();
+
+            foreach (var parameterOrOverrideBase in allParameters)
+            {
+                var container = (ElementBase)parameterOrOverrideBase.Container;
+
+                var alreadyPresent = elementBases.Keys.FirstOrDefault(x => x.Iid == container.Iid && x.Name == container.Name);
+
+                if (alreadyPresent is null)
                 {
-                    var parameterRows = this.GetRows(parameterOrOverrideBase).ToList();
-
-                    if (!parameterRows.Any())
-                    {
-                        var oldElement = this.GetOldElement(parameterOrOverrideBase.Container);
-
-                        (oldElement as ElementDefinition)?.Parameter.RemoveAll(p =>
-                            parametersToRemove.Any(r => p.ParameterType.Iid == r.ParameterType.Iid));
-
-                        var elementRow = this.VerifyElementIsInTheTree(parameterOrOverrideBase);
-
-                        this.UpdateRow(parameterOrOverrideBase, (ElementDefinition) oldElement, elementRow);
-
-                        this.IsDirty = true;
-                    }
-
-                    foreach (var parameterRow in parameterRows)
-                    {
-                        var oldElement = this.GetOldElement(parameterRow.ContainerViewModel.Thing);
-
-                        if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
-                        {
-                            this.UpdateRow(parameterOrOverrideBase, (ElementDefinition) oldElement, elementDefinitionRow);
-                        }
-
-                        else if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
-                        {
-                            this.UpdateRow(parameterOrOverrideBase, (ElementUsage) oldElement, elementUsageRow);
-                        }
-
-                        this.IsDirty = true;
-                    }
+                    elementBases.Add(container, new List<ParameterOrOverrideBase> { parameterOrOverrideBase });
+                }
+                else
+                {
+                    elementBases[alreadyPresent].Add(parameterOrOverrideBase);
                 }
             }
+
+            foreach (var elementBase in elementBases)
+            {
+                var elementClone = elementBase.Key.Clone(false);
+
+                foreach (var parameterOrOverrideBase in elementBase.Value)
+                {
+                    this.AddOrReplaceParameter(elementClone, parameterOrOverrideBase.Clone(false));
+                }
+
+                var elementRow = this.VerifyElementIsInTheTree(elementBase.Value.First());
+
+                if (elementClone is ElementDefinition { Container: { } } elementDefition)
+                {
+                    elementRow.UpdateThing(elementDefition);
+                    elementRow.UpdateChildren();
+                }
+
+                rows.Add(elementRow);
+
+                foreach (var parameterOrOverrideBase in elementBase.Value)
+                {
+                    rows.AddRange(this.GetRows(parameterOrOverrideBase).ToList());
+                }
+            }
+
+            this.HighlightRows(rows);
         }
 
         /// <summary>
-        /// Gets the <see cref="ElementBase"/> at the previous state that correspond to the <paramref name="container"/>
+        /// Verifies that the <see cref="ElementDefinition" /> container of the <paramref name="parameterOrOverrideBase" />
+        /// exists in the tree. If not it creates it
         /// </summary>
-        /// <param name="container">The <see cref="Thing"/> container</param>
-        /// <returns>A <see cref="ElementBase"/></returns>
-        private ElementBase GetOldElement(Thing container)
+        /// <param name="parameterOrOverrideBase">The <see cref="Thing" /> parameterOrOverrideBase</param>
+        /// <returns>A <see cref="ElementDefinitionRowViewModel" /></returns>
+        private ElementDefinitionRowViewModel VerifyElementIsInTheTree(Thing parameterOrOverrideBase)
         {
-            return this.ThingsAtPreviousState
-                    .FirstOrDefault(t => t.Iid == container.Iid
-                                         || container.Iid == Guid.Empty
-                                         && container is ElementDefinition element
-                                         && t is ElementDefinition previousStateElement
-                                         && element.Name == previousStateElement.Name
-                                         && element.ShortName == previousStateElement.ShortName)
-                as ElementBase;
+            var iterationRow =
+                this.Things.OfType<ElementDefinitionsBrowserViewModel>().FirstOrDefault();
+
+            if (parameterOrOverrideBase is ParameterOverride parameterOverride)
+            {
+                return iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
+                    .FirstOrDefault(e => e.Thing.Iid == parameterOverride.Container.Container.Iid);
+            }
+
+            var elementDefinitionRow = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
+                .FirstOrDefault(e => e.Thing.Iid == parameterOrOverrideBase.Container.Iid
+                                     && e.Thing.Name == ((INamedThing)parameterOrOverrideBase.Container).Name);
+
+            if (elementDefinitionRow is null)
+            {
+                elementDefinitionRow = new ElementDefinitionRowViewModel((ElementDefinition)parameterOrOverrideBase.Container,
+                    this.HubController.CurrentDomainOfExpertise, this.HubController.Session, iterationRow);
+
+                iterationRow.ContainedRows.Add(elementDefinitionRow);
+            }
+
+            return elementDefinitionRow;
         }
 
         /// <summary>
-        /// Updates the <paramref name="elementRow"/> children with the <paramref name="parameterOrOverrideBase"/>
+        /// Gets all the rows of type <see cref="ParameterOrOverrideBase" /> that are related to <paramref name="parameter" />
         /// </summary>
-        /// <typeparam name="TThing">The precise type of <see cref="ElementBase"/></typeparam>
-        /// <typeparam name="TRow">The type of <paramref name="elementRow"/></typeparam>
-        /// <param name="parameterOrOverrideBase">The <see cref="ParameterOrOverrideBase"/></param>
-        /// <param name="oldElement">The old <see cref="ElementBase"/> to be updated</param>
-        /// <param name="elementRow">The row to perform on the update</param>
-        private void UpdateRow<TThing, TRow>(ParameterOrOverrideBase parameterOrOverrideBase, TThing oldElement, TRow elementRow)
-            where TRow : ElementBaseRowViewModel<TThing> where TThing : ElementBase
+        /// <param name="parameter">The <see cref="ParameterBase" /></param>
+        /// <returns>A collection of <see cref="IRowViewModelBase{T}" /> of type <see cref="ParameterOrOverrideBase" /></returns>
+        private IEnumerable<IRowViewModelBase<ParameterOrOverrideBase>> GetRows(ParameterBase parameter)
         {
-            var updatedElement = (TThing) oldElement?.Clone(true);
+            var result = new List<IRowViewModelBase<ParameterOrOverrideBase>>();
 
-            this.AddOrReplaceParameter(updatedElement, parameterOrOverrideBase);
+            foreach (var elementDefinitionRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>()
+                         .SelectMany(x => x.ContainedRows.OfType<ElementDefinitionRowViewModel>()))
+            {
+                result.AddRange(elementDefinitionRow.ContainedRows.OfType<ElementUsageRowViewModel>()
+                    .SelectMany(x => x.ContainedRows
+                        .OfType<IRowViewModelBase<ParameterOrOverrideBase>>())
+                    .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
 
-            CDPMessageBus.Current.SendMessage(new HighlightEvent(elementRow.Thing), elementRow.Thing);
+                result.AddRange(elementDefinitionRow.ContainedRows
+                    .OfType<IRowViewModelBase<ParameterOrOverrideBase>>()
+                    .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
 
-            elementRow.UpdateThing(updatedElement);
+                result.AddRange(this.FindInParameterGroups(elementDefinitionRow.ContainedRows
+                    .OfType<ParameterGroupRowViewModel>(), parameter));
+            }
 
-            elementRow.UpdateChildren();
+            return result;
         }
 
         /// <summary>
-        /// Restores the tree to the point before <see cref="ComputeValues"/> was executed the first time
+        /// Search inside all <see cref="ParameterGroupRowViewModel" /> if it contains the <see cref="ParameterBase" />
         /// </summary>
-        private void RestoreThings()
+        /// <param name="parameterGroups">A collection of <see cref="ParameterGroupRowViewModel" /></param>
+        /// <param name="parameter">the <see cref="ParameterBase" /> to find</param>
+        /// <returns>A collection of <see cref="IRowViewModelBase{T}" /></returns>
+        private IEnumerable<IRowViewModelBase<ParameterOrOverrideBase>> FindInParameterGroups(IEnumerable<ParameterGroupRowViewModel> parameterGroups,
+            ParameterBase parameter)
         {
-            var isExpanded = this.Things.First().IsExpanded;
-            this.UpdateTree(true);
-            this.Things.First().IsExpanded = isExpanded;
+            var result = new List<IRowViewModelBase<ParameterOrOverrideBase>>();
+
+            foreach (var parameterGroup in parameterGroups.ToList())
+            {
+                result.AddRange(parameterGroup.ContainedRows.OfType<IRowViewModelBase<ParameterOrOverrideBase>>()
+                    .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
+
+                result.AddRange(this.FindInParameterGroups(parameterGroup.ContainedRows.OfType<ParameterGroupRowViewModel>(), parameter));
+            }
+
+            return result;
         }
 
         /// <summary>
-        /// Adds or replace the <paramref name="parameterOrOverride"/> on the <paramref name="updatedElement"/>
+        /// Verify that the <paramref name="parameterRow" /> contains the <paramref name="parameter" />
         /// </summary>
-        /// <param name="updatedElement">The <see cref="ElementBase"/></param>
-        /// <param name="parameterOrOverride">The <see cref="ParameterOrOverrideBase"/></param>
+        /// <param name="parameter">The <see cref="ParameterBase" /></param>
+        /// <param name="parameterRow">The <see cref="IRowViewModelBase{T}" /></param>
+        /// <returns>An assert</returns>
+        private static bool VerifyRowContainsTheParameter(ParameterBase parameter, IRowViewModelBase<ParameterOrOverrideBase> parameterRow)
+        {
+            var containerIsTheRightOne = parameterRow.ContainerViewModel.Thing.Iid == parameter.Container.Iid ||
+                                         (parameterRow.ContainerViewModel.Thing is ElementUsage elementUsage
+                                          && (elementUsage.ElementDefinition.Iid == parameter.Container.Iid
+                                              || elementUsage.Iid == parameter.Container.Iid));
+
+            var parameterIsTheRightOne = parameterRow.Thing.Iid == parameter.Iid ||
+                                         (parameter.Iid == Guid.Empty
+                                          && parameter.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid);
+
+            return containerIsTheRightOne && parameterIsTheRightOne;
+        }
+
+        /// <summary>
+        /// Adds or replace the <paramref name="parameterOrOverride" /> on the <paramref name="updatedElement" />
+        /// </summary>
+        /// <param name="updatedElement">The <see cref="ElementBase" /></param>
+        /// <param name="parameterOrOverride">The <see cref="ParameterOrOverrideBase" /></param>
         private void AddOrReplaceParameter(ElementBase updatedElement, ParameterOrOverrideBase parameterOrOverride)
         {
             if (updatedElement is ElementDefinition elementDefinition)
@@ -552,7 +736,7 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
                     elementDefinition.Parameter.Remove(parameter);
                 }
 
-                elementDefinition.Parameter.Add((Parameter) parameterOrOverride);
+                elementDefinition.Parameter.Add((Parameter)parameterOrOverride);
             }
 
             else if (updatedElement is ElementUsage elementUsage)
@@ -582,196 +766,91 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         }
 
         /// <summary>
-        /// Gets all the rows of type <see cref="ParameterOrOverrideBase}"/> that are related to <paramref name="parameter"/>
+        /// Highlight all selected rows
         /// </summary>
-        /// <param name="parameter">The <see cref="ParameterBase"/></param>
-        /// <returns>A collection of <see cref="IRowViewModelBase{T}"/> of type <see cref="ParameterOrOverrideBase"/></returns>
-        private IEnumerable<IRowViewModelBase<ParameterOrOverrideBase>> GetRows(ParameterBase parameter)
+        /// <param name="rows">A collection of <see cref="IRowViewModelBase{T}" /></param>
+        private void HighlightRows(List<IRowViewModelBase<Thing>> rows)
         {
-            var result = new List<IRowViewModelBase<ParameterOrOverrideBase>>();
-
-            foreach (var elementDefinitionRow in this.Things.OfType<ElementDefinitionsBrowserViewModel>()
-                .SelectMany(x => x.ContainedRows.OfType<ElementDefinitionRowViewModel>()))
+            foreach (var row in rows)
             {
-                result.AddRange(elementDefinitionRow.ContainedRows.OfType<ElementUsageRowViewModel>()
-                    .SelectMany(x => x.ContainedRows
-                        .OfType<IRowViewModelBase<ParameterOrOverrideBase>>())
-                    .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
-
-                result.AddRange(elementDefinitionRow.ContainedRows
-                    .OfType<IRowViewModelBase<ParameterOrOverrideBase>>()
-                    .Where(parameterRow => VerifyRowContainsTheParameter(parameter, parameterRow)));
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Verify that the <paramref name="parameterRow"/> contains the <paramref name="parameter"/>
-        /// </summary>
-        /// <param name="parameter">The <see cref="ParameterBase"/></param>
-        /// <param name="parameterRow">The <see cref="IRowViewModelBase{T}"/></param>
-        /// <returns>An assert</returns>
-        private static bool VerifyRowContainsTheParameter(ParameterBase parameter, IRowViewModelBase<ParameterOrOverrideBase> parameterRow)
-        {
-            var containerIsTheRightOne = parameterRow.ContainerViewModel.Thing.Iid == parameter.Container.Iid ||
-                                         parameterRow.ContainerViewModel.Thing is ElementUsage elementUsage
-                                         && (elementUsage.ElementDefinition.Iid == parameter.Container.Iid
-                                             || elementUsage.Iid == parameter.Container.Iid);
-
-            var parameterIsTheRightOne = parameterRow.Thing.Iid == parameter.Iid ||
-                                         parameter.Iid == Guid.Empty
-                                         && parameter.ParameterType.Iid == parameterRow.Thing.ParameterType.Iid;
-
-            return containerIsTheRightOne && parameterIsTheRightOne;
-        }
-
-        /// <summary>
-        /// Updates the tree
-        /// </summary>
-        /// <param name="shouldReset">A value indicating whether the tree should remove the element in preview</param>
-        public override void UpdateTree(bool shouldReset)
-        {
-            if (shouldReset)
-            {
-                this.Reload();
-            }
-            else
-            {
-                this.ComputeValuesWrapper();
-            }
-        }
-
-        /// <summary>
-        /// Calls the <see cref="ComputeValues"/> with some household
-        /// </summary>
-        private void ComputeValuesWrapper()
-        {
-            this.IsBusy = true;
-            this.ThingsAtPreviousState.Clear();
-            var isExpanded = this.Things.First().IsExpanded;
-            this.ComputeValues();
-            this.Things.First().IsExpanded = isExpanded;
-            this.IsDirty = false;
-            this.IsBusy = false;
-        }
-
-        /// <summary>
-        /// Computes the old values for each <see cref="P:DEHPCommon.UserInterfaces.ViewModels.ObjectBrowserViewModel.Things" />
-        /// </summary>
-        public override void ComputeValues()
-        {
-            foreach (var parameterOverride in this.dstController.DstMapResult.OfType<ElementUsage>()
-                .SelectMany(x => x.ParameterOverride))
-            {
-                var parameterRows = this.GetRows(parameterOverride).ToList();
-
-                foreach (var parameterRow in parameterRows)
+                switch (row)
                 {
-                    if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
-                    {
-                        this.UpdateRow(parameterOverride, elementUsageRow.Thing, elementUsageRow);
-                    }
+                    case ParameterRowViewModel parameterRow:
+                        parameterRow.IsHighlighted = true;
+                        break;
 
-                    this.ThingsAtPreviousState.Add(parameterRow.ContainerViewModel.Thing.Clone(true));
-                }
-            }
+                    case ParameterOverrideRowViewModel parameterOverrideRow:
+                        parameterOverrideRow.IsHighlighted = true;
+                        break;
 
-            foreach (var parameter in this.dstController.DstMapResult.OfType<ElementDefinition>()
-                .SelectMany(x => x.Parameter))
-            {
-                var elementRow = this.VerifyElementIsInTheTree(parameter);
+                    case ElementDefinitionRowViewModel elementDefinitionRow:
+                        this.highlightedRows.Add(elementDefinitionRow);
+                        elementDefinitionRow.IsHighlighted = true;
+                        break;
 
-                if (parameter.Iid == Guid.Empty)
-                {
-                    this.UpdateRow(parameter, (ElementDefinition) parameter.Container, elementRow);
-                    this.AddToThingsAtPreviousState(elementRow.Thing);
-                    continue;
-                }
-
-                var parameterRows = this.GetRows(parameter).ToList();
-
-                foreach (var parameterRow in parameterRows)
-                {
-                    if (parameterRow.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionRow)
-                    {
-                        this.UpdateRow(parameter, elementDefinitionRow.Thing, elementDefinitionRow);
-                    }
-
-                    else if (parameterRow.ContainerViewModel is ElementUsageRowViewModel elementUsageRow)
-                    {
-                        this.UpdateRow(parameter, elementUsageRow.Thing, elementUsageRow);
-                    }
-
-                    this.AddToThingsAtPreviousState(parameterRow.ContainerViewModel.Thing);
+                    case ElementUsageRowViewModel elementUsageRow:
+                        this.highlightedRows.Add(elementUsageRow);
+                        elementUsageRow.IsHighlighted = true;
+                        break;
                 }
             }
         }
 
         /// <summary>
-        /// Adds to <see cref="NetChangePreviewViewModel.ThingsAtPreviousState"/>
+        /// Clear the highlight of a row and of its children
         /// </summary>
-        /// <param name="element">The element to add</param>
-        private void AddToThingsAtPreviousState(Thing element)
+        /// <param name="toClear">The row to clear</param>
+        private void ClearRowAndChildren(IViewModelBase<Thing> toClear)
         {
-            var existing = this.GetOldElement(element);
-
-            if (existing == null)
+            switch (toClear)
             {
-                this.ThingsAtPreviousState.Add(element.Clone(true));
+                case ElementDefinitionRowViewModel elementDefinitionRow:
+                    elementDefinitionRow.ClearRowHighlighting();
+
+                    foreach (var containedRow in elementDefinitionRow.ContainedRows)
+                    {
+                        this.ClearRowAndChildren(containedRow);
+                    }
+
+                    break;
+                case ElementUsageRowViewModel elementUsageRow:
+                    elementUsageRow.ClearRowHighlighting();
+
+                    foreach (var containedRow in elementUsageRow.ContainedRows)
+                    {
+                        this.ClearRowAndChildren(containedRow);
+                    }
+
+                    break;
+
+                case ParameterOrOverrideBaseRowViewModel parameterRow:
+                    parameterRow.ClearRowHighlighting();
+
+                    break;
+
+                case ParameterGroupRowViewModel parameterGroup:
+                    parameterGroup.ClearRowHighlighting();
+
+                    foreach (var parameterGroupContainedRow in parameterGroup.ContainedRows)
+                    {
+                        this.ClearRowAndChildren(parameterGroupContainedRow);
+                    }
+
+                    break;
             }
         }
 
         /// <summary>
-        /// Verifies that the <see cref="ElementDefinition"/> container of the <paramref name="parameterOrOverrideBase"/>
-        /// exists in the tree. If not it creates it
+        /// Remove all highlight for each row
         /// </summary>
-        /// <param name="parameterOrOverrideBase">The <see cref="Thing"/> parameterOrOverrideBase</param>
-        /// <returns>A <see cref="ElementDefinitionRowViewModel"/></returns>
-        private ElementDefinitionRowViewModel VerifyElementIsInTheTree(Thing parameterOrOverrideBase)
+        private void ClearTree()
         {
-            var iterationRow =
-                this.Things.OfType<ElementDefinitionsBrowserViewModel>().FirstOrDefault();
-
-            var elementDefinitionRow = iterationRow.ContainedRows.OfType<ElementDefinitionRowViewModel>()
-                .FirstOrDefault(e => e.Thing.Iid == parameterOrOverrideBase.Container.Iid
-                                     && e.Thing.Name == ((INamedThing) parameterOrOverrideBase.Container).Name);
-
-            if (elementDefinitionRow is null)
+            foreach (var hightlightedRow in this.highlightedRows)
             {
-                elementDefinitionRow = new ElementDefinitionRowViewModel((ElementDefinition) parameterOrOverrideBase.Container,
-                    this.HubController.CurrentDomainOfExpertise, this.HubController.Session, iterationRow);
-
-                iterationRow.ContainedRows.Add(elementDefinitionRow);
+                this.ClearRowAndChildren(hightlightedRow);
             }
 
-            return elementDefinitionRow;
-        }
-
-        /// <summary>
-        /// Populates the context menu
-        /// </summary>
-        public override void PopulateContextMenu()
-        {
-            this.ContextMenu.Clear();
-
-            this.ContextMenu.Add(
-                new ContextMenuItemViewModel("Select all for transfer", "", this.SelectAllCommand, MenuItemKind.Copy, ClassKind.NotThing));
-
-            this.ContextMenu.Add(
-                new ContextMenuItemViewModel("Deselect all for transfer", "", this.DeselectAllCommand, MenuItemKind.Delete, ClassKind.NotThing));
-        }
-
-        /// <summary>
-        /// Executes the <see cref="SelectAllCommand"/> and the <see cref="DeselectAllCommand"/>
-        /// </summary>
-        /// <param name="areSelected">A value indicating whether the elements are to be selected</param>
-        public void SelectDeselectAllForTransfer(bool areSelected = true)
-        {
-            foreach (var element in this.dstController.DstMapResult)
-            {
-                this.AddOrRemoveToSelectedThingsToTransfer(element, areSelected);
-            }
+            this.highlightedRows.Clear();
         }
     }
 }
