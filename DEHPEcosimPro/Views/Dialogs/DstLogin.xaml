@@ -8,10 +8,10 @@
                    xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:behaviors="clr-namespace:DEHPCommon.UserInterfaces.Behaviors;assembly=DEHPCommon"
-                   xmlns:system="clr-namespace:System;assembly=mscorlib"
                    Title="Connections"
                    WindowStartupLocation="CenterScreen"
-                   mc:Ignorable="d" Height="300" d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True">
+                   ResizeMode="NoResize"
+                   mc:Ignorable="d" Height="230" d:DesignWidth="409" MinWidth="600"  Width="400" Topmost="True">
     <dxmvvm:Interaction.Behaviors>
         <behaviors:CloseWindowBehavior/>
     </dxmvvm:Interaction.Behaviors>
@@ -30,6 +30,18 @@
         </ResourceDictionary>
     </Window.Resources>
     <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
+        <dx:LoadingDecorator.SplashScreenWindowStyle>
+            <Style TargetType="Window">
+                <Setter Property="Topmost" Value="True"/>
+                <Setter Property="AllowsTransparency" Value="True"/>
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="WindowStyle" Value="None"/>
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="ShowInTaskbar" Value="False"/>
+                <Setter Property="ShowActivated" Value="False"/>
+                <Setter Property="SizeToContent" Value="WidthAndHeight"/>
+            </Style>
+        </dx:LoadingDecorator.SplashScreenWindowStyle>
         <Grid Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -95,30 +107,6 @@
                                      Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Height="Auto" Margin="5" FontSize="12"
                                      ToolTip="The password to login on the server"
                                      Text="{Binding Path=Password, Mode=TwoWay}" />
-
-                <!--  Mapping  -->
-                <dxlc:LayoutItemLabel Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" Height="Auto" Margin="5" Content="Mapping Configuration" FontSize="12"/>
-                <Grid Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition></RowDefinition>
-                        <RowDefinition></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
-                        <ColumnDefinition></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <CheckBox Grid.Column="0" Grid.Row="1" Margin="5" Style="{StaticResource IsReadOnlyStyle}" Content="New Configuration" IsChecked="{Binding CreateNewMappingConfigurationChecked}"></CheckBox>
-                    <dxe:ComboBoxEdit Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource IsReadOnlyStyle}" Name="ModelBoxEdit"  DisplayMember="ExternalModelName" ShowNullTextForEmptyValue="True"
-                                      Height="Auto" Margin="5" FontSize="12" SelectedItem="{Binding SelectedExternalIdentifierMap}"
-                                      ItemsSource="{Binding AvailableExternalIdentifierMap}" IncrementalFiltering="True" NullValueButtonPlacement="EditBox" NullText="No Mapping Configuration Selected"
-                                      ToolTip="Select an existing mapping"/>
-
-                    <dxe:TextEdit Grid.Column="1" Style="{StaticResource IsReadOnlyStyle}" Grid.Row="1" Height="Auto" Margin="5" FontSize="12" ShowNullTextForEmptyValue="True"
-                                  ToolTip="Enter a name wich will identify the mapping configuration to be saved  &#x0a;suggestion: EcosimPro Model / Experiment Name" NullText="Enter a new mapping configuration name"
-                                  Text="{Binding Path=ExternalIdentifierMapNewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                </Grid>
-
             </Grid>
 
             <Grid Grid.Row="1">

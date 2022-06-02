@@ -146,8 +146,7 @@ namespace DEHPEcosimPro.ViewModel
             this.NumberOfThing = this.dstController.MappingDirection switch
             {
                 MappingDirection.FromHubToDst => this.dstController.SelectedHubMapResultToTransfer.Count,
-                MappingDirection.FromDstToHub => this.dstController.SelectedDstMapResultToTransfer.OfType<ElementDefinition>().SelectMany(x => x.Parameter).Count()
-                    + this.dstController.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride).Count(),
+                MappingDirection.FromDstToHub => this.dstController.SelectedDstMapResultToTransfer.Count,
                 _ => throw new ArgumentException($"Use of unsupported value of {nameof(this.dstController.MappingDirection)}")
             };
 

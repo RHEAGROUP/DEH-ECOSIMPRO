@@ -28,7 +28,6 @@ namespace DEHPEcosimPro.ViewModel
     using System.Collections.Generic;
     using System.Linq;
     using System.Reactive.Linq;
-    using System.Windows;
 
     using CDP4Common.EngineeringModelData;
 
@@ -168,7 +167,8 @@ namespace DEHPEcosimPro.ViewModel
 
             var result = 
                 originals.Select(parameterOverride => (parameterOverride as ParameterOrOverrideBase, 
-                    modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid).Value)).ToList();
+                    modified.FirstOrDefault(p => p.Key.Iid == parameterOverride.Iid 
+                                                 && p.Key.ParameterType.Name == parameterOverride.ParameterType.Name).Value)).ToList();
 
             result.AddRange(modified.Where(x => originals.All(o => o.Iid != x.Key.Iid))
                 .Select(x => (x.Key, x.Value)));

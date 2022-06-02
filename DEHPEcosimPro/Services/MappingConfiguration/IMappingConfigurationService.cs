@@ -27,7 +27,6 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
     using System;
     using System.Collections.Generic;
 
-    using CDP4Common.CommonData;
     using CDP4Common.EngineeringModelData;
 
     using CDP4Dal.Operations;
@@ -45,6 +44,11 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         /// Gets or sets the <see cref="ExternalIdentifierMap"/>
         /// </summary>
         ExternalIdentifierMap ExternalIdentifierMap { get; set; }
+
+        /// <summary>
+        /// Get a value indicating wheter the current <see cref="ExternalIdentifierMap" /> is the default one
+        /// </summary>
+        bool IsTheCurrentIdentifierMapTemporary { get; }
 
         /// <summary>
         /// Selects the values as defined in the <see cref="MappingConfigurationService.ExternalIdentifierMap"/> for the mappin
@@ -74,11 +78,15 @@ namespace DEHPEcosimPro.Services.MappingConfiguration
         void PersistExternalIdentifierMap(IThingTransaction transaction, Iteration iterationClone);
 
         /// <summary>
-        /// Creates and sets the <see cref="MappingConfigurationService.ExternalIdentifierMap"/>
+        /// Creates the <see cref="MappingConfigurationService.ExternalIdentifierMap" />
         /// </summary>
-        /// <param name="newName">The model name to use for creating the new <see cref="MappingConfigurationService.ExternalIdentifierMap"/></param>
-        /// <returns>A newly created <see cref="MappingConfigurationService.ExternalIdentifierMap"/></returns>
-        ExternalIdentifierMap CreateExternalIdentifierMap(string newName);
+        /// <param name="newName">
+        /// The model name to use for creating the new
+        /// <see cref="MappingConfigurationService.ExternalIdentifierMap" />
+        /// </param>
+        /// <param name="addTheTemporyMapping">a value indicating whether the current temporary should be transfered to new one</param>
+        /// <returns>A newly created <see cref="MappingConfigurationService.ExternalIdentifierMap" /></returns>
+        ExternalIdentifierMap CreateExternalIdentifierMap(string newName, bool addTheTemporyMapping);
 
         /// <summary>
         /// Adds one correspondance to the <see cref="MappingConfigurationService.ExternalIdentifierMap"/>

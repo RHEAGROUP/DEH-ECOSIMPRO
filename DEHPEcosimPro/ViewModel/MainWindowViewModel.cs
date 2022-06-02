@@ -27,13 +27,16 @@ namespace DEHPEcosimPro.ViewModel
     using System;
     using System.Windows.Input;
 
+    using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
     using DEHPCommon.UserInterfaces.Behaviors;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.Views.ExchangeHistory;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.Services.MappingConfiguration;
     using DEHPEcosimPro.ViewModel.Interfaces;
+    using DEHPEcosimPro.Views.Dialogs;
 
     using ReactiveUI;
 
@@ -51,6 +54,21 @@ namespace DEHPEcosimPro.ViewModel
         /// The <see cref="INavigationService"/>
         /// </summary>
         private readonly INavigationService navigationService;
+
+        /// <summary>
+        /// The <see cref="IHubController" />
+        /// </summary>
+        private readonly IHubController hubController;
+
+        /// <summary>
+        /// The <see cref="IMappingConfigurationService" />
+        /// </summary>
+        private readonly IMappingConfigurationService mappingConfiguration;
+
+        /// <summary>
+        /// Backing field for <see cref="CurrentMappingConfigurationName" />
+        /// </summary>
+        private string currentMappingConfigurationName;
 
         /// <summary>
         /// Gets the view model that represents the difference table
@@ -93,6 +111,11 @@ namespace DEHPEcosimPro.ViewModel
         public IHubDataSourceViewModel HubDataSourceViewModel { get; }
 
         /// <summary>
+        /// Opens a dialog to setup the mapping configuration
+        /// </summary>
+        public ReactiveCommand<object> OpenMappingConfigurationDialog { get; private set; }
+
+        /// <summary>
         /// Gets the view model that represents the EcosimPro data source
         /// </summary>
         public IDstDataSourceViewModel DstSourceViewModel { get; }
@@ -122,6 +145,15 @@ namespace DEHPEcosimPro.ViewModel
         }
 
         /// <summary>
+        /// Gets or sets the name of the current <see cref="IMappingConfigurationService.ExternalIdentifierMap" />
+        /// </summary>
+        public string CurrentMappingConfigurationName
+        {
+            get => this.currentMappingConfigurationName;
+            set => this.RaiseAndSetIfChanged(ref this.currentMappingConfigurationName, value);
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="MainWindowViewModel"/>
         /// </summary>
         /// <param name="hubDataSourceViewModelViewModel">A <see cref="IHubDataSourceViewModel"/></param>
@@ -134,11 +166,14 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="mappingViewModel">The <see cref="IMappingViewModel"/></param>
         /// <param name="navigationService">The <see cref="INavigationService"/></param>
         /// <param name="differenceViewModel">The <see cref="IDifferenceViewModel"/></param>
+        /// <param name="hubController">The <see cref="IHubController" /></param>
+        /// <param name="mappingConfiguration">The <see cref="IMappingConfigurationService" /></param>
         public MainWindowViewModel(IHubDataSourceViewModel hubDataSourceViewModelViewModel, IDstDataSourceViewModel dstSourceViewModelViewModel,
             IStatusBarControlViewModel statusBarControlViewModel, IHubNetChangePreviewViewModel hubNetChangePreviewViewModel,
             IDstNetChangePreviewViewModel dstNetChangePreviewViewModel, IDstController dstController,
             ITransferControlViewModel transferControlViewModel, IMappingViewModel mappingViewModel,
-            INavigationService navigationService, IDifferenceViewModel differenceViewModel)
+            INavigationService navigationService, IDifferenceViewModel differenceViewModel,IHubController hubController,
+            IMappingConfigurationService mappingConfiguration)
         {
             this.dstController = dstController;
             this.navigationService = navigationService;
@@ -150,6 +185,8 @@ namespace DEHPEcosimPro.ViewModel
             this.HubDataSourceViewModel = hubDataSourceViewModelViewModel;
             this.DstSourceViewModel = dstSourceViewModelViewModel;
             this.StatusBarControlViewModel = statusBarControlViewModel;
+            this.mappingConfiguration = mappingConfiguration;
+            this.hubController = hubController;
 
             this.InitializeCommands();
         }
@@ -164,6 +201,14 @@ namespace DEHPEcosimPro.ViewModel
 
             this.OpenExchangeHistory = ReactiveCommand.Create();
             this.OpenExchangeHistory.Subscribe(_ => this.navigationService.ShowDialog<ExchangeHistory>());
+
+            this.OpenMappingConfigurationDialog = ReactiveCommand.Create(this.WhenAny(x => x.hubController.OpenIteration,
+                iteration => iteration.Value != null));
+
+            this.OpenMappingConfigurationDialog.Subscribe(_ => this.OpenMappingConfigurationDialogExecute());
+
+            this.WhenAny(x => x.hubController.OpenIteration,
+                iteration => iteration.Value == null).Subscribe(_ => this.UpdateProperties());
         }
 
         /// <summary>
@@ -177,6 +222,29 @@ namespace DEHPEcosimPro.ViewModel
                                                   ?? DEHPCommon.Enumerators.MappingDirection.FromDstToHub;
 
             this.MappingDirection = (int) this.dstController.MappingDirection;
+        }
+
+        /// <summary>
+        /// Update this viewModel properties
+        /// </summary>
+        private void UpdateProperties()
+        {
+            this.CurrentMappingConfigurationName = string.IsNullOrWhiteSpace(this.mappingConfiguration.ExternalIdentifierMap.Name)
+                ? ""
+                : $"Current Mapping: {this.mappingConfiguration.ExternalIdentifierMap.Name}";
+        }
+
+        /// <summary>
+        /// Execute the <see cref="OpenMappingConfigurationDialog" /> Command
+        /// </summary>
+        private void OpenMappingConfigurationDialogExecute()
+        {
+            this.navigationService.ShowDialog<MappingConfigurationServiceDialog>();
+
+            this.dstController.ClearMappingCollections();
+            this.dstController.LoadMapping();
+
+            this.UpdateProperties();
         }
     }
 }

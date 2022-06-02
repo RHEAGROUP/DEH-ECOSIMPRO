@@ -30,7 +30,6 @@ namespace DEHPEcosimPro.DstController
     using System.Linq;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
-    using System.Windows;
 
     using CDP4Common;
     using CDP4Common.CommonData;
@@ -133,7 +132,7 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// The collection of (<see cref="NodeId"/> nodeId, <see cref="string"/> value) to be retransfered
         /// </summary>
-        private readonly List<(NodeId NodeId, string Value)> transferedHubMapResult = new List<(NodeId NodeId, string Value)>();
+        private readonly List<(NodeId NodeId, string Value)> transferedHubMapResult = new ();
         
         /// <summary>
         /// Backing field for <see cref="IsExperimentRunning"/> 
@@ -205,32 +204,32 @@ namespace DEHPEcosimPro.DstController
         /// <summary>
         /// Gets the colection of mapped <see cref="Parameter"/>s And <see cref="ParameterOverride"/>s through their container
         /// </summary>
-        public ReactiveList<ElementBase> DstMapResult { get; private set; } = new ReactiveList<ElementBase>();
+        public ReactiveList<ElementBase> DstMapResult { get; private set; } = new ();
 
         /// <summary>
-        /// Gets the colection of <see cref="ElementBase"/> that are selected to be transfered
+        /// Gets the colection of <see cref="ParameterOrOverrideBase"/> that are selected to be transfered
         /// </summary>
-        public ReactiveList<ElementBase> SelectedDstMapResultToTransfer { get; private set; } = new ReactiveList<ElementBase>();
+        public ReactiveList<ParameterOrOverrideBase> SelectedDstMapResultToTransfer { get; private set; } = new ();
 
         /// <summary>
         /// Gets the colection of <see cref="MappedElementDefinitionRowViewModel"/> that are selected to be transfered
         /// </summary>
-        public ReactiveList<MappedElementDefinitionRowViewModel> SelectedHubMapResultToTransfer { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
+        public ReactiveList<MappedElementDefinitionRowViewModel> SelectedHubMapResultToTransfer { get; private set; } = new ();
 
         /// <summary>
         /// Gets a <see cref="Dictionary{TKey, TValue}"/> of all mapped parameter and the associate <see cref="VariableRowViewModel"/>
         /// </summary>
-        public Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; } = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
+        public Dictionary<ParameterOrOverrideBase, VariableRowViewModel> ParameterVariable { get; } = new ();
 
         /// <summary>
         /// Gets the colection of mapped <see cref="ReferenceDescription"/>
         /// </summary>
-        public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ReactiveList<MappedElementDefinitionRowViewModel>();
+        public ReactiveList<MappedElementDefinitionRowViewModel> HubMapResult { get; private set; } = new ();
 
         /// <summary>
         /// Gets the collection of <see cref="VariableRowViewModel"/>
         /// </summary>
-        public ReactiveList<VariableRowViewModel> VariableRowViewModels { get; } = new ReactiveList<VariableRowViewModel>();
+        public ReactiveList<VariableRowViewModel> VariableRowViewModels { get; } = new ();
         
         /// <summary>
         /// Gets the OPC Time <see cref="NodeId"/>
@@ -433,8 +432,21 @@ namespace DEHPEcosimPro.DstController
         /// <returns>A <see cref="Task"/></returns>
         public async Task Connect(string endpoint, bool autoAcceptConnection = true, IUserIdentity credential = null, int samplingInterval = 1000)
         {
+            this.ClearMappingCollections();
             this.opcClientService.RefreshInterval = samplingInterval;
             await this.opcClientService.Connect(endpoint, autoAcceptConnection, credential);
+        }
+
+        /// <summary>
+        /// Clears all collections containing  mapped element for any direction
+        /// </summary>
+        public void ClearMappingCollections()
+        {
+            this.DstMapResult.Clear();
+            this.ParameterVariable.Clear();
+            this.HubMapResult.Clear();
+            this.SelectedDstMapResultToTransfer.Clear();
+            this.SelectedHubMapResultToTransfer.Clear();
         }
 
         /// <summary>
@@ -745,35 +757,19 @@ namespace DEHPEcosimPro.DstController
                     return;
                 }
 
-                foreach (var element in this.SelectedDstMapResultToTransfer)
+                var elementBasesToUpdate = new Dictionary<Thing, List<ParameterOrOverrideBase>>();
+
+                foreach (var element in this.SelectedDstMapResultToTransfer.ToList())
                 {
-                    switch (element)
+                    if (!elementBasesToUpdate.ContainsKey(element.Container))
                     {
-                        case ElementDefinition elementDefinition:
-                        {
-                            var elementClone = this.TransactionCreateOrUpdate(transaction, elementDefinition, iterationClone.Element);
-
-                            foreach (var parameter in elementDefinition.Parameter)
-                            {
-                                this.TransactionCreateOrUpdate(transaction, parameter, elementClone.Parameter);
-                            }
-
-                            break;
-                        }
-                        case ElementUsage elementUsage:
-                        {
-                            foreach (var parameterOverride in elementUsage.ParameterOverride)
-                            {
-                                var elementUsageClone = elementUsage.Clone(false);
-                                transaction.CreateOrUpdate(elementUsageClone);
-
-                                this.TransactionCreateOrUpdate(transaction, parameterOverride, elementUsageClone.ParameterOverride);
-                            }
-
-                            break;
-                        }
+                        elementBasesToUpdate[element.Container] = new List<ParameterOrOverrideBase>();
                     }
+
+                    elementBasesToUpdate[element.Container].Add(element);
                 }
+
+                this.AddParameterOrOverrideToTransaction(elementBasesToUpdate, transaction, iterationClone);
 
                 transaction.CreateOrUpdate(iterationClone);
 
@@ -804,6 +800,89 @@ namespace DEHPEcosimPro.DstController
         }
 
         /// <summary>
+        /// Includes all the <see cref="ParameterOrOverrideBase" /> to the transaction for the transfer
+        /// </summary>
+        /// <param name="elementBasesToUpdate">The collection of <see cref="ParameterOrOverrideBase" /> to transfer</param>
+        /// <param name="transaction">The <see cref="IThingTransaction" /></param>
+        /// <param name="iterationClone">The <see cref="Iteration" /></param>
+        private void AddParameterOrOverrideToTransaction(Dictionary<Thing, List<ParameterOrOverrideBase>> elementBasesToUpdate, IThingTransaction transaction, Iteration iterationClone)
+        {
+            foreach (var element in elementBasesToUpdate.Keys.ToList())
+            {
+                switch (element)
+                {
+                    case ElementDefinition elementDefinition:
+                    {
+                        var elementClone = this.CreateOrUpdateTransaction(transaction, elementDefinition, iterationClone.Element);
+
+                        foreach (var parameter in elementBasesToUpdate[element])
+                        {
+                            var needToUpdateParameterIid = parameter.Iid == Guid.Empty;
+                            var sourceThing = this.CreateOrUpdateTransaction(transaction, (Parameter)parameter, elementClone.Parameter);
+
+                            if (!needToUpdateParameterIid)
+                            {
+                                continue;
+                            }
+
+                            foreach (var parameterVariable in this.ParameterVariable.Keys
+                                         .Where(x => x.ParameterType.Name == parameter.ParameterType.Name
+                                                     && x.Iid == Guid.Empty
+                                                     && x.Container is ElementDefinition container
+                                                     && container.Name == elementClone.Name).ToList())
+                            {
+                                parameterVariable.Iid = sourceThing.Iid;
+                            }
+                        }
+
+                        break;
+                    }
+                    case ElementUsage elementUsage:
+                    {
+                        var elementUsageClone = elementUsage.Clone(false);
+                        transaction.CreateOrUpdate(elementUsageClone);
+
+                        foreach (var parameterOverride in elementBasesToUpdate[element])
+                        {
+                            this.CreateOrUpdateTransaction(transaction, (ParameterOverride)parameterOverride, elementUsageClone.ParameterOverride);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Registers the provided <paramref cref="Thing" /> to be created or updated by the <paramref name="transaction" />
+        /// </summary>
+        /// <typeparam name="TThing">The type of the <paramref name="containerClone" /></typeparam>
+        /// <param name="transaction">The <see cref="IThingTransaction" /></param>
+        /// <param name="thing">The <see cref="Thing" /></param>
+        /// <param name="containerClone">The <see cref="ContainerList{T}" /> of the cloned container</param>
+        /// <returns>A cloned <typeparamref name="TThing" /></returns>
+        private TThing CreateOrUpdateTransaction<TThing>(IThingTransaction transaction, TThing thing, ContainerList<TThing> containerClone) where TThing : Thing
+        {
+            var clone = thing.Clone(false);
+
+            if (clone.Iid == Guid.Empty)
+            {
+                clone.Iid = Guid.NewGuid();
+                thing.Iid = clone.Iid;
+                transaction.Create(clone);
+                containerClone.Add((TThing)clone);
+                this.exchangeHistory.Append(clone, ChangeKind.Create);
+            }
+            else
+            {
+                transaction.CreateOrUpdate(clone);
+                this.exchangeHistory.Append(clone, ChangeKind.Update);
+            }
+
+            return (TThing)clone;
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="IThingTransaction"/> based on the current open <see cref="Iteration"/>
         /// </summary>
         /// <returns>A <see cref="ValueTuple"/> Containing the <see cref="Iteration"/> clone and the <see cref="IThingTransaction"/></returns>
@@ -821,8 +900,8 @@ namespace DEHPEcosimPro.DstController
         {
             var (iterationClone, transaction) = this.GetIterationTransaction();
 
-            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ElementDefinition>().SelectMany(x => x.Parameter));
-            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ElementUsage>().SelectMany(x => x.ParameterOverride));
+            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<Parameter>());
+            this.UpdateParametersValueSets(transaction, this.SelectedDstMapResultToTransfer.OfType<ParameterOverride>());
 
             transaction.CreateOrUpdate(iterationClone);
             
@@ -889,35 +968,6 @@ namespace DEHPEcosimPro.DstController
             clone.ValueSwitch = valueSet.ValueSwitch;
         }
 
-        /// <summary>
-        /// Registers the provided <paramref cref="Thing"/> to be created or updated by the <paramref name="transaction"/>
-        /// </summary>
-        /// <typeparam name="TThing">The type of the <paramref name="containerClone"/></typeparam>
-        /// <param name="transaction">The <see cref="IThingTransaction"/></param>
-        /// <param name="thing">The <see cref="Thing"/></param>
-        /// <param name="containerClone">The <see cref="ContainerList{T}"/> of the cloned container</param>
-        /// <returns>A cloned <typeparamref name="TThing"/></returns>
-        private TThing TransactionCreateOrUpdate<TThing>(IThingTransaction transaction, TThing thing, ContainerList<TThing> containerClone) where TThing : Thing
-        {
-            var clone = thing.Clone(false);
-
-            if (clone.Iid == Guid.Empty)
-            {
-                clone.Iid = Guid.NewGuid();
-                thing.Iid = clone.Iid;
-                transaction.Create(clone);
-                containerClone.Add((TThing) clone);
-                this.exchangeHistory.Append(clone, ChangeKind.Create);
-            }
-            else
-            {
-                transaction.CreateOrUpdate(clone);
-                this.exchangeHistory.Append(clone, ChangeKind.Update);
-            }
-
-            return (TThing) clone;
-        }
-        
         /// <summary>
         /// Pops the <see cref="CreateLogEntryDialog"/> and based on its result, either registers a new ModelLogEntry to the <see cref="transaction"/> or not
         /// </summary>

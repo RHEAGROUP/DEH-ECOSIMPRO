@@ -235,12 +235,12 @@ namespace DEHPEcosimPro.ViewModel.Rows
             CultureInfo culture = CultureInfo.InvariantCulture;
 
             var isOldValueDecimal = decimal.TryParse(oldValue?.ToString(), style, culture, out decimal decimalOldValue);
-            var isNewValueDecimal = decimal.TryParse(newValue.ToString(), style, culture, out decimal decimalNewValue);
+            var isNewValueDecimal = decimal.TryParse(newValue?.ToString(), style, culture, out decimal decimalNewValue);
 
             if (isOldValueDecimal && isNewValueDecimal)
             {
                 var diff = decimalNewValue - decimalOldValue;
-                var percentChange = Math.Round(Math.Abs(diff / Math.Abs(decimalOldValue) * 100), 2);
+                var percentChange = decimalOldValue == 0 ? diff : Math.Round(Math.Abs(diff / Math.Abs(decimalOldValue) * 100), 2);
 
                 difference = diff > 0 ? $"+{diff}" : diff.ToString();
                 percentDiff = diff > 0 ? $"+{percentChange}%" : $"-{percentChange}%";
