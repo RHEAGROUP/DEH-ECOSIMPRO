@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.Views
 {
+    using System.Diagnostics.CodeAnalysis;
     using System.Windows.Controls;
 
     /// <summary>
@@ -34,6 +35,7 @@ namespace DEHPEcosimPro.Views
         /// <summary>
         /// Initializes a new instance of the <see cref="DstBrowserHeader"/> class.
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public DstBrowserHeader()
         {
             this.InitializeComponent();

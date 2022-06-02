@@ -24,6 +24,7 @@
 
 namespace DEHPEcosimPro.Views
 {
+    using System.Diagnostics.CodeAnalysis;
     using System.Windows.Controls;
 
     /// <summary>
@@ -34,6 +35,7 @@ namespace DEHPEcosimPro.Views
         /// <summary>
         /// Initializes a new <see cref="DstVariablesControl"/>
         /// </summary>
+        [ExcludeFromCodeCoverage]
         public DstVariablesControl()
         {
             this.InitializeComponent();

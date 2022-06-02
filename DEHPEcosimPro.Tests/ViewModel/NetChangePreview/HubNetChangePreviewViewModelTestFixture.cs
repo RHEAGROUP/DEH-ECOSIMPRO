@@ -75,6 +75,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         private List<VariableRowViewModel> variableRowViewModels;
         private Parameter parameter;
         private ParameterOverride parameterOverride;
+        private ReactiveList<ElementBase> dstMapResult;
+        private Dictionary<ParameterOrOverrideBase, VariableRowViewModel> parameterVariable;
 
         [SetUp]
         public void Setup()
@@ -128,6 +130,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                 Parameter = { this.parameter },
                 Container = this.iteration
             };
+
+            var parameterGroup1 = new ParameterGroup(Guid.NewGuid(), null, null);
+            var parameterGroup2 = new ParameterGroup(Guid.NewGuid(), null, null);
+            parameterGroup2.ContainingGroup = parameterGroup1;
+            parameterGroup1.Container = this.elementDefinition0;
+            this.elementDefinition0.ParameterGroup.Add(parameterGroup1);
+            this.elementDefinition0.ParameterGroup.Add(parameterGroup2);
+            this.elementDefinition0.Parameter.First().Group = parameterGroup2;
 
             this.elementDefinition1 = new ElementDefinition(Guid.NewGuid(), null, null)
             {
@@ -205,75 +215,77 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
 
             this.dstController.Setup(x => x.SelectedDstMapResultToTransfer).Returns(new ReactiveList<ParameterOrOverrideBase>());
 
-            this.dstController.Setup(x => x.DstMapResult)
-                .Returns(new ReactiveList<ElementBase>() 
+            this.dstMapResult = new ReactiveList<ElementBase>()
+            {
+                new ElementDefinition(this.iteration.Element.First().Iid, null, null)
                 {
-                    new ElementDefinition(this.iteration.Element.First().Iid, null, null)
+                    Parameter =
                     {
-                        Parameter =
+                        new Parameter(this.iteration.Element.First().Parameter.First().Iid, null, null)
                         {
-                            new Parameter(this.iteration.Element.First().Parameter.First().Iid, null, null)
+                            ValueSet =
                             {
-                                ValueSet =
+                                new ParameterValueSet(this.iteration.Element.First().Parameter.First().ValueSet.First().Iid, null, null)
                                 {
-                                    new ParameterValueSet(this.iteration.Element.First().Parameter.First().ValueSet.First().Iid, null, null)
-                                    {
-                                        ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new []{"42"})
-                                    }
-                                },
-                                ParameterType = this.parameterType
-                            }
-                        },
-                        Container = this.iteration
-                    },
-                    new ElementDefinition(this.iteration.Element.Last().Iid, null, null)
-                    {
-                        Parameter =
-                        {
-                            new Parameter()
-                            {
-                                ValueSet =
-                                {
-                                    new ParameterValueSet(Guid.NewGuid(), null, null)
-                                    {
-                                        ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new []{"51"})
-                                    }
-                                },
-                                ParameterType = this.parameterType
-                            }
-                        },
-                        Container = this.iteration
-                    },
-                    new ElementDefinition(Guid.NewGuid(), null, null)
-                    {
-                        Parameter =
-                        {
-                            new Parameter()
-                            {
-                                ValueSet =
-                                {
-                                    new ParameterValueSet(Guid.NewGuid(), null, null)
-                                    {
-                                        ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new []{"NewElementDeifinition"})
-                                    }
-                                },
-                                ParameterType = this.parameterType
-                            }
-                        },
-                        Container = this.iteration
-                    },
-                    new ElementUsage(this.elementDefinition2.ContainedElement.First().Iid, null, null)
-                    {
-                        Container = this.elementDefinition1,
-                        ElementDefinition = this.elementDefinition1,
-                        ParameterOverride =
-                        {
-                            this.parameterOverride
+                                    ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new[] { "42" })
+                                }
+                            },
+                            ParameterType = this.parameterType
                         }
+                    },
+                    Container = this.iteration,
+                },
+                new ElementDefinition(this.iteration.Element.Last().Iid, null, null)
+                {
+                    Parameter =
+                    {
+                        new Parameter()
+                        {
+                            ValueSet =
+                            {
+                                new ParameterValueSet(Guid.NewGuid(), null, null)
+                                {
+                                    ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new[] { "51" })
+                                }
+                            },
+                            ParameterType = this.parameterType
+                        }
+                    },
+                    Container = this.iteration
+                },
+                new ElementDefinition(Guid.NewGuid(), null, null)
+                {
+                    Parameter =
+                    {
+                        new Parameter()
+                        {
+                            ValueSet =
+                            {
+                                new ParameterValueSet(Guid.NewGuid(), null, null)
+                                {
+                                    ValueSwitch = ParameterSwitchKind.COMPUTED, Computed = new ValueArray<string>(new[] { "NewElementDeifinition" })
+                                }
+                            },
+                            ParameterType = this.parameterType
+                        }
+                    },
+                    Container = this.iteration
+                },
+                new ElementUsage(this.elementDefinition2.ContainedElement.First().Iid, null, null)
+                {
+                    Container = this.elementDefinition1,
+                    ElementDefinition = this.elementDefinition1,
+                    ParameterOverride =
+                    {
+                        this.parameterOverride
                     }
-                });
+                }
+            };
 
-            this.dstController.Setup(x => x.ParameterVariable).Returns(new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>());
+            this.parameterVariable = new Dictionary<ParameterOrOverrideBase, VariableRowViewModel>();
+
+            this.dstController.Setup(x => x.DstMapResult).Returns(this.dstMapResult);
+            this.dstController.Setup(x => x.ParameterVariable).Returns(this.parameterVariable);
 
             this.variableRowViewModels = new List<VariableRowViewModel>
             {
@@ -324,7 +336,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.AreEqual(3, elements.Count);
 
             var parameterRowViewModels = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid)
-                .ContainedRows.OfType<ParameterRowViewModel>();
+                .ContainedRows.First().ContainedRows.First().ContainedRows.OfType<ParameterRowViewModel>();
 
             Assert.AreEqual("2", parameterRowViewModels.First().Value);
             
@@ -385,6 +397,44 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             Assert.IsTrue(this.viewModel.DeselectAllCommand.CanExecute(null));
             Assert.DoesNotThrow(() => this.viewModel.SelectDeselectAllForTransfer());
             Assert.DoesNotThrow(() => this.viewModel.SelectDeselectAllForTransfer(false));
+        }
+
+        [Test]
+        public void VerifyWhenItemSelectedChanges()
+        {
+            for (var i = 0; i < this.dstMapResult.Count; i++)
+            {
+                this.dstMapResult[i] = this.dstMapResult[i].Clone(true);
+            }
+
+            var elements = this.viewModel.Things.First().ContainedRows;
+            var elementDefinitionRow = elements.First(x => x.Thing.Iid == this.elementDefinition0.Iid);
+            Assert.DoesNotThrow(() => this.viewModel.WhenItemSelectedChanges(elementDefinitionRow));
+
+            this.parameterVariable[this.parameter] = new VariableRowViewModel((new ReferenceDescription()
+            {
+                NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable3")
+            }, new DataValue()));
+
+            Assert.DoesNotThrow(() => this.viewModel.WhenItemSelectedChanges(elementDefinitionRow));
+
+            var parameterRow = elementDefinitionRow.ContainedRows.First().ContainedRows.First().ContainedRows.OfType<ParameterRowViewModel>().First();
+            Assert.DoesNotThrow(() => this.viewModel.WhenItemSelectedChanges(parameterRow));
+
+            var elementDefinitionRow2 = elements.First(x => x.Thing.Iid == this.elementDefinition2.Iid);
+            var elementUsageRow = elementDefinitionRow2.ContainedRows.OfType<ElementUsageRowViewModel>().First();
+            Assert.DoesNotThrow(() => this.viewModel.WhenItemSelectedChanges(elementUsageRow));
+
+            this.parameterVariable[this.parameterOverride] = new VariableRowViewModel((new ReferenceDescription()
+            {
+                NodeId = new ExpandedNodeId(Guid.NewGuid()),
+                DisplayName = new LocalizedText("", "trans0.Gain.DummyVariable3")
+            }, new DataValue()));
+
+            Assert.DoesNotThrow(() => this.viewModel.WhenItemSelectedChanges(elementUsageRow));
+
+            this.dstMapResult.Clear();
         }
     }
 }
