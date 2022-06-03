@@ -287,8 +287,6 @@ namespace DEHPEcosimPro.DstController
             this.WhenAnyValue(x => x.IsExperimentRunning)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.WhenIsExperimentRunningChanged);
-
-            this.HubMapResult.ItemsRemoved.Subscribe(this.DisposeDisposable);
         }
 
         /// <summary>

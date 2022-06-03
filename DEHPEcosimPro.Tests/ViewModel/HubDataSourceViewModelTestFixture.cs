@@ -229,7 +229,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
             var elementRow = new ElementDefinitionRowViewModel(elementDefinition, 
                 new DomainOfExpertise(), this.session.Object, null);
             
-
             var parameterRow = new ParameterRowViewModel(elementDefinition.Parameter.First(),this.session.Object, elementRow); 
             this.viewModel.ObjectBrowser.SelectedThings.Add(parameterRow);
             this.viewModel.ObjectBrowser.SelectedThings.Add(elementRow);
