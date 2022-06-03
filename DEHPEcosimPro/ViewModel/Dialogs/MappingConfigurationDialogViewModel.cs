@@ -134,26 +134,14 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// <summary>
         /// Disposes all <see cref="IDisposable" /> contained in this viewmodel
         /// </summary>
-        public void ClearSubscriptions()
+        public virtual void ClearSubscriptions()
         {
-            this.Dispose(true);
-        }
-
-        /// <summary>
-        /// Dispose this <see cref="MappingConfigurationDialogViewModel" />
-        /// </summary>
-        /// <param name="disposing">A value indicating if it should dispose or not</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
+            foreach (var disposable in this.Disposables)
             {
-                foreach (var disposable in this.Disposables)
-                {
-                    disposable.Dispose();
-                }
-
-                this.Disposables.Clear();
+                disposable.Dispose();
             }
+
+            this.Disposables.Clear();
         }
 
         /// <summary>

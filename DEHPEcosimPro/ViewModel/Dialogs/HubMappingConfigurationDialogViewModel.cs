@@ -267,22 +267,18 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         }
 
         /// <summary>
-        /// Dispose this <see cref="HubMappingConfigurationDialogViewModel" />
+        /// Disposes all <see cref="IDisposable" /> contained in this viewmodel
         /// </summary>
-        /// <param name="disposing">A value indicating if it should dispose or not</param>
-        protected override void Dispose(bool disposing)
+        public override void ClearSubscriptions()
         {
-            base.Dispose(disposing);
+            base.ClearSubscriptions();
 
-            if (disposing)
+            foreach (var variable in this.AvailableVariables)
             {
-                foreach (var variable in this.AvailableVariables)
-                {
-                    variable.Dispose();
-                }
-
-                this.AvailableVariables.Clear();
+                variable.Dispose();
             }
+
+            this.AvailableVariables.Clear();
         }
 
         /// <summary>
