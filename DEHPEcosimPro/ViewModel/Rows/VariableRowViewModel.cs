@@ -87,10 +87,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.data = dataValue;
             this.SetProperties();
 
-            _ = CDPMessageBus.Current.Listen<DstHighlightEvent>()
+            this.Disposables.Add(CDPMessageBus.Current.Listen<DstHighlightEvent>()
                 .Where(x => x.TargetThingId == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(x => this.IsHighlighted = x.ShouldHighlight);
+                .Subscribe(x => this.IsHighlighted = x.ShouldHighlight));
         }
 
         /// <summary>

@@ -176,15 +176,15 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         public void Initialize()
         {
             this.UpdateProperties();
-            
-            this.Variables.CountChanged
+
+            this.Disposables.Add(this.Variables.CountChanged
                 .Subscribe(_ => this.UpdateHubFields(() =>
                     {
                         this.InitializesCommandsAndObservableSubscriptions();
                         this.DstController.LoadMapping();
                         this.UpdatePropertiesBasedOnMappingConfiguration();
                         this.CheckCanExecute();
-                    }));
+                    })));
         }
         
         /// <summary>
@@ -194,19 +194,19 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             foreach (var variableRowViewModel in this.Variables)
             {
-                variableRowViewModel.SelectedValues.CountChanged
+                this.Disposables.Add(variableRowViewModel.SelectedValues.CountChanged
                     .Subscribe(n =>
                         this.UpdateHubFields(() =>
                         {
                             this.WhenVariableValueSelectionChanged(n);
-                        }));
+                        })));
             }
 
             this.ContinueCommand = ReactiveCommand.Create(
                 this.WhenAnyValue(x => x.CanContinue),
                 RxApp.MainThreadScheduler);
 
-            this.ContinueCommand.Subscribe(_ =>
+            this.Disposables.Add(this.ContinueCommand.Subscribe(_ =>
             {
                 if (this.Variables.Any(x => x.IsVariableMappingValid is false)
                     && this.navigation.ShowDxDialog<MappingValidationErrorDialog>() is false)
@@ -222,18 +222,18 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.DstController.Map(variableRowViewModels);
                     this.StatusBar.Append($"Mapping in progress of {variableRowViewModels.Count} value(s)...");
                 });
-            });
+            }));
 
-            this.WhenAnyValue(x => x.ElementUsageSelectedIndex)
+            this.Disposables.Add(this.WhenAnyValue(x => x.ElementUsageSelectedIndex)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
                     this.UpdateAvailableParameters();
                     this.UpdateAvailableParameterType();
                     this.CheckCanExecute();
-                }));
+                })));
 
-            this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedThing.SelectedElementDefinition)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
@@ -241,9 +241,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.UpdateAvailableParameterType();
                     this.UpdateAvailableElementUsages();
                     this.CheckCanExecute();
-                }));
+                })));
 
-            this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedThing.SelectedParameterType)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
@@ -252,9 +252,9 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.UpdateSelectedScale();
                     this.NotifyIfParameterTypeIsNotAllowed();
                     this.CheckCanExecute();
-                    }));
-            
-            this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
+                    })));
+
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedThing.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(() =>
                 {
@@ -262,22 +262,22 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.UpdateAvailableActualFiniteStates();
                     this.UpdateAvailableOptions();
                     this.CheckCanExecute();
-                }));
+                })));
 
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
 
-            this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
+            this.Disposables.Add(this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
                 this.UpdateHubFields(() =>
                 {
                     this.canTriggerWhenVariableValueSelectionChanged = false;
                     this.SelectedThing?.ApplyTimeStep();
                     this.canTriggerWhenVariableValueSelectionChanged = true;
                     this.WhenVariableValueSelectionChanged();
-                }));
+                })));
             
             this.SelectAllValuesCommand = ReactiveCommand.Create();
 
-            this.SelectAllValuesCommand.Subscribe(_ =>
+            this.Disposables.Add(this.SelectAllValuesCommand.Subscribe(_ =>
                 this.UpdateHubFields(() =>
                 {
                     this.canTriggerWhenVariableValueSelectionChanged = false;
@@ -293,9 +293,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
                     this.canTriggerWhenVariableValueSelectionChanged = true;
                     this.WhenVariableValueSelectionChanged();
-                }));
-
-
+                })));
         }
 
         /// <summary>

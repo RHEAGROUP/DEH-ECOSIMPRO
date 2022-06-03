@@ -41,7 +41,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     using DEHPCommon;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
@@ -69,7 +68,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
         private Mock<INavigationService> navigationService;
         private Mock<IObjectBrowserViewModel> objectBrowser;
         private Mock<IPublicationBrowserViewModel> publicationBrowser;
-        private Mock<IObjectBrowserTreeSelectorService> treeSelectorService;
         private HubDataSourceViewModel viewModel;
         private Mock<IHubBrowserHeaderViewModel> hubBrowserHeader;
         private Mock<IDstController> dstController;
@@ -152,14 +150,12 @@ namespace DEHPEcosimPro.Tests.ViewModel
             
             this.publicationBrowser = new Mock<IPublicationBrowserViewModel>();
 
-            this.treeSelectorService = new Mock<IObjectBrowserTreeSelectorService>();
-
             this.hubBrowserHeader = new Mock<IHubBrowserHeaderViewModel>();
             this.dstController = new Mock<IDstController>();
             this.sessionControl = new Mock<IHubSessionControlViewModel>();
 
             this.viewModel = new HubDataSourceViewModel(this.navigationService.Object, this.hubController.Object, this.objectBrowser.Object, this.publicationBrowser.Object, 
-                this.treeSelectorService.Object, this.hubBrowserHeader.Object, this.dstController.Object, this.sessionControl.Object);
+                 this.hubBrowserHeader.Object, this.dstController.Object, this.sessionControl.Object);
         }
 
         [Test]

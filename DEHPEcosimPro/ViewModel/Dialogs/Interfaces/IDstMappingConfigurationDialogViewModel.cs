@@ -38,7 +38,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
     /// <summary>
     /// Interface definition for <see cref="DstMappingConfigurationDialogViewModel"/>
     /// </summary>
-    public interface IDstMappingConfigurationDialogViewModel
+    public interface IDstMappingConfigurationDialogViewModel: IMappingConfigurationDialogViewModel
     {
         /// <summary>
         /// Gets or sets the selected row that represents a <see cref="ReferenceDescription"/>

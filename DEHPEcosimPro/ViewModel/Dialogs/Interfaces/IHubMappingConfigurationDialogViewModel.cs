@@ -24,7 +24,7 @@
 
 namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
 {
-    using CDP4Common.EngineeringModelData;
+    using System;
 
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
 
@@ -35,7 +35,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs.Interfaces
     /// <summary>
     /// Interface definition for the <see cref="HubMappingConfigurationDialogViewModel"/>
     /// </summary>
-    public interface IHubMappingConfigurationDialogViewModel
+    public interface IHubMappingConfigurationDialogViewModel : IMappingConfigurationDialogViewModel
     {
         /// <summary>
         /// Gets or sets the collection of available variables
