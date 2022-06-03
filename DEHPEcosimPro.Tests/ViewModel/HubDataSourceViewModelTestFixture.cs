@@ -26,6 +26,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reactive.Concurrency;
     using System.Threading;
 
@@ -228,8 +229,10 @@ namespace DEHPEcosimPro.Tests.ViewModel
             var elementRow = new ElementDefinitionRowViewModel(elementDefinition, 
                 new DomainOfExpertise(), this.session.Object, null);
             
-            this.viewModel.ObjectBrowser.SelectedThings.Add(
-                elementRow);
+
+            var parameterRow = new ParameterRowViewModel(elementDefinition.Parameter.First(),this.session.Object, elementRow); 
+            this.viewModel.ObjectBrowser.SelectedThings.Add(parameterRow);
+            this.viewModel.ObjectBrowser.SelectedThings.Add(elementRow);
 
             Assert.IsTrue(this.viewModel.ObjectBrowser.MapCommand.CanExecute(null));
             Assert.DoesNotThrow(() => this.viewModel.ObjectBrowser.MapCommand.Execute(null));
