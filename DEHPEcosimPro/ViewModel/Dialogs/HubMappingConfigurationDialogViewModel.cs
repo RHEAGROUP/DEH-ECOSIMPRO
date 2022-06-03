@@ -57,8 +57,6 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
 
     using ReactiveUI;
 
-    using Splat;
-
     /// <summary>
     /// The <see cref="HubMappingConfigurationDialogViewModel"/> is the view model to let the user configure the mapping to the Ecosim source
     /// </summary>
@@ -68,7 +66,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         /// The <see cref="INavigationService" />
         /// </summary>
         private readonly INavigationService navigationService;
-        
+
         /// <summary>
         /// Get the Selected Option of the parameter
         /// </summary>
@@ -198,42 +196,42 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.ContinueCommand = ReactiveCommand.Create(this.WhenAnyValue(x => x.CanContinue), RxApp.MainThreadScheduler);
 
-            this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(() =>
+            this.Disposables.Add(this.ContinueCommand.Subscribe(_ => this.ExecuteContinueCommand(() =>
                 {
                     var mappedElement =
                         this.MappedElements.Where(x => x.IsValid).ToList();
 
                     this.DstController.Map(mappedElement);
                     this.statusBarService.Append($"Mapping in progress of {mappedElement.Count} value(s)...");
-                }));
+                })));
 
-            this.WhenAnyValue(x => x.Elements)
+            this.Disposables.Add(this.WhenAnyValue(x => x.Elements)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.LoadExistingMappedElement));
-            
-            this.WhenAnyValue(x => x.SelectedParameter)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.SelectedParameterChanged));
+                .Subscribe(_ => this.UpdateHubFields(this.LoadExistingMappedElement)));
 
-            this.WhenAnyValue(x => x.SelectedVariable)
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedParameter)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(_ => this.UpdateHubFields(this.SelectedAvailableVariablesChanged));
+                .Subscribe(_ => this.UpdateHubFields(this.SelectedParameterChanged)));
 
-            this.WhenAnyValue(x => x.SelectedThing)
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedVariable)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(this.SelectedAvailableVariablesChanged)));
+
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedThing)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => this.UpdateHubFields(this.SelectedThingChanged), e =>
                 {
                     this.StatusBar.Append($"An error of type {e.GetType().Name}, check the log for more detail.");
                     this.Logger.Error(e);
-                });
+                }));
 
             this.DeleteMappedRowCommand = ReactiveCommand.Create(this.WhenAny(x => x.SelectedMappedElement,
                 x =>
                     x.Value != null && this.DstController.HubMapResult.All(h => 
                         h.SelectedParameter.Iid != x.Value.SelectedParameter.Iid)));
-            
-            this.DeleteMappedRowCommand.OfType<Guid>()
-                .Subscribe(this.DeleteMappedRowCommandExecute);
+
+            this.Disposables.Add(this.DeleteMappedRowCommand.OfType<Guid>()
+                .Subscribe(this.DeleteMappedRowCommandExecute));
         }
 
         /// <summary>
@@ -267,7 +265,26 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
         {
             this.SetSelectedMappedElement(this.SelectedParameter);
         }
-        
+
+        /// <summary>
+        /// Dispose this <see cref="HubMappingConfigurationDialogViewModel" />
+        /// </summary>
+        /// <param name="disposing">A value indicating if it should dispose or not</param>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if (disposing)
+            {
+                foreach (var variable in this.AvailableVariables)
+                {
+                    variable.Dispose();
+                }
+
+                this.AvailableVariables.Clear();
+            }
+        }
+
         /// <summary>
         /// Verifies that the selected variable has a compatible type with the parameter <see cref="ParameterType"/> selected
         /// </summary>

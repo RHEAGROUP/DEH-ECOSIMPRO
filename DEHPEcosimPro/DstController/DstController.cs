@@ -287,6 +287,29 @@ namespace DEHPEcosimPro.DstController
             this.WhenAnyValue(x => x.IsExperimentRunning)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(this.WhenIsExperimentRunningChanged);
+
+            this.HubMapResult.ItemsRemoved.Subscribe(this.DisposeDisposable);
+        }
+
+        /// <summary>
+        /// Dispose all collection of <see cref="IDisposable" /> when before" being cleared
+        /// </summary>
+        /// <param name="disposables">The <see cref="IDisposable" /> collection</param>
+        private void DisposeCollection(IEnumerable<IDisposable> disposables)
+        {
+            foreach (var disposable in disposables)
+            {
+                this.DisposeDisposable(disposable);
+            }
+        }
+
+        /// <summary>
+        /// Dispose a <see cref="IDisposable" />
+        /// </summary>
+        /// <param name="disposable">The <see cref="IDisposable" /></param>
+        private void DisposeDisposable(IDisposable disposable)
+        {
+            disposable.Dispose();
         }
 
         /// <summary>
@@ -352,6 +375,7 @@ namespace DEHPEcosimPro.DstController
                     else
                     {
                         this.Variables.Clear();
+                        this.DisposeCollection(this.VariableRowViewModels);
                         this.VariableRowViewModels.Clear();
                         this.Methods.Clear();
                         this.TimeNodeId = null;
