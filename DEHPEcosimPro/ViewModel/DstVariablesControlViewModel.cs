@@ -217,6 +217,7 @@ namespace DEHPEcosimPro.ViewModel
 
                 Logger.Debug("Calling NavigationService to open the DstMappingConfigurationDialog");
                 this.navigationService.ShowDialog<DstMappingConfigurationDialog, IDstMappingConfigurationDialogViewModel>(viewModel);
+                viewModel.ClearSubscriptions();
                 Logger.Debug("DstMappingConfigurationDialog closed");
                 this.SelectedThings.Clear();
                 this.statusBar.Append($"Mapping in progress");

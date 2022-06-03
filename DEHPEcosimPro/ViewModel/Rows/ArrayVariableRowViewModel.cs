@@ -95,6 +95,20 @@ namespace DEHPEcosimPro.ViewModel.Rows
         }
 
         /// <summary>
+        /// Dispose this <see cref="ArrayVariableRowViewModel" />
+        /// </summary>
+        /// <param name="disposing">A value indicating if it should dispose or not</param>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            foreach (var variable in this.Variables)
+            {
+                variable.Dispose();
+            }
+        }
+
+        /// <summary>
         /// list of <see cref="VariableRowViewModel" />
         /// </summary>
         public ReactiveList<VariableRowViewModel> Variables { get; set; } = new ReactiveList<VariableRowViewModel>();

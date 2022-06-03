@@ -25,7 +25,7 @@
 namespace DEHPEcosimPro.ViewModel.Dialogs
 {
     using System;
-    using System.Windows;
+    using System.Collections.Generic;
     using System.Windows.Input;
 
     using DEHPCommon.HubController.Interfaces;
@@ -33,6 +33,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
 
     using DEHPEcosimPro.DstController;
+    using DEHPEcosimPro.ViewModel.Dialogs.Interfaces;
 
     using NLog;
 
@@ -42,8 +43,13 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
     /// Base mapping configuration dialog view model for the <see cref="DstMappingConfigurationDialogViewModel"/>
     /// and the <see cref="HubMappingConfigurationDialogViewModel"/>
     /// </summary>
-    public abstract class MappingConfigurationDialogViewModel : ReactiveObject, ICloseWindowViewModel
+    public abstract class MappingConfigurationDialogViewModel : ReactiveObject, IMappingConfigurationDialogViewModel
     {
+        /// <summary>
+        /// A collection of <see cref="IDisposable"/>
+        /// </summary>
+        protected readonly List<IDisposable> Disposables = new();
+
         /// <summary>
         /// The <see cref="NLog"/> logger
         /// </summary>
@@ -124,7 +130,32 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                 this.IsBusy = false;
             }
         }
-        
+
+        /// <summary>
+        /// Disposes all <see cref="IDisposable" /> contained in this viewmodel
+        /// </summary>
+        public void ClearSubscriptions()
+        {
+            this.Dispose(true);
+        }
+
+        /// <summary>
+        /// Dispose this <see cref="MappingConfigurationDialogViewModel" />
+        /// </summary>
+        /// <param name="disposing">A value indicating if it should dispose or not</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                foreach (var disposable in this.Disposables)
+                {
+                    disposable.Dispose();
+                }
+
+                this.Disposables.Clear();
+            }
+        }
+
         /// <summary>
         /// Executes the specified action to update the view Hub fields surrounded by a <see cref="IsBusy"/> state change
         /// </summary>

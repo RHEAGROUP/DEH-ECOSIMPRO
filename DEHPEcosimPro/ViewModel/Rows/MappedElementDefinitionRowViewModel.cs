@@ -33,8 +33,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
     /// <summary>
     /// Represents a single value from the Hub source and a <see cref="SelectedVariable"/> to update with this value
     /// </summary>
-    public class MappedElementDefinitionRowViewModel : ReactiveObject
+    public class MappedElementDefinitionRowViewModel : ReactiveObject, IDisposable
     {
+        /// <summary>
+        /// The <see cref="IDisposable"/> for the Subscription
+        /// </summary>
+        private readonly IDisposable disposable;
+
         /// <summary>
         /// Backing field for <see cref="SelectedParameter"/>
         /// </summary>
@@ -101,7 +106,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// </summary>
         public MappedElementDefinitionRowViewModel()
         {
-            this.WhenAnyValue(x => x.SelectedVariable,
+            this.disposable = this.WhenAnyValue(x => x.SelectedVariable,
                     x => x.SelectedValue)
                 .Subscribe(_ => this.VerifyValidity());
         }
@@ -126,6 +131,27 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.IsValid = this.SelectedValue != null && 
                            this.SelectedValue.Value != "-" && 
                            this.SelectedVariable != null;
+        }
+
+        /// <summary>
+        /// Dispose the <see cref="MappedElementDefinitionRowViewModel" />
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
+        }
+
+        /// <summary>
+        /// Dispose this <see cref="MappedElementDefinitionRowViewModel" />
+        /// </summary>
+        /// <param name="disposing">A value indicating if it sould dispose or not</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.SelectedVariable?.Dispose();
+                this.disposable.Dispose();
+            }
         }
     }
 }

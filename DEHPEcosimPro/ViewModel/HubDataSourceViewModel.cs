@@ -25,12 +25,10 @@
 namespace DEHPEcosimPro.ViewModel
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
-    using System.Reactive;
     using System.Reactive.Linq;
-    using System.Threading.Tasks;
     using System.Windows.Input;
-    using System.Windows.Threading;
 
     using Autofac;
 
@@ -40,7 +38,6 @@ namespace DEHPEcosimPro.ViewModel
     using DEHPCommon.Enumerators;
     using DEHPCommon.HubController.Interfaces;
     using DEHPCommon.Services.NavigationService;
-    using DEHPCommon.Services.ObjectBrowserTreeSelectorService;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
     using DEHPCommon.UserInterfaces.ViewModels.PublicationBrowser;
     using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
@@ -66,11 +63,6 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IHubController hubController;
 
         /// <summary>
-        /// The <see cref="IObjectBrowserTreeSelectorService"/>
-        /// </summary>
-        private readonly IObjectBrowserTreeSelectorService treeSelectorService;
-
-        /// <summary>
         /// The <see cref="IDstController"/>
         /// </summary>
         private readonly IDstController dstController;
@@ -87,18 +79,14 @@ namespace DEHPEcosimPro.ViewModel
         /// <param name="hubController">The <see cref="IHubController"/></param>
         /// <param name="objectBrowser">The <see cref="IObjectBrowserViewModel"/></param>
         /// <param name="publicationBrowser">The <see cref="IPublicationBrowserViewModel"/></param>
-        /// <param name="treeSelectorService">The <see cref="IObjectBrowserTreeSelectorService"/></param>
         /// <param name="hubBrowserHeader">The <see cref="IHubBrowserHeaderViewModel"/></param>
         /// <param name="dstController">The <see cref="IDstController"/></param>
-        /// <param name="statusBar">The <see cref="IStatusBarControlViewModel"/></param>
         /// <param name="sessionControl">The <see cref="IHubSessionControlViewModel"/></param>
         public HubDataSourceViewModel(INavigationService navigationService, IHubController hubController, IObjectBrowserViewModel objectBrowser, 
-            IPublicationBrowserViewModel publicationBrowser, IObjectBrowserTreeSelectorService treeSelectorService, 
-            IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController,
+            IPublicationBrowserViewModel publicationBrowser, IHubBrowserHeaderViewModel hubBrowserHeader, IDstController dstController,
             IHubSessionControlViewModel sessionControl) : base(navigationService)
         {
             this.hubController = hubController;
-            this.treeSelectorService = treeSelectorService;
             this.dstController = dstController;
             this.SessionControl = sessionControl;
             this.ObjectBrowser = objectBrowser;
@@ -147,17 +135,37 @@ namespace DEHPEcosimPro.ViewModel
         public void MapCommandExecute()
         {
             var viewModel = AppContainer.Container.Resolve<IHubMappingConfigurationDialogViewModel>();
-            
-            viewModel.Elements.AddRange(this.ObjectBrowser
-                .SelectedThings
-                .OfType<ElementDefinitionRowViewModel>()
+
+            HashSet<ElementDefinitionRowViewModel> rows = new();
+
+            foreach (var selectedThing in this.ObjectBrowser.SelectedThings)
+            {
+                switch (selectedThing)
+                {
+                    case ElementDefinitionRowViewModel elementDefinition:
+                        rows.Add(elementDefinition);
+                        break;
+                    case ParameterOrOverrideBaseRowViewModel parameterOrOverride:
+                        if (parameterOrOverride.ContainerViewModel is ElementDefinitionRowViewModel elementDefinitionParent)
+                        {
+                            rows.Add(elementDefinitionParent);
+                        }
+
+                        break;
+                }
+            }
+
+            viewModel.Elements.AddRange(rows
                 .Select(x =>
                 {
                     x.Thing.Clone(true);
                     return x;
                 }));
 
+            viewModel.SelectedThing = this.ObjectBrowser.SelectedThing;
+
             this.NavigationService.ShowDialog<HubMappingConfigurationDialog, IHubMappingConfigurationDialogViewModel>(viewModel);
+            viewModel.ClearSubscriptions();
             this.ObjectBrowser.SelectedThings.Clear();
         }
 

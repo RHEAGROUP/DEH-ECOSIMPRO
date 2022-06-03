@@ -46,8 +46,13 @@ namespace DEHPEcosimPro.ViewModel.Rows
     /// <summary>
     /// The <see cref="VariableBaseRowViewModel"/> represents on reference row into the <see cref="DstVariablesControl"/>
     /// </summary>
-    public abstract class VariableBaseRowViewModel : ReactiveObject
+    public abstract class VariableBaseRowViewModel : ReactiveObject, IDisposable
     {
+        /// <summary>
+        /// A collection of <see cref="IDisposable" />
+        /// </summary>
+        protected readonly List<IDisposable> Disposables = new();
+
         /// <summary>
         /// The represented <see cref="ReferenceDescription"/>
         /// </summary>
@@ -288,10 +293,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
             this.ShouldListenToChangeMessage = shouldListenToChangeMessage;
             this.SetProperties();
 
-            CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
+            this.Disposables.Add(CDPMessageBus.Current.Listen<OpcVariableChangedEvent>()
                 .Where(x => this.ShouldListenToChangeMessage && x.Id == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(this.OnNotification);
+                .Subscribe(this.OnNotification));
         }
 
         /// <summary>
@@ -398,6 +403,31 @@ namespace DEHPEcosimPro.ViewModel.Rows
                     .ResultKind == ValidationResultKind.Valid,
                 _ => false
             };
+        }
+
+        /// <summary>
+        /// Disposes all <see cref="IDisposable" /> contained in the <see cref="Disposables" /> collections
+        /// </summary>
+        public void Dispose()
+        {
+            this.Dispose(true);
+        }
+
+        /// <summary>
+        /// Dispose this <see cref="VariableBaseRowViewModel" />
+        /// </summary>
+        /// <param name="disposing">A value indicating if it should dispose or not</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                foreach (var disposable in this.Disposables)
+                {
+                    disposable.Dispose();
+                }
+
+                this.Disposables.Clear();
+            }
         }
     }
 }
