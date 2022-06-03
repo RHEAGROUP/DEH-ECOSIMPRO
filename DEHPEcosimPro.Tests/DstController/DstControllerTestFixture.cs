@@ -697,7 +697,7 @@ namespace DEHPEcosimPro.Tests.DstController
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
                 this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
-
+            
             this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Disconnected);
 
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
@@ -708,7 +708,10 @@ namespace DEHPEcosimPro.Tests.DstController
             
             this.controller = new DstController(this.opcClient.Object, this.hubController.Object,
                 this.opcSessionHandler.Object, this.mappingEngine.Object, this.statusBarViewModel.Object,
-                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object);
+                this.navigationService.Object, this.exchangeHistoryService.Object, this.objectTypeResolver.Object, this.mappingConfigurationService.Object)
+            {
+                VariableRowViewModels = { new VariableRowViewModel() }
+            };
 
             this.opcClient.Setup(x => x.OpcClientStatusCode).Returns(OpcClientStatusCode.Connected);
             this.opcClient.Setup(x => x.ReadNode(It.IsAny<NodeId>())).Throws<InvalidOperationException>();
@@ -724,7 +727,6 @@ namespace DEHPEcosimPro.Tests.DstController
             this.mappingConfigurationService.Verify(
                 x => x.LoadMappingFromHubToDst(It.IsAny<ReactiveList<VariableRowViewModel>>()),
                 Times.AtLeastOnce);
-
         }
 
         [Test]
@@ -778,6 +780,15 @@ namespace DEHPEcosimPro.Tests.DstController
             });
 
             Assert.DoesNotThrow(() => this.controller.LoadMapping());
+        }
+
+        [Test]
+        public void VerifyDispose()
+        {
+            this.controller.VariableRowViewModels.Add(new VariableRowViewModel());
+            var mappedElement = new MappedElementDefinitionRowViewModel();
+            this.controller.HubMapResult.Add(mappedElement);
+            Assert.DoesNotThrow(() => this.controller.HubMapResult.Remove(mappedElement));
         }
     }
 }
