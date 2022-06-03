@@ -465,6 +465,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.Dialogs
             choosingDialog.hasOnlyOneDimension = false;
             choosingDialog.ParameterNames = new ReactiveList<string>();
             Assert.IsNotNull(listOfVariableToMap);
+
+            Assert.DoesNotThrow(() => this.viewModel.ClearSubscriptions());
         }
 
         [Test]
