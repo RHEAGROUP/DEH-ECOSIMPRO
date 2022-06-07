@@ -345,7 +345,27 @@ namespace DEHPEcosimPro.ViewModel.Rows
         /// <param name="timeStep">The <see cref="DateTime"/> timeStep stamp associated with the <paramref name="value"/></param>
         private void UpdateValueCollection(object value, double timeStep)
         {
-            this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStep));
+            var alreadyExisiting = this.Values.FirstOrDefault(x => x.TimeStep == timeStep);
+
+            if (alreadyExisiting != null)
+            {
+                alreadyExisiting.Value = value;
+            }
+            else
+            {
+                this.Values.Add(new TimeTaggedValueRowViewModel(value, timeStep));
+            }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="Values"/> collection with current value for the latest add timestep
+        /// </summary>
+        public void UpdateValueCollection()
+        {
+            if (this.Values.Any())
+            {
+                this.Values.Last().Value = this.ActualValue;
+            }
         }
 
         /// <summary>
