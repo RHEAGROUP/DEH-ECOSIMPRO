@@ -84,7 +84,14 @@ namespace DEHPEcosimPro.Tests.ViewModel.Rows
             {
                 TimeStamp = DateTime.MinValue.AddDays(1), Id = viewModel.Reference.NodeId.Identifier, Value = 20.9
             });
-            
+
+            CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent()
+            {
+                TimeStamp = DateTime.MinValue.AddDays(1),
+                Id = viewModel.Reference.NodeId.Identifier,
+                Value = 63.1, Time = 0.01
+            });
+
             Assert.AreEqual(2, viewModel.Values.Count);
             Assert.AreEqual(42, viewModel.AverageValue);
 

@@ -285,8 +285,7 @@ namespace DEHPEcosimPro.Tests.DstController
                                     new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue }))
                             }
                         },
-                        new List<ElementBase>() {}));
-
+                        new List<ElementBase>()));
 
             Assert.DoesNotThrow(() => this.controller.Map(new List<VariableRowViewModel>()));
 
@@ -363,6 +362,15 @@ namespace DEHPEcosimPro.Tests.DstController
 
             _ = new ElementDefinition() { Parameter = { parameter0, parameter1 } };
 
+            var iid = Guid.NewGuid();
+
+            this.controller.VariableRowViewModels.Add(new VariableRowViewModel((new ReferenceDescription()
+                {
+                    DisplayName = new LocalizedText(string.Empty, "Mos.a"),
+                    NodeId = new NodeId(iid)
+                },
+                new DataValue() { Value = 5, ServerTimestamp = DateTime.MinValue })));
+
             this.controller.SelectedHubMapResultToTransfer.AddRange(
                 new List<MappedElementDefinitionRowViewModel>()
                 {
@@ -374,7 +382,7 @@ namespace DEHPEcosimPro.Tests.DstController
                             new ReferenceDescription()
                             {
                                 DisplayName = new LocalizedText(string.Empty, "Mos.a"),
-                                NodeId = new NodeId(Guid.NewGuid())
+                                NodeId = new NodeId(iid)
                             },
                             new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
                     },

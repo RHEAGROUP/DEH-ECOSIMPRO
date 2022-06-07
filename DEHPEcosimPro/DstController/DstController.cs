@@ -641,6 +641,9 @@ namespace DEHPEcosimPro.DstController
             {
                 CDPMessageBus.Current.SendMessage(new OpcVariableChangedEvent(mappedElement));
 
+                this.VariableRowViewModels.FirstOrDefault(x => x.Reference.NodeId.Identifier
+                    .Equals(mappedElement.SelectedVariable.Reference.NodeId.Identifier))?.UpdateValueCollection();
+
                 this.UpdateTransferedHubMapResult(mappedElement);
 
                 this.SelectedHubMapResultToTransfer.Remove(mappedElement);
