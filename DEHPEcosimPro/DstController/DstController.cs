@@ -46,6 +46,7 @@ namespace DEHPEcosimPro.DstController
     using DEHPCommon.Services.ExchangeHistory;
     using DEHPCommon.UserInterfaces.ViewModels;
     using DEHPCommon.UserInterfaces.ViewModels.Interfaces;
+    using DEHPCommon.UserInterfaces.ViewModels.Rows.ElementDefinitionTreeRows;
     using DEHPCommon.UserInterfaces.Views;
 
     using DEHPEcosimPro.Enumerator;
@@ -664,7 +665,7 @@ namespace DEHPEcosimPro.DstController
 
             this.LoadMappingToDst();
 
-            CDPMessageBus.Current.SendMessage(new UpdateDstVariableTreeEvent(true));
+            CDPMessageBus.Current.SendMessage(new UpdateDstPreviewBasedOnSelectionEvent(new List<ElementDefinitionRowViewModel>(), null, false));
         }
         
         /// <summary>

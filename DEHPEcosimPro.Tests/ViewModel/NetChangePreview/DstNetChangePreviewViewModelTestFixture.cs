@@ -63,6 +63,8 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
         private Parameter parameter0;
         private Parameter parameter1;
         private Mock<ISession> session;
+        private ReactiveList<MappedElementDefinitionRowViewModel> hubMapResult;
+        private ReactiveList<MappedElementDefinitionRowViewModel> selectedHubMapResultToTransfer;
 
         [SetUp]
         public void Setup()
@@ -71,6 +73,7 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
             this.navigation = new Mock<INavigationService>();
             this.hubController = new Mock<IHubController>();
             this.statusBar = new Mock<IStatusBarControlViewModel>();
+            this.selectedHubMapResultToTransfer = new ReactiveList<MappedElementDefinitionRowViewModel>();
 
             this.dstController.Setup(x => x.VariableRowViewModels).Returns(new ReactiveList<VariableRowViewModel>()
             {
@@ -90,38 +93,44 @@ namespace DEHPEcosimPro.Tests.ViewModel.NetChangePreview
                     new DataValue() {Value = 5, ServerTimestamp = DateTime.MinValue}))
             });
 
-            this.viewModel = new DstNetChangePreviewViewModel(this.dstController.Object,
-                this.navigation.Object, this.hubController.Object, this.statusBar.Object);
-            
+            this.dstController.Setup(x => x.SelectedHubMapResultToTransfer).Returns(this.selectedHubMapResultToTransfer);
+
             this.parameter0 = new Parameter() { ParameterType = new BooleanParameterType()};
             this.parameter1 = new Parameter() { ParameterType = new TextParameterType()};
-
-            this.dstController.Setup(x => x.HubMapResult).Returns(
-                new ReactiveList<MappedElementDefinitionRowViewModel>()
-                {
-                    new MappedElementDefinitionRowViewModel()
-                    {
-                        SelectedParameter = this.parameter0,
-                        SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
-                        SelectedVariable = this.viewModel.Variables.First()
-                    },
-                    new MappedElementDefinitionRowViewModel()
-                    {
-                        SelectedParameter = this.parameter1,
-                        SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
-                        SelectedVariable = this.viewModel.Variables.Last()
-                    }
-                });
+            this.hubMapResult = new ReactiveList<MappedElementDefinitionRowViewModel>();
+            this.dstController.Setup(x => x.HubMapResult).Returns(this.hubMapResult);
 
             this.session = new Mock<ISession>();
             this.session.Setup(x => x.PermissionService).Returns(new Mock<IPermissionService>().Object);
+
+            this.viewModel = new DstNetChangePreviewViewModel(this.dstController.Object,
+                this.navigation.Object, this.hubController.Object, this.statusBar.Object);
+
+            this.hubMapResult.AddRange(new List<MappedElementDefinitionRowViewModel>()
+            {
+                new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = this.parameter0,
+                    SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                    SelectedVariable = this.viewModel.Variables.First()
+                },
+                new MappedElementDefinitionRowViewModel()
+                {
+                    SelectedParameter = this.parameter1,
+                    SelectedValue = new ValueSetValueRowViewModel(new ParameterValueSet(), "42", new RatioScale()),
+                    SelectedVariable = this.viewModel.Variables.Last()
+                }
+            });
         }
 
         [Test]
-        public void VerifyComputeValues()
+        public void VerifyComputeValuesAndCommands()
         {
             Assert.DoesNotThrow(() => this.viewModel.UpdateTree(true));
             Assert.DoesNotThrow(() => this.viewModel.UpdateTree(false));
+            Assert.DoesNotThrow(() => this.viewModel.SelectAllCommand.Execute(null));
+            Assert.DoesNotThrow(() => this.viewModel.DeselectAllCommand.Execute(null));
+            this.hubMapResult.Clear();
         }
 
         [Test]

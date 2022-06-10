@@ -43,11 +43,6 @@ namespace DEHPEcosimPro.ViewModel.Rows
     public class VariableRowViewModel : VariableBaseRowViewModel
     {
         /// <summary>
-        /// The represented <see cref="ReferenceDescription" /> corresponding <see cref="DataValue" />
-        /// </summary>
-        private readonly DataValue data;
-
-        /// <summary>
         /// The represented <see cref="ReferenceDescription" />
         /// </summary>
         public new readonly ReferenceDescription Reference;
@@ -84,13 +79,22 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             var (referenceDescriptionValue, dataValue) = referenceDescriptionAndData;
             this.Reference = referenceDescriptionValue;
-            this.data = dataValue;
+            this.Data = dataValue;
             this.SetProperties();
 
             this.Disposables.Add(CDPMessageBus.Current.Listen<DstHighlightEvent>()
                 .Where(x => x.TargetThingId == this.Reference.NodeId.Identifier)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.IsHighlighted = x.ShouldHighlight));
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="VariableRowViewModel" />
+        /// </summary>
+        /// <param name="variable">The <see cref="VariableBaseRowViewModel" /> to clone</param>
+        public VariableRowViewModel(VariableBaseRowViewModel variable) : 
+            this((variable.Reference, variable.Data), false)
+        {
         }
 
         /// <summary>
@@ -236,10 +240,10 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             this.Name = this.Reference.DisplayName.Text;
 
-            if (this.data != null)
+            if (this.Data != null)
             {
-                this.InitialValue = this.data.Value;
-                this.ActualValue = this.data.Value;
+                this.InitialValue = this.Data.Value;
+                this.ActualValue = this.Data.Value;
             }
         }
 
