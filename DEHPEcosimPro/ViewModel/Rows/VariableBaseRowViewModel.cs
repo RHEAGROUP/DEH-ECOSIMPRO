@@ -59,14 +59,14 @@ namespace DEHPEcosimPro.ViewModel.Rows
         public readonly ReferenceDescription Reference;
 
         /// <summary>
-        /// The represented <see cref="ReferenceDescription"/> corresponding <see cref="DataValue"/>
-        /// </summary>
-        private readonly DataValue data;
-
-        /// <summary>
         /// Backing field for <see cref="Name"/>
         /// </summary>
         private string name;
+
+        /// <summary>
+        /// The represented <see cref="ReferenceDescription"/> corresponding <see cref="DataValue"/>
+        /// </summary>
+        public DataValue Data { get; protected set; }
 
         /// <summary>
         /// Gets the name of the represented reference
@@ -289,7 +289,7 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             var (referenceDescriptionValue, dataValue) = referenceDescriptionAndData;
             this.Reference = referenceDescriptionValue;
-            this.data = dataValue;
+            this.Data = dataValue;
             this.ShouldListenToChangeMessage = shouldListenToChangeMessage;
             this.SetProperties();
 
@@ -313,11 +313,11 @@ namespace DEHPEcosimPro.ViewModel.Rows
         {
             this.Name = this.Reference.DisplayName.Text;
 
-            if (this.data != null)
+            if (this.Data != null)
             {
-                this.InitialValue = this.data.Value;
-                this.ActualValue = this.data.Value;
-                this.UpdateValueCollection(this.data.Value, 0);
+                this.InitialValue = this.Data.Value;
+                this.ActualValue = this.Data.Value;
+                this.UpdateValueCollection(this.Data.Value, 0);
             }
         }
         

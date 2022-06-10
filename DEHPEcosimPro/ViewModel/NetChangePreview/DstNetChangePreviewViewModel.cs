@@ -46,8 +46,6 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
     using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
-    using DevExpress.XtraRichEdit.Commands;
-
     using ReactiveUI;
 
     /// <summary>
@@ -74,6 +72,11 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         public ReactiveCommand<object> SelectAllCommand { get; set; }
 
         /// <summary>
+        /// A collection of <see cref="VariableRowViewModel"/>
+        /// </summary>
+        public ReactiveList<VariableRowViewModel> VariablesCopy { get; set; } = new() {ChangeTrackingEnabled = true};
+
+        /// <summary>
         /// Initializes a new <see cref="DstNetChangePreviewViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
@@ -98,7 +101,11 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             CDPMessageBus.Current.Listen<UpdateDstPreviewBasedOnSelectionEvent>()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x => this.UpdateTreeBasedOnSelectionHandler(x.Selection.ToList()));
-            
+
+            this.DstController.HubMapResult.IsEmptyChanged.Subscribe(this.UpdateTree);
+
+            this.Variables.IsEmptyChanged.Subscribe(this.WhenVariablesIsEmptyChanged);
+
             this.SelectedThings.BeforeItemsAdded.Subscribe(this.WhenItemSelectedChanges);
             this.SelectedThings.BeforeItemsRemoved.Subscribe(this.WhenItemSelectedChanges);
 
@@ -108,7 +115,22 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
             this.DeselectAllCommand = ReactiveCommand.Create();
             this.DeselectAllCommand.Subscribe(_ => this.SelectDeselectAllForTransfer(false));
         }
-        
+
+        /// <summary>
+        /// Occurs when <see cref="DstVariablesControlViewModel.Variables"/> count Changed
+        /// </summary>
+        /// <param name="isEmpty">If the <see cref="DstVariablesControlViewModel.Variables"/> is empty or not</param>
+        private void WhenVariablesIsEmptyChanged(bool isEmpty)
+        {
+            this.VariablesCopy.Clear();
+
+            if (!isEmpty)
+            {
+                this.VariablesCopy = new ReactiveList<VariableRowViewModel>(this.Variables);
+                this.RaisePropertyChanged(nameof(this.VariablesCopy));
+            }
+        }
+
         /// <summary>
         /// Occurs when the <see cref="DstNetChangePreviewViewModel.SelectedThings"/> gets a new element added or removed
         /// </summary>
@@ -250,10 +272,12 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         {
             foreach (var variable in this.Variables)
             {
-                variable.ShouldListenToChangeMessage = true;
                 variable.IsSelectedForTransfer = false;
                 variable.ActualValue = this.DstController.ReadNode(variable.Reference);
+                variable.IsHighlighted = false;
             }
+
+            this.WhenVariablesIsEmptyChanged(false);
         }
 
         /// <summary>
@@ -273,18 +297,23 @@ namespace DEHPEcosimPro.ViewModel.NetChangePreview
         /// <param name="mappedElement">The source <see cref="MappedElementDefinitionRowViewModel"/></param>
         private void UpdateVariableRow(MappedElementDefinitionRowViewModel mappedElement)
         {
-            var variableChanged = this.Variables.FirstOrDefault(
+            var variableChanged = this.VariablesCopy.FirstOrDefault(
                 x => x.Reference.NodeId.Identifier == mappedElement.SelectedVariable.Reference.NodeId.Identifier);
 
             if (variableChanged is null)
             {
                 return;
             }
+
+            var indexOfVariable = this.VariablesCopy.IndexOf(variableChanged);
+            this.VariablesCopy.Remove(variableChanged);
+
+            variableChanged = new VariableRowViewModel(mappedElement.SelectedVariable);
+            this.VariablesCopy.Insert(indexOfVariable, variableChanged);
             
             CDPMessageBus.Current.SendMessage(new DstHighlightEvent(variableChanged.Reference.NodeId.Identifier));
 
             variableChanged.ActualValue = mappedElement.SelectedValue.Value;
-            variableChanged.ShouldListenToChangeMessage = false;
         }
 
         /// <summary>

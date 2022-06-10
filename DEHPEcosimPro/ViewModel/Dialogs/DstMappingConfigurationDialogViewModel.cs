@@ -264,6 +264,16 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.CheckCanExecute();
                 })));
 
+            this.Disposables.Add(this.WhenAnyValue(x => x.SelectedThing)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ => this.UpdateHubFields(() =>
+                {
+                    this.UpdateAvailableParameters();
+                    this.UpdateAvailableParameterType();
+                    this.UpdateAvailableElementUsages();
+                    this.CheckCanExecute();
+                })));
+
             this.ApplyTimeStepOnSelectionCommand = ReactiveCommand.Create();
 
             this.Disposables.Add(this.ApplyTimeStepOnSelectionCommand.Subscribe(_ =>
@@ -274,7 +284,7 @@ namespace DEHPEcosimPro.ViewModel.Dialogs
                     this.canTriggerWhenVariableValueSelectionChanged = true;
                     this.WhenVariableValueSelectionChanged();
                 })));
-            
+
             this.SelectAllValuesCommand = ReactiveCommand.Create();
 
             this.Disposables.Add(this.SelectAllValuesCommand.Subscribe(_ =>

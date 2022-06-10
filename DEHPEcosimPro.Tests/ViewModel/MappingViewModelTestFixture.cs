@@ -37,7 +37,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
 
     using DEHPEcosimPro.DstController;
     using DEHPEcosimPro.ViewModel;
-    using DEHPEcosimPro.ViewModel.Interfaces;
     using DEHPEcosimPro.ViewModel.Rows;
 
     using Moq;
@@ -52,7 +51,6 @@ namespace DEHPEcosimPro.Tests.ViewModel
     public class MappingViewModelTestFixture
     {
         private Mock<IDstController> dstController;
-        private Mock<IDstVariablesControlViewModel> dstVariableViewModel;
         private MappingViewModel viewModel;
         private List<VariableRowViewModel> variableRowViewModels;
         private ElementDefinition element0;
@@ -175,12 +173,7 @@ namespace DEHPEcosimPro.Tests.ViewModel
                     { this.parameter0, this.variableRowViewModels.FirstOrDefault()}
                 });
 
-            this.dstVariableViewModel = new Mock<IDstVariablesControlViewModel>();
-
-            this.dstVariableViewModel.Setup(x => x.Variables)
-                .Returns(new ReactiveList<VariableRowViewModel>(this.variableRowViewModels));
-
-            this.viewModel = new MappingViewModel(this.dstController.Object, this.hubController.Object, this.dstVariableViewModel.Object);
+            this.viewModel = new MappingViewModel(this.dstController.Object, this.hubController.Object);
         }
 
         [Test]
