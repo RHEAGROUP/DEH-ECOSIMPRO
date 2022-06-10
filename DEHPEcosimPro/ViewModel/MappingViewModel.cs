@@ -56,44 +56,40 @@ namespace DEHPEcosimPro.ViewModel
         private readonly IHubController hubController;
 
         /// <summary>
-        /// The <see cref="IDstVariablesControlViewModel"/>
-        /// </summary>
-        private readonly IDstVariablesControlViewModel dstVariablesControlViewModel;
-
-        /// <summary>
         /// Gets or sets the collection of <see cref="MappingRowViewModel"/>
         /// </summary>
-        public ReactiveList<MappingRowViewModel> MappingRows { get; set; } = new ReactiveList<MappingRowViewModel>();
+        public ReactiveList<MappingRowViewModel> MappingRows { get; set; } = new ();
 
         /// <summary>
         /// Gets or sets the selected <see cref="MappingRowViewModel"/>
         /// </summary>
-        public ReactiveList<MappingRowViewModel> SelectedRows { get; set; } = new ReactiveList<MappingRowViewModel>();
+        public ReactiveList<MappingRowViewModel> SelectedRows { get; set; } = new ();
 
         /// <summary>
         /// Initializes a new <see cref="MappingViewModel"/>
         /// </summary>
         /// <param name="dstController">The <see cref="IDstController"/></param>
         /// <param name="hubController">The <see cref="IHubController"/>"/></param>
-        /// <param name="dstVariablesControlViewModel">The <see cref="IDstVariablesControlViewModel"/></param>
-        public MappingViewModel(IDstController dstController, IHubController hubController, IDstVariablesControlViewModel dstVariablesControlViewModel)
+        public MappingViewModel(IDstController dstController, IHubController hubController)
         {
             this.dstController = dstController;
             this.hubController = hubController;
 
-            this.dstVariablesControlViewModel = dstVariablesControlViewModel;
-
             this.dstController.DstMapResult.ItemsAdded.Subscribe(this.UpdateMappedThings);
+
+            this.dstController.DstMapResult.IsEmptyChanged.Where(x => !x).Subscribe(_ => this.ComputeDstMapResult());
 
             this.dstController.DstMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ =>
                 this.MappingRows.RemoveAll(this.MappingRows
                         .Where(x => x.Direction == MappingDirection.FromDstToHub).ToList()));
 
-            this.dstController.HubMapResult.ItemsAdded.Subscribe(this.UpdateMappedThings);
-            
+            this.dstController.HubMapResult.IsEmptyChanged.Where(x => !x).Subscribe(_ => this.ComputeHubMapResult());
+
             this.dstController.HubMapResult.IsEmptyChanged.Where(x => x).Subscribe(_ => 
                 this.MappingRows.RemoveAll(this.MappingRows
                         .Where(x => x.Direction == MappingDirection.FromHubToDst).ToList()));
+
+            this.dstController.HubMapResult.ItemsAdded.Subscribe(this.UpdateMappedThings);
 
             this.WhenAnyValue(x => x.dstController.MappingDirection)
                 .Subscribe(this.UpdateMappingRowsDirection);
@@ -110,7 +106,29 @@ namespace DEHPEcosimPro.ViewModel
                 mappingRowViewModel.UpdateDirection(mappingDirection);
             }
         }
-        
+
+        /// <summary>
+        /// Computes rows to represents <see cref="IDstController.HubMapResult"/>
+        /// </summary>
+        private void ComputeHubMapResult()
+        {
+            foreach (var mappedElementDefinitionRowViewModel in this.dstController.HubMapResult)
+            {
+                this.UpdateMappedThings(mappedElementDefinitionRowViewModel);
+            }
+        }
+
+        /// <summary>
+        /// Computes rows to represents <see cref="IDstController.DstMapResult"/>
+        /// </summary>
+        private void ComputeDstMapResult()
+        {
+            foreach (var mappedElementDefinitionRowViewModel in this.dstController.DstMapResult)
+            {
+                this.UpdateMappedThings(mappedElementDefinitionRowViewModel);
+            }
+        }
+
         /// <summary>
         /// Updates the <see cref="MappingRows"/>
         /// </summary>

@@ -35,9 +35,10 @@
             </HierarchicalDataTemplate>
         </ResourceDictionary>
     </UserControl.Resources>
+    <dx:LoadingDecorator BorderEffect="Default" BorderEffectColor="Blue" IsSplashScreenShown="{Binding IsBusy}" OwnerLock="LoadingContent">
         <Grid>
-            <dxg:TreeListControl ItemsSource="{Binding Variables}"
-                                 SelectedItem="{Binding SelectedThing}"
+            <dxg:TreeListControl ItemsSource="{Binding VariablesCopy, UpdateSourceTrigger=PropertyChanged}"
+                             SelectedItem="{Binding SelectedThing}"
                                  SelectedItems="{Binding SelectedThings}"
                                  SelectionMode="MultipleRow">
                 <dxmvvm:Interaction.Behaviors>
@@ -59,26 +60,27 @@
                                       ShowVerticalLines="False"
                                       TreeDerivationMode="HierarchicalDataTemplate"
                                       TreeLineStyle="Solid"
-                                      VerticalScrollbarVisibility="Auto">
-                    <dxg:TreeListView.ContextMenu>
-                        <ContextMenu Name="RowContextMenu" />
-                    </dxg:TreeListView.ContextMenu>
-                    <dxg:TreeListView.RowStyle>
-                        <Style TargetType="{x:Type dxg:RowControl}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Row.IsHighlighted}" Value="True">
-                                    <Setter Property="Background" Value="Yellow"/>
-                                    <Setter Property="FontWeight" Value="Bold" />
-                                    <Setter Property="Foreground" Value="Blue" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Row.IsSelectedForTransfer}" Value="True">
-                                    <Setter Property="Background" Value="LightGreen"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                            <Setter Property="ToolTip" Value="{Binding Row.Tooltip}" />
-                        </Style>
-                    </dxg:TreeListView.RowStyle>
-                </dxg:TreeListView>
+                                      VerticalScrollbarVisibility="Auto"
+                                      AllowChildNodeSourceUpdates="True">
+                        <dxg:TreeListView.ContextMenu>
+                            <ContextMenu Name="RowContextMenu" />
+                        </dxg:TreeListView.ContextMenu>
+                        <dxg:TreeListView.RowStyle>
+                            <Style TargetType="{x:Type dxg:RowControl}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Row.IsHighlighted}" Value="True">
+                                        <Setter Property="Background" Value="Yellow"/>
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="Foreground" Value="Blue" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Row.IsSelectedForTransfer}" Value="True">
+                                        <Setter Property="Background" Value="LightGreen"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                                <Setter Property="ToolTip" Value="{Binding Row.Tooltip}" />
+                            </Style>
+                        </dxg:TreeListView.RowStyle>
+                    </dxg:TreeListView>
                 </dxg:TreeListControl.View>
                 <dxg:TreeListControl.Columns>
                     <dxg:TreeListColumn AllowEditing="False" FieldName="Name" Fixed="Left" />
@@ -89,4 +91,5 @@
                 </dxg:TreeListControl.Columns>
             </dxg:TreeListControl>
         </Grid>
+    </dx:LoadingDecorator>
 </UserControl>
